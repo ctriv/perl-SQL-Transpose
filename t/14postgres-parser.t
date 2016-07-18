@@ -65,6 +65,16 @@ my $sql = q{
         price numeric
     );
 
+    CREATE FUNCTION foo(arg integer) RETURNS trigger
+        LANGUAGE plpgsql
+        AS $$
+            BEGIN
+                    UPDATE t_test1 SET f_timestamp=NOW() WHERE id=NEW.product_no;
+                    RETURN NEW;
+            END;
+        $$;
+
+
   CREATE TRIGGER test_trigger
     BEFORE INSERT OR UPDATE OR DELETE
     ON products_1
@@ -108,6 +118,8 @@ my $sql = q{
     alter table only t_test1 drop constraint foo cascade;
 
     alter table t_test1 owner to foo;
+
+
 
     commit;
 };
@@ -407,4 +419,8 @@ is_deeply(
     'Index is using hash method and has predicate right'
 );
 
+
+my @procs = $schema->get_procedures();
+is(scalar @procs, 1, 'got a procedure');
+is($procs[0]->name, 'foo');
 done_testing;

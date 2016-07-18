@@ -61,6 +61,24 @@ Index:
       [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
       [ WHERE predicate ]
 
+Create function:
+    CREATE [ OR REPLACE ] FUNCTION
+        name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } default_expr ] [, ...] ] )
+        [ RETURNS rettype
+          | RETURNS TABLE ( column_name column_type [, ...] ) ]
+      { LANGUAGE lang_name
+        | WINDOW
+        | IMMUTABLE | STABLE | VOLATILE
+        | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
+        | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
+        | COST execution_cost
+        | ROWS result_rows
+        | SET configuration_parameter { TO value | = value | FROM CURRENT }
+        | AS 'definition'
+        | AS 'obj_file', 'link_symbol'
+      } ...
+      [ WITH ( attribute [, ...] ) ]
+
 Alter table:
 
   ALTER TABLE [ ONLY ] table [ * ]
@@ -102,7 +120,7 @@ our @EXPORT_OK = qw(parse);
 
 our $GRAMMAR = <<'END_OF_GRAMMAR';
 
-{ my ( %tables, @views, @triggers, $table_order, $field_order, @table_comments) }
+{ my ( %tables, @views, @triggers, $table_order, $field_order, @table_comments, @functions) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -115,6 +133,7 @@ startrule : statement(s) eofile {
         tables => \%tables,
         views => \@views,
         triggers => \@triggers,
+        functions => \@functions,
     }
 }
 
@@ -262,6 +281,98 @@ create : CREATE or_replace(?) temporary(?) VIEW view_id view_fields(?) /AS/i vie
             fields       => $item[6],
             is_temporary => $item[3][0],
         }
+    }
+
+function_name : NAME
+
+function_arg_mode : /\b(?:INOUT|IN|OUT|VARIADIC)\b/i
+
+function_arg_name : NAME
+
+function_arg_type : pg_data_type
+
+function_arg_default : function_arg_default_marker function_arg_default_exp
+
+function_arg_default_marker : DEFAULT | '='
+
+function_arg_default_exp : DEFAULT_VALUE
+
+function_arg : function_arg_mode(?) function_arg_name(?) function_arg_type function_arg_default(?)
+    {
+        $return = join(' ', grep { defined } $item[1][0], $item[2][0], $item[3]->{type}, $item[4][0] );
+    }
+
+function_rettype: WORD
+
+function_returns_type : RETURNS function_rettype
+
+function_return_table_field: field_name data_type
+
+function_returns_table : RETURNS TABLE '(' function_return_table_field(s?) ')'
+
+function_return : function_returns_type | function_returns_table
+
+function_lang: SQSTRING | WORD
+
+function_cost: /\d+/
+
+function_obj_file: SQSTRING ',' SQSTRING
+
+function_definition: SQSTRING | DOLLAR_QUOTED_STRING
+
+function_option :
+      /LANGUAGE/i function_lang
+    { $return = { language => $item[2] }}
+    | /WINDOW/i
+    | /IMMUTABLE/i
+    | /STABLE/i
+    | /VOLATILE/i
+    | /CALLED\s+ON\s+NULL\s+INPUT/i
+    | /RETURNS\s+NULL\s+ON\s+NULL\s+INPUT/i
+    | /STRICT/
+    | /(?:EXTERNAL)?\s+SECURITY\s+(?:INVOKER|DEFINER)/i
+    | /COST/i function_cost
+    {
+        $return = { cost => $item[2] };
+    }
+    | /AS/i function_obj_file
+    {
+        $return = { implementation => $item[2] };
+    }
+    | /AS/i function_definition
+    {
+        $return = { sql => $item[2] };
+    }
+
+function_option_set: function_option(s?)
+    {
+        $return = {
+            map { %$_ } @{$item[1]}
+        };
+    }
+
+
+create : CREATE or_replace(?) FUNCTION function_name  '(' function_arg(s? /,/) ')' function_return(?) function_option_set ';'
+    {
+            my %extra;
+
+            if ($item[2][0]) {
+                $extra{or_replace} = 1;
+            }
+
+            if ($item[8][0]) {
+                $extra{returns} = $item[8][0];
+            }
+            my $options = $item[9];
+
+            my $bit = {
+                name       => $item{function_name},
+                parameters => $item[6],
+                extra      => \%extra,
+                sql        => $options->{sql}
+            };
+
+            push @functions, $bit;
     }
 
 trigger_name : NAME
@@ -1003,6 +1114,10 @@ COMMA : ','
 
 SET : /set/i
 
+FUNCTION : /function/i
+
+RETURNS : /returns/i
+
 NAME : DQSTRING
     | /\w+/
 
@@ -1011,6 +1126,11 @@ DQSTRING : '"' <skip: ''> /((?:[^"]|"")+)/ '"'
 
 SQSTRING : "'" <skip: ''> /((?:[^']|'')*)/ "'"
     { ($return = $item[3]) =~ s/''/'/g }
+
+DOLLAR_DELIMITER : /\$[^\$]*?\$/
+
+DOLLAR_QUOTED_STRING : DOLLAR_DELIMITER /.*?(?=\$.*?\$)/s DOLLAR_DELIMITER
+    { $return = $item[2] }
 
 VALUE : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
     | SQSTRING
@@ -1123,6 +1243,10 @@ sub parse {
 
     for my $trigger (@{ $result->{triggers} }) {
         $schema->add_trigger( %$trigger );
+    }
+
+    for my $function (@{ $result->{functions} }) {
+        $schema->add_procedure($function);
     }
 
     return 1;
