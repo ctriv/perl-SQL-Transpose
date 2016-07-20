@@ -65,7 +65,7 @@ my $sql = q{
         price numeric
     );
 
-    CREATE FUNCTION foo(arg integer) RETURNS trigger
+    CREATE FUNCTION foo(arg integer, another text) RETURNS trigger
         LANGUAGE plpgsql
         AS $$
             BEGIN
@@ -422,5 +422,13 @@ is_deeply(
 
 my @procs = $schema->get_procedures();
 is(scalar @procs, 1, 'got a procedure');
-is($procs[0]->name, 'foo');
+my $proc = $procs[0];
+is($proc->name, 'foo');
+is($proc->extra('returns'), 'trigger');
+is($proc->extra('language'), 'plpgsql');
+like($proc->sql, qr/\QUPDATE t_test1 SET f_timestamp=NOW() WHERE id=NEW.product_no/);
+is($proc->parameters->[0], 'arg integer');
+is($proc->parameters->[1], 'another text');
+#use Data::Dumper;
+#diag(Dumper(@procs));
 done_testing;

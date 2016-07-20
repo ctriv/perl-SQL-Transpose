@@ -708,4 +708,50 @@ CREATE VIEW view_foo ( id, name ) AS
 
 is($drop_view_9_1_produced, $drop_view_9_1_expected, "My DROP VIEW statement for 9.1 is correct");
 
+
+my $procedure = SQL::Translator::Schema::Procedure->new(
+    name => 'foo',
+    extra => {
+        returns => 'trigger',
+        language => 'plpgsql'
+    },
+    parameters => ['arg integer', 'another text'],
+    sql => <<'END_OF_SQL',
+BEGIN
+    UPDATE t_test1 SET f_timestamp=NOW() WHERE id=NEW.product_no;
+    RETURN NEW;
+END
+END_OF_SQL
+);
+
+my $create_procedure_expected = <<'END_OF_SQL';
+CREATE FUNCTION foo (arg integer, another text) RETURNS trigger LANGUAGE plpgsql AS $__SQL_TRANS_SEP__$
+BEGIN
+    UPDATE t_test1 SET f_timestamp=NOW() WHERE id=NEW.product_no;
+    RETURN NEW;
+END
+
+$__SQL_TRANS_SEP__$
+END_OF_SQL
+chomp($create_procedure_expected);
+
+my $create_procedure_produced = SQL::Translator::Producer::PostgreSQL::create_procedure($procedure);
+
+is($create_procedure_produced, $create_procedure_expected, 'create procedure sql is correct');
+
+my $alter_procedure_expected = <<'END_OF_SQL';
+CREATE OR REPLACE FUNCTION foo (arg integer, another text) RETURNS trigger LANGUAGE plpgsql AS $__SQL_TRANS_SEP__$
+BEGIN
+    UPDATE t_test1 SET f_timestamp=NOW() WHERE id=NEW.product_no;
+    RETURN NEW;
+END
+
+$__SQL_TRANS_SEP__$
+END_OF_SQL
+chomp($alter_procedure_expected);
+
+my $alter_procedure_produced = SQL::Translator::Producer::PostgreSQL::alter_procedure($procedure);
+
+is($alter_procedure_produced, $alter_procedure_expected, 'alter procedure sql is correct');
+
 done_testing;

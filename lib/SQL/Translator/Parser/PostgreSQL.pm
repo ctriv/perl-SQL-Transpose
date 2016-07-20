@@ -363,7 +363,11 @@ create : CREATE or_replace(?) FUNCTION function_name  '(' function_arg(s? /,/) '
             if ($item[8][0]) {
                 $extra{returns} = $item[8][0];
             }
+
             my $options = $item[9];
+            if ($options->{language}) {
+                $extra{language} = $options->{language}
+            }
 
             my $bit = {
                 name       => $item{function_name},

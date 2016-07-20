@@ -1026,6 +1026,66 @@ sub batch_alter_table {
   return @sql;
 }
 
+
+# CREATE [ OR REPLACE ] FUNCTION
+#     name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } default_expr ] [, ...] ] )
+#     [ RETURNS rettype
+#       | RETURNS TABLE ( column_name column_type [, ...] ) ]
+#   { LANGUAGE lang_name
+#     | WINDOW
+#     | IMMUTABLE | STABLE | VOLATILE
+#     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
+#     | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
+#     | COST execution_cost
+#     | ROWS result_rows
+#     | SET configuration_parameter { TO value | = value | FROM CURRENT }
+#     | AS 'definition'
+#     | AS 'obj_file', 'link_symbol'
+#   } ...
+#     [ WITH ( attribute [, ...] ) ]
+
+sub create_procedure {
+    my ($procedure, $options) = @_;
+
+    return _create_function($procedure, { or_replace => 0}, $options);
+}
+
+sub alter_procedure {
+    my ($procedure, $options) = @_;
+
+    return _create_function($procedure, { or_replace => 1}, $options);
+}
+
+sub _create_function {
+    my ($procedure, $args, $options) = @_;
+
+    my $generator  = _generator($options);
+    my $or_replace = $args->{or_replace} ? 'OR REPLACE ' : '';
+    my $name       = $generator->quote($procedure->name);
+    my $sql = sprintf('CREATE %sFUNCTION %s (%s) ',
+        $or_replace, $name, join(', ' => map { $generator->quote($_) } $procedure->parameters)
+    );
+
+    my @definitions;
+    if (my $returns = $procedure->extra('returns')) {
+        $returns = $generator->quote($returns);
+        push(@definitions, "RETURNS $returns");
+    }
+
+    if (my $lang = $procedure->extra('language')) {
+        $lang = $generator->quote($lang);
+        push(@definitions, "LANGUAGE $lang");
+    }
+
+    my $quote_delim    = '$__SQL_TRANS_SEP__$';
+    my $implementation = $procedure->sql;
+    push(@definitions, "AS $quote_delim\n$implementation\n$quote_delim");
+
+    $sql .= join(' ', @definitions);
+
+    return $sql;
+}
+
 1;
 
 # -------------------------------------------------------------------
