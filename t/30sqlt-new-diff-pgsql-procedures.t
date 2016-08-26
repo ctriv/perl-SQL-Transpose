@@ -13,7 +13,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator::Schema::Constants;
 use Storable 'dclone';
 
-plan tests => 4;
+plan tests => 3;
 
 use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
 
@@ -33,6 +33,21 @@ my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
     ($schema);
 } (qw( create1.yml create2.yml ));
 
+$target_schema->add_procedure(
+    name => 'foo',
+    extra => {
+        returns => 'trigger',
+        language => 'plpgsql'
+    },
+    parameters => ['arg integer', 'another text'],
+    sql => <<'END_OF_SQL',
+BEGIN
+UPDATE t_test1 SET f_timestamp=NOW() WHERE id=NEW.product_no;
+RETURN NEW;
+END
+END_OF_SQL
+);
+
 # Test for differences
 my $out = SQL::Translator::Diff::schema_diff(
     $source_schema,
@@ -40,10 +55,10 @@ my $out = SQL::Translator::Diff::schema_diff(
     $target_schema,
    'PostgreSQL',
    {
+     ignore_proc_sql => 0,
      producer_args => {
          quote_identifiers => 1,
-     },
-     ignore_proc_sql => 0
+     }
    }
 );
 
@@ -55,6 +70,14 @@ BEGIN;
 CREATE TABLE "added" (
   "id" bigint
 );
+
+CREATE FUNCTION foo (arg integer, another text) RETURNS trigger LANGUAGE plpgsql AS $__SQL_TRANS_SEP__$
+BEGIN
+UPDATE t_test1 SET f_timestamp=NOW() WHERE id=NEW.product_no;
+RETURN NEW;
+END
+
+$__SQL_TRANS_SEP__$;
 
 ALTER TABLE "employee" DROP CONSTRAINT "FK5302D47D93FE702E";
 
@@ -94,59 +117,6 @@ ALTER TABLE "person" ADD CONSTRAINT "UC_person_id" UNIQUE ("person_id");
 ALTER TABLE "person" ADD CONSTRAINT "UC_age_name" UNIQUE ("age", "name");
 
 DROP TABLE "deleted" CASCADE;
-
-
-COMMIT;
-
-## END OF DIFF
-
-$out = SQL::Translator::Diff::schema_diff(
-    $source_schema, 'PostgreSQL', $target_schema, 'PostgreSQL',
-    { ignore_index_names => 1,
-      ignore_constraint_names => 1,
-      producer_args => {
-         quote_identifiers => 0,
-      }
-    });
-
-eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
--- Convert schema 'create1.yml' to 'create2.yml':;
-
-BEGIN;
-
-CREATE TABLE added (
-  id bigint
-);
-
-ALTER TABLE employee DROP COLUMN job_title;
-
-ALTER TABLE old_name RENAME TO new_name;
-
-ALTER TABLE new_name ADD COLUMN new_field integer;
-
-ALTER TABLE person DROP CONSTRAINT UC_age_name;
-
-ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT 1;
-
-ALTER TABLE person ALTER COLUMN person_id TYPE serial;
-
-ALTER TABLE person ALTER COLUMN name SET NOT NULL;
-
-ALTER TABLE person ALTER COLUMN age SET DEFAULT 18;
-
-ALTER TABLE person ALTER COLUMN iq TYPE bigint;
-
-ALTER TABLE person ALTER COLUMN nickname SET NOT NULL;
-
-ALTER TABLE person ALTER COLUMN nickname TYPE character varying(24);
-
-ALTER TABLE person RENAME COLUMN description TO physical_description;
-
-ALTER TABLE person ADD CONSTRAINT UC_person_id UNIQUE (person_id);
-
-ALTER TABLE person ADD CONSTRAINT UC_age_name UNIQUE (age, name);
-
-DROP TABLE deleted CASCADE;
 
 
 COMMIT;

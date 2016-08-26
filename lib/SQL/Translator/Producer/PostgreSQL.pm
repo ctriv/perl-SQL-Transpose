@@ -1086,6 +1086,16 @@ sub _create_function {
     return $sql;
 }
 
+sub drop_procedure {
+    my ($procedure, $options) = @_;
+    my $generator  = _generator($options);
+
+    return sprintf('DROP FUNCTION %s (%s)',
+        $generator->quote($procedure->name),
+        join(', ' => map { $generator->quote($_) } $procedure->parameters)
+    );
+}
+
 1;
 
 # -------------------------------------------------------------------

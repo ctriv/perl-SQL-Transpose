@@ -754,4 +754,12 @@ my $alter_procedure_produced = SQL::Translator::Producer::PostgreSQL::alter_proc
 
 is($alter_procedure_produced, $alter_procedure_expected, 'alter procedure sql is correct');
 
+
+my $drop_procedure_expected = 'DROP FUNCTION foo (arg integer, another text)';
+
+my $drop_procedure_produced = SQL::Translator::Producer::PostgreSQL::drop_procedure($procedure);
+
+is($drop_procedure_produced, $drop_procedure_expected, 'drop procedure sql is correct');
+
+
 done_testing;

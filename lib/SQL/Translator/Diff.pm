@@ -22,6 +22,7 @@ has ignore_view_sql => (
 );
 has ignore_proc_sql => (
   is => 'rw',
+  default => 1,
 );
 has output_db => (
   is => 'rw',
@@ -61,11 +62,22 @@ has table_diff_hash => (
   lazy => 1,
   default => quote_sub '{}',
 );
+has procedures_to_create => (
+    is => 'rw',
+    lazy => 1,
+    default => quote_sub '[]',
+);
+has procedures_to_drop => (
+    is => 'rw',
+    lazy => 1,
+    default => quote_sub '[]',
+);
+has procedures_to_alter => (
+    is => 'rw',
+    lazy => 1,
+    default => quote_sub '[]'
+);
 
-my @diff_arrays = qw/
-  tables_to_drop
-  tables_to_create
-/;
 
 my @diff_hash_keys = qw/
   constraints_to_create
@@ -119,17 +131,27 @@ sub BUILD {
 sub compute_differences {
     my ($self) = @_;
 
-    my $target_schema = $self->target_schema;
-    my $source_schema = $self->source_schema;
-
     my $producer_class = "SQL::Translator::Producer::@{[$self->output_db]}";
     eval "require $producer_class";
     die $@ if $@;
 
     if (my $preprocess = $producer_class->can('preprocess_schema')) {
-      $preprocess->($source_schema);
-      $preprocess->($target_schema);
+      $preprocess->($self->source_schema);
+      $preprocess->($self->target_schema);
     }
+
+    $self->_compute_procedure_differences();
+    $self->_compute_table_differences();
+
+    return $self;
+}
+
+
+sub _compute_table_differences {
+    my ($self) = @_;
+
+    my $target_schema = $self->target_schema;
+    my $source_schema = $self->source_schema;
 
     my %src_tables_checked = ();
     my @tar_tables = sort { $a->name cmp $b->name } $target_schema->get_tables;
@@ -189,6 +211,41 @@ sub compute_differences {
     return $self;
 }
 
+sub _compute_procedure_differences {
+    my ($self) = @_;
+
+    my $target_schema = $self->target_schema;
+    my $source_schema = $self->source_schema;
+
+    my %src_procs_checked = ();
+    my @target_procs = sort { $a->name cmp $b->name } $target_schema->get_procedures;
+    ## do original/source procs exist in target?
+    foreach my $target_proc (@target_procs) {
+      my $source_proc = $source_schema->get_procedure($target_proc->name);
+
+      if (!$source_proc) {
+        ## function is new
+        push(@{$self->procedures_to_create}, $target_proc);
+        next;
+      }
+      elsif (!$source_proc->equals($target_proc)) {
+        ## the fucntion has changed
+        push(@{$self->procedures_to_alter}, $target_proc);
+      }
+    }
+
+    foreach my $source_proc ($source_schema->get_procedures) {
+        my $target_proc = $target_schema->get_procedure($source_proc->name);
+
+        unless ($target_proc) {
+          # the function no longer exists
+          push(@{$self->procedures_to_drop}, $source_proc);
+        }
+    }
+
+    return $self;
+}
+
 sub produce_diff_sql {
     my ($self) = @_;
 
@@ -215,6 +272,8 @@ sub produce_diff_sql {
       table_renamed_from    => 'rename_table',
     );
     my @diffs;
+
+    push(@diffs, $self->_procedure_diff_sql($producer_class));
 
     if (!$self->no_batch_alters &&
         (my $batch_alter = $producer_class->can('batch_alter_table')) )
@@ -285,6 +344,7 @@ sub produce_diff_sql {
         grep { $_ !~ /^(?:COMMIT|START(?: TRANSACTION)?|BEGIN(?: TRANSACTION)?)/ } $producer_class->can('produce')->($translator);
     }
 
+
     if (my @tables_to_drop = @{ $self->{tables_to_drop} || []} ) {
       my $meth = $producer_class->can('drop_table');
 
@@ -314,6 +374,32 @@ sub produce_diff_sql {
     }
     return undef;
 
+}
+
+sub _procedure_diff_sql {
+    my ($self, $producer) = @_;
+
+    my @diff;
+
+    my $create = $producer->can('create_procedure');
+    my $alter  = $producer->can('alter_procedure');
+    my $drop   = $producer->can('drop_procedure');
+
+    return unless $create && $alter && $drop;
+
+    foreach my $proc (@{$self->procedures_to_create}) {
+        push(@diff, $create->($proc));
+    }
+
+    foreach my $proc (@{$self->procedures_to_alter}) {
+        push(@diff, $alter->($proc));
+    }
+
+    foreach my $proc (@{$self->procedures_to_drop}) {
+        push(@diff, $drop->($proc));
+    }
+
+    return @diff;
 }
 
 sub diff_table_indexes {
@@ -519,6 +605,10 @@ supports the ability to do all alters for a table as one statement.
 
 If the diff would need a method that is missing from the producer, just emit a
 comment showing the method is missing, rather than dieing with an error
+
+=item B<ignore_proc_sql>
+
+Ignore changes to stored procedures.  Defaults to true.
 
 =item B<producer_args>
 
