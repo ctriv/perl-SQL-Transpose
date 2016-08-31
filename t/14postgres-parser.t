@@ -119,7 +119,7 @@ my $sql = q{
 
     alter table t_test1 owner to foo;
 
-
+    CREATE VIEW test_view AS SELECT * FROM products_1;
 
     commit;
 };
@@ -429,6 +429,14 @@ is($proc->extra('language'), 'plpgsql');
 like($proc->sql, qr/\QUPDATE t_test1 SET f_timestamp=NOW() WHERE id=NEW.product_no/);
 is($proc->parameters->[0], 'arg integer');
 is($proc->parameters->[1], 'another text');
-#use Data::Dumper;
-#diag(Dumper(@procs));
+
+my @views = $schema->get_views();
+is(scalar @views, 1, 'got a view');
+my $view = $views[0];
+
+is($view->name, 'test_view');
+is($view->sql, 'SELECT * FROM products_1');
+# use Data::Dumper;
+# diag(Dumper($view));
+
 done_testing;
