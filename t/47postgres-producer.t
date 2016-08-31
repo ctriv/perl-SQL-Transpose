@@ -708,6 +708,17 @@ CREATE VIEW view_foo ( id, name ) AS
 
 is($drop_view_9_1_produced, $drop_view_9_1_expected, "My DROP VIEW statement for 9.1 is correct");
 
+my $drop_view_only = SQL::Translator::Producer::PostgreSQL::drop_view($view1);
+my $drop_view_only_expected = 'DROP VIEW view_foo';
+
+is($drop_view_only, $drop_view_only_expected, 'drop_view() works');
+
+my $alter_view = SQL::Translator::Producer::PostgreSQL::alter_view($view1);
+my $alter_view_expected = 'CREATE OR REPLACE VIEW view_foo ( id, name ) AS
+    SELECT id, name FROM thing
+';
+
+is($alter_view, $alter_view_expected, 'alter_view works');
 
 my $procedure = SQL::Translator::Schema::Procedure->new(
     name => 'foo',

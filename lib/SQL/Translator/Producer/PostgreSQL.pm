@@ -362,6 +362,10 @@ sub create_view {
     }
     $create .= 'CREATE';
 
+    if ($options->{or_replace}) {
+        $create .= " OR REPLACE";
+    }
+
     my $extra = $view->extra;
     $create .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
     $create .= " VIEW " . $generator->quote($view_name);
@@ -382,8 +386,28 @@ sub create_view {
     return $create;
 }
 
-{
+sub drop_view {
+    my ($view, $options) = @_;
+    my $generator = _generator($options);
 
+    return sprintf('DROP VIEW %s', $generator->quote($view->name));
+}
+
+sub alter_view {
+    my ($view, $options) = @_;
+
+    $options ||= {};
+
+    my %options = (
+        %$options,
+        or_replace => 1,
+        no_comments => 1,
+    );
+
+    return create_view($view, \%options)
+}
+
+{
     my %field_name_scope;
 
     sub create_field

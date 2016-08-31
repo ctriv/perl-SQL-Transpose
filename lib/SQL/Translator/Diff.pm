@@ -77,6 +77,21 @@ has procedures_to_alter => (
     lazy => 1,
     default => quote_sub '[]'
 );
+has views_to_create => (
+    is => 'rw',
+    lazy => 1,
+    default => quote_sub '[]'
+);
+has views_to_drop => (
+    is => 'rw',
+    lazy => 1,
+    default => quote_sub '[]'
+);
+has views_to_alter => (
+    is => 'rw',
+    lazy => 1,
+    default => quote_sub '[]'
+);
 
 
 my @diff_hash_keys = qw/
@@ -142,6 +157,7 @@ sub compute_differences {
 
     $self->_compute_procedure_differences();
     $self->_compute_table_differences();
+    $self->_compute_view_differences();
 
     return $self;
 }
@@ -226,7 +242,6 @@ sub _compute_procedure_differences {
       if (!$source_proc) {
         ## function is new
         push(@{$self->procedures_to_create}, $target_proc);
-        next;
       }
       elsif (!$source_proc->equals($target_proc)) {
         ## the fucntion has changed
@@ -245,6 +260,42 @@ sub _compute_procedure_differences {
 
     return $self;
 }
+
+
+sub _compute_view_differences {
+    my ($self) = @_;
+
+    my $target_schema = $self->target_schema;
+    my $source_schema = $self->source_schema;
+
+    my %src_procs_checked = ();
+    my @target_views = sort { $a->name cmp $b->name } $target_schema->get_views;
+    ## do original/source procs exist in target?
+    foreach my $target_view (@target_views) {
+      my $source_view = $source_schema->get_view($target_view->name);
+
+      if (!$source_view) {
+        ## view is new
+        push(@{$self->views_to_create}, $target_view);
+      }
+      elsif (!$source_view->equals($target_view)) {
+        ## the view has changed
+        push(@{$self->views_to_alter}, $target_view);
+      }
+    }
+
+    foreach my $source_view ($source_schema->get_views) {
+        my $target_view = $target_schema->get_view($source_view->name);
+
+        unless ($target_view) {
+          # the view no longer exists
+          push(@{$self->views_to_drop}, $source_view);
+        }
+    }
+
+    return $self;
+}
+
 
 sub produce_diff_sql {
     my ($self) = @_;
@@ -354,6 +405,8 @@ sub produce_diff_sql {
                          : die "$producer_class cant drop_table";
     }
 
+    push(@diffs, $self->_view_diff_sql($producer_class));
+
     if (@diffs) {
       unshift @diffs, "BEGIN";
       push    @diffs, "\nCOMMIT";
@@ -397,6 +450,33 @@ sub _procedure_diff_sql {
 
     foreach my $proc (@{$self->procedures_to_drop}) {
         push(@diff, $drop->($proc));
+    }
+
+    return @diff;
+}
+
+
+sub _view_diff_sql {
+    my ($self, $producer) = @_;
+
+    my @diff;
+
+    my $create = $producer->can('create_view');
+    my $alter  = $producer->can('alter_view');
+    my $drop   = $producer->can('drop_view');
+
+    return unless $create && $alter && $drop;
+
+    foreach my $view (@{$self->views_to_create}) {
+        push(@diff, $create->($view, { no_comments => 1 }));
+    }
+
+    foreach my $view (@{$self->views_to_alter}) {
+        push(@diff, $alter->($view));
+    }
+
+    foreach my $view (@{$self->views_to_drop}) {
+        push(@diff, $drop->($view));
     }
 
     return @diff;
