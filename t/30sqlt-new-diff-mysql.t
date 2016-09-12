@@ -3,24 +3,24 @@
 
 use strict;
 use warnings;
-use SQL::Translator;
+use SQL::Transpose;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
 use FindBin qw($Bin);
 use Test::More;
 use Test::Differences;
-use Test::SQL::Translator qw(maybe_plan);
-use SQL::Translator::Schema::Constants;
+use Test::SQL::Transpose qw(maybe_plan);
+use SQL::Transpose::Schema::Constants;
 use Storable 'dclone';
 
 plan tests => 9;
 
-use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
+use_ok('SQL::Transpose::Diff') or die "Cannot continue\n";
 
-my $tr = SQL::Translator->new;
+my $tr = SQL::Transpose->new;
 
 my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
-    my $t = SQL::Translator->new;
+    my $t = SQL::Transpose->new;
     $t->parser( 'YAML' )
       or die $tr->error;
     my $out = $t->translate( catfile($Bin, qw/data diff/, $_ ) )
@@ -34,7 +34,7 @@ my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
 } (qw( create1.yml create2.yml ));
 
 # Test for differences
-my @out = SQL::Translator::Diff::schema_diff(
+my @out = SQL::Transpose::Diff::schema_diff(
     $source_schema, 'MySQL',
     $target_schema, 'MySQL',
     {
@@ -103,7 +103,7 @@ COMMIT;
 
 ## END OF DIFF
 
-$out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $target_schema, 'MySQL',
+$out = SQL::Transpose::Diff::schema_diff($source_schema, 'MySQL', $target_schema, 'MySQL',
     { ignore_index_names => 1,
       ignore_constraint_names => 1,
       producer_args => { quote_identifiers => 0 },
@@ -149,7 +149,7 @@ COMMIT;
 
 
 # Test for sameness
-$out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL' );
+$out = SQL::Transpose::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL' );
 
 eq_or_diff($out, <<'## END OF DIFF', "No differences found");
 -- Convert schema 'create1.yml' to 'create1.yml':;
@@ -159,7 +159,7 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found");
 ## END OF DIFF
 
 {
-  my $t = SQL::Translator->new;
+  my $t = SQL::Transpose->new;
   $t->parser( 'MySQL' )
     or die $tr->error;
   my $out = $t->translate( catfile($Bin, qw/data mysql create.sql/ ) )
@@ -178,7 +178,7 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found");
   my $field = $target_schema->get_table('employee')->get_field('employee_id');
   $field->data_type('integer');
   $field->size(0);
-  $out = SQL::Translator::Diff::schema_diff($schema, 'MySQL', $target_schema, 'MySQL', { producer_args => { quote_identifiers => 0 } } );
+  $out = SQL::Transpose::Diff::schema_diff($schema, 'MySQL', $target_schema, 'MySQL', { producer_args => { quote_identifiers => 0 } } );
   eq_or_diff($out, <<'## END OF DIFF', "No differences found");
 -- Convert schema 'create.sql' to 'create2.yml':;
 
@@ -223,8 +223,8 @@ COMMIT;
 
 
 {
-  my $s1 = SQL::Translator::Schema->new;
-  my $s2 = SQL::Translator::Schema->new;
+  my $s1 = SQL::Transpose::Schema->new;
+  my $s2 = SQL::Transpose::Schema->new;
 
   $s1->name('Schema 1');
   $s2->name('Schema 2');
@@ -249,7 +249,7 @@ COMMIT;
     data_type => 'int'
   );
 
-  my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
+  my $out = SQL::Transpose::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
 
   eq_or_diff($out, <<'## END OF DIFF', "Batch alter of constraints work for InnoDB");
 -- Convert schema 'Schema 1' to 'Schema 2':;
@@ -272,8 +272,8 @@ COMMIT;
   # Test other things about renaming tables to - namely that renames
   # constraints are still formated right.
 
-  my $s1 = SQL::Translator::Schema->new;
-  my $s2 = SQL::Translator::Schema->new;
+  my $s1 = SQL::Transpose::Schema->new;
+  my $s2 = SQL::Transpose::Schema->new;
 
   $s1->name('Schema 3');
   $s2->name('Schema 4');
@@ -301,7 +301,7 @@ COMMIT;
     reference_table => 'foo',
   );
 
-  my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
+  my $out = SQL::Transpose::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
   eq_or_diff($out, <<'## END OF DIFF', "Alter/drop constraints works with rename table");
 -- Convert schema 'Schema 3' to 'Schema 4':;
 
@@ -321,7 +321,7 @@ COMMIT;
 ## END OF DIFF
 
   # Test quoting works too.
-  $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL',
+  $out = SQL::Transpose::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL',
     { producer_args => { quote_identifiers => 1 } }
   );
   eq_or_diff($out, <<'## END OF DIFF', "Quoting can be turned on");

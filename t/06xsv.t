@@ -5,19 +5,19 @@
 # Tests for xSV parser
 #
 use strict;
-use SQL::Translator;
-use SQL::Translator::Schema;
-use SQL::Translator::Schema::Constants;
+use SQL::Transpose;
+use SQL::Transpose::Schema;
+use SQL::Transpose::Schema::Constants;
 use Test::More;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(25, 'SQL::Translator::Parser::xSV');
-    SQL::Translator::Parser::xSV->import('parse');
+    maybe_plan(25, 'SQL::Transpose::Parser::xSV');
+    SQL::Transpose::Parser::xSV->import('parse');
 }
 
-my $tr = SQL::Translator->new;
-my $s  = SQL::Translator::Schema->new;
+my $tr = SQL::Transpose->new;
+my $s  = SQL::Transpose::Schema->new;
 my $data = q|One, Two, Three, Four, Five, Six, Seven
 I, Am, Some, Data, Yo, -10, .04
 And, So, am, I, "you crazy, crazy bastard", 500982, 1.1

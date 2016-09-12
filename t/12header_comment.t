@@ -3,10 +3,10 @@
 
 use strict;
 use Test::More tests => 5;
-use SQL::Translator::Utils qw($DEFAULT_COMMENT header_comment);
+use SQL::Transpose::Utils qw($DEFAULT_COMMENT header_comment);
 
 # Superfluous test, but that's ok
-use_ok("SQL::Translator::Utils");
+use_ok("SQL::Transpose::Utils");
 
 is($DEFAULT_COMMENT, '-- ', 'default comment');
 like(header_comment("foo"), qr/[-][-] Created by foo/, "Created by...");

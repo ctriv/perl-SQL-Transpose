@@ -6,9 +6,9 @@ use strict;
 use File::Temp 'tempfile';
 use FindBin qw/$Bin/;
 use IPC::Open3;
-use SQL::Translator;
+use SQL::Transpose;
 use Test::More;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 use Symbol qw(gensym);
 use Text::ParseWords qw(shellwords);
 
@@ -16,8 +16,8 @@ BEGIN {
     maybe_plan(
         5,
         'DBI',
-        'SQL::Translator::Parser::SQLite',
-        'SQL::Translator::Producer::Dumper'
+        'SQL::Transpose::Parser::SQLite',
+        'SQL::Transpose::Producer::Dumper'
     );
 }
 
@@ -25,7 +25,7 @@ my $db_user         = 'nomar';
 my $db_pass         = 'gos0X!';
 my $dsn             = 'dbi:SQLite:dbname=/tmp/foo';
 my $file            = "$Bin/data/sqlite/create.sql";
-my $t               = SQL::Translator->new(
+my $t               = SQL::Transpose->new(
     from            => 'SQLite',
     to              => 'Dumper',
     producer_args   => {

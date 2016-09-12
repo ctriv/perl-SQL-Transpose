@@ -3,11 +3,11 @@
 
 use strict;
 use Test::More;
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
-use Test::SQL::Translator qw(maybe_plan table_ok);
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
+use Test::SQL::Transpose qw(maybe_plan table_ok);
 
-maybe_plan(undef, 'SQL::Translator::Parser::DBI::PostgreSQL');
+maybe_plan(undef, 'SQL::Transpose::Parser::DBI::PostgreSQL');
 
 my @dsn =
   $ENV{DBICTEST_PG_DSN} ? @ENV{ map { "DBICTEST_PG_$_" } qw/DSN USER PASS/ }
@@ -68,7 +68,7 @@ $| = 1;
 $dbh->begin_work;
 $dbh->do($sql);
 
-my $t = SQL::Translator->new(
+my $t = SQL::Transpose->new(
   trace => 0,
   parser => 'DBI',
   parser_args => { dbh => $dbh },
@@ -76,7 +76,7 @@ my $t = SQL::Translator->new(
 $t->translate;
 my $schema = $t->schema;
 
-isa_ok( $schema, 'SQL::Translator::Schema', 'Schema object' );
+isa_ok( $schema, 'SQL::Transpose::Schema', 'Schema object' );
 
 ok ($dbh->ping, 'External handle still connected');
 
@@ -162,7 +162,7 @@ is( $t2_f3->default_value, undef, 'Default value is undefined' );
 is( $t2_f3->is_primary_key, 1, 'Field is PK' );
 is( $t2_f3->is_foreign_key, 1, 'Field is a FK' );
 my $fk_ref1 = $t2_f3->foreign_key_reference;
-isa_ok( $fk_ref1, 'SQL::Translator::Schema::Constraint', 'FK' );
+isa_ok( $fk_ref1, 'SQL::Transpose::Schema::Constraint', 'FK' );
 is( $fk_ref1->reference_table, 'sqlt_test1', 'FK is to "sqlt_test1" table' );
 
 my @t2_constraints = $t2->get_constraints;

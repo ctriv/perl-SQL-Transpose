@@ -3,7 +3,7 @@
 
 use strict;
 use Test::More;
-use SQL::Translator::Utils qw(normalize_name);
+use SQL::Transpose::Utils qw(normalize_name);
 
 my %tests = (
     "silly field (with random characters)" => "silly_field_with_random_characters",
@@ -15,7 +15,7 @@ my %tests = (
 plan tests => scalar(keys %tests) + 1;
 
 # Superfluous test, but that's ok
-use_ok("SQL::Translator::Utils");
+use_ok("SQL::Transpose::Utils");
 
 for my $test (keys %tests) {
     is(normalize_name($test) => $tests{$test},

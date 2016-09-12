@@ -5,14 +5,14 @@ use strict;
 use warnings;
 use Test::More;
 
-use SQL::Translator::Schema::Constants;
-use SQL::Translator::Schema::Table;
-use SQL::Translator::Schema::Field;
-use SQL::Translator::Schema::Constraint;
-use SQL::Translator::Producer::Oracle;
+use SQL::Transpose::Schema::Constants;
+use SQL::Transpose::Schema::Table;
+use SQL::Transpose::Schema::Field;
+use SQL::Transpose::Schema::Constraint;
+use SQL::Transpose::Producer::Oracle;
 
 {
-    my $table1 = SQL::Translator::Schema::Table->new( name => 'table1' );
+    my $table1 = SQL::Transpose::Schema::Table->new( name => 'table1' );
 
     my $table1_field1 = $table1->add_field(
         name              => 'fk_col1',
@@ -36,7 +36,7 @@ use SQL::Translator::Producer::Oracle;
         is_unique         => 0
     );
 
-    my $table2 = SQL::Translator::Schema::Table->new( name => 'table2' );
+    my $table2 = SQL::Transpose::Schema::Table->new( name => 'table2' );
 
     my $table2_field1 = $table2->add_field(
         name              => 'fk_col1',
@@ -70,7 +70,7 @@ use SQL::Translator::Producer::Oracle;
 
     my ($table1_def, $fk1_def, $trigger1_def,
         $index1_def, $constraint1_def
-    ) = SQL::Translator::Producer::Oracle::create_table($table1);
+    ) = SQL::Transpose::Producer::Oracle::create_table($table1);
 
     is_deeply(
         $fk1_def,

@@ -3,24 +3,24 @@
 
 use strict;
 use warnings;
-use SQL::Translator;
+use SQL::Transpose;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
 use FindBin qw($Bin);
 use Test::More;
 use Test::Differences;
-use Test::SQL::Translator qw(maybe_plan);
-use SQL::Translator::Schema::Constants;
+use Test::SQL::Transpose qw(maybe_plan);
+use SQL::Transpose::Schema::Constants;
 use Storable 'dclone';
 
 plan tests => 5;
 
-use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
+use_ok('SQL::Transpose::Diff') or die "Cannot continue\n";
 
-my $tr = SQL::Translator->new;
+my $tr = SQL::Transpose->new;
 
 my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
-    my $t = SQL::Translator->new;
+    my $t = SQL::Transpose->new;
     $t->parser( 'YAML' )
       or die $tr->error;
     my $out = $t->translate( catfile($Bin, qw/data diff pgsql/, $_ ) )
@@ -39,7 +39,7 @@ $target_schema->add_view(
 );
 
 # Test for differences
-my $out = SQL::Translator::Diff::schema_diff(
+my $out = SQL::Transpose::Diff::schema_diff(
     $source_schema,
    'PostgreSQL',
     $target_schema,
@@ -117,7 +117,7 @@ $source_schema->add_view(
     sql  => 'SELECT * FROM test_table',
 );
 
-$out = SQL::Translator::Diff::schema_diff(
+$out = SQL::Transpose::Diff::schema_diff(
     $source_schema,
    'PostgreSQL',
     $target_schema,
@@ -192,7 +192,7 @@ $target_schema->add_view(
     sql  => 'SELECT * FROM test_table_2',
 );
 
-$out = SQL::Translator::Diff::schema_diff(
+$out = SQL::Transpose::Diff::schema_diff(
     $source_schema,
    'PostgreSQL',
     $target_schema,
@@ -265,7 +265,7 @@ COMMIT;
 
 
 # Test for sameness
-$out = SQL::Translator::Diff::schema_diff(
+$out = SQL::Transpose::Diff::schema_diff(
     $source_schema, 'PostgreSQL', $source_schema, 'PostgreSQL'
 );
 

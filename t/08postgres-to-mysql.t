@@ -3,14 +3,14 @@
 
 use strict;
 use Test::More;
-use SQL::Translator;
+use SQL::Transpose;
 use Data::Dumper;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
     maybe_plan(1,
-        'SQL::Translator::Parser::PostgreSQL',
-        'SQL::Translator::Producer::MySQL',
+        'SQL::Transpose::Parser::PostgreSQL',
+        'SQL::Transpose::Producer::MySQL',
     );
 }
 
@@ -166,7 +166,7 @@ create table cvterm_geom (
 
 |;
 
-my $tr = SQL::Translator->new(
+my $tr = SQL::Transpose->new(
     parser   => "PostgreSQL",
     producer => "MySQL"
 );

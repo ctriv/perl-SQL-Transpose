@@ -2,19 +2,18 @@ use warnings;
 use strict;
 use Test::More;
 use Test::Differences;
-use Test::SQL::Translator qw(maybe_plan);
-use SQL::Translator;
+use Test::SQL::Transpose qw(maybe_plan);
+use SQL::Transpose;
 use FindBin '$Bin';
 
 BEGIN {
     maybe_plan(
         2,
-        'SQL::Translator::Parser::SQLite',
-        'SQL::Translator::Producer::JSON',
+        'SQL::Transpose::Parser::SQLite',
+        'SQL::Transpose::Producer::JSON',
     );
 }
 
-my $sqlt_version = $SQL::Translator::VERSION;
 use JSON;
 my $json = to_json(from_json(<<JSON), { canonical => 1, pretty => 1 });
 {
@@ -277,15 +276,14 @@ my $json = to_json(from_json(<<JSON), { canonical => 1, pretty => 1 });
       "filename" : null,
       "no_comments" : 0,
       "parser_args" : {},
-      "parser_type" : "SQL::Translator::Parser::SQLite",
+      "parser_type" : "SQL::Transpose::Parser::SQLite",
       "producer_args" : {
          "canonical" : 1,
          "pretty" : 1
       },
-      "producer_type" : "SQL::Translator::Producer::JSON",
+      "producer_type" : "SQL::Transpose::Producer::JSON",
       "show_warnings" : 0,
-      "trace" : 0,
-      "version" : "$sqlt_version"
+      "trace" : 0
    }
 }
 JSON
@@ -294,7 +292,7 @@ my $file = "$Bin/data/sqlite/create.sql";
 open my $fh, '<', $file or die "Can't read '$file': $!\n";
 local $/;
 my $data = <$fh>;
-my $tr = SQL::Translator->new(
+my $tr = SQL::Transpose->new(
     parser => 'SQLite',
     producer => 'JSON',
     producer_args => {
@@ -305,5 +303,5 @@ my $tr = SQL::Translator->new(
 );
 
 my $out;
-ok( $out = $tr->translate, 'Translate SQLite to JSON' );
+ok( $out = $tr->translate, 'Translate SQLite to JSON' ) || die $tr->error;
 eq_or_diff( $out, $json, 'JSON matches expected' );

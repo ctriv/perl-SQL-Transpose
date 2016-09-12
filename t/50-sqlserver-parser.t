@@ -8,13 +8,13 @@ use strict;
 
 use FindBin qw/$Bin/;
 use Test::More;
-use Test::SQL::Translator qw(maybe_plan);
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
+use Test::SQL::Transpose qw(maybe_plan);
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
 
 BEGIN {
-    maybe_plan(46, 'SQL::Translator::Parser::SQLServer');
-    SQL::Translator::Parser::SQLServer->import('parse');
+    maybe_plan(46, 'SQL::Transpose::Parser::SQLServer');
+    SQL::Transpose::Parser::SQLServer->import('parse');
 }
 
 my $file = "$Bin/data/sqlserver/create.sql";
@@ -31,7 +31,7 @@ my $data;
 
 ok( $data, 'Data' );
 
-my $t = SQL::Translator->new;
+my $t = SQL::Transpose->new;
 
 my $val = parse($t, $data);
 
@@ -39,7 +39,7 @@ is( $val, 1, 'Parse' );
 
 my $schema = $t->schema;
 
-isa_ok( $schema, 'SQL::Translator::Schema', 'Schema' );
+isa_ok( $schema, 'SQL::Transpose::Schema', 'Schema' );
 
 is( $schema->is_valid, 1, 'Schema is valid' );
 
@@ -49,7 +49,7 @@ is( scalar @tables, 8, 'Eight tables' );
 
 {
     my $t = $schema->get_table( 'jdbc_function_escapes' );
-    isa_ok( $t, 'SQL::Translator::Schema::Table', 'Table' );
+    isa_ok( $t, 'SQL::Transpose::Schema::Table', 'Table' );
     is( $t->name, 'jdbc_function_escapes', "Name = 'jdbc_function_escapes'" );
 
     my @fields = $t->get_fields;
@@ -68,7 +68,7 @@ is( scalar @tables, 8, 'Eight tables' );
 
 {
     my $t = $schema->get_table( 'spt_jtext' );
-    isa_ok( $t, 'SQL::Translator::Schema::Table', 'Table' );
+    isa_ok( $t, 'SQL::Transpose::Schema::Table', 'Table' );
     is( $t->name, 'spt_jtext', "Name = 'spt_jtext'" );
 
     my @fields = $t->get_fields;
@@ -93,7 +93,7 @@ is( scalar @tables, 8, 'Eight tables' );
 
 {
     my $t = $schema->get_table( 'spt_mda' );
-    isa_ok( $t, 'SQL::Translator::Schema::Table', 'Table' );
+    isa_ok( $t, 'SQL::Transpose::Schema::Table', 'Table' );
     is( $t->name, 'spt_mda', "Name = 'spt_mda'" );
 
     my @fields = $t->get_fields;

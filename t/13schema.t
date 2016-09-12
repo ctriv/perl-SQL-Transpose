@@ -7,20 +7,20 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Exception;
-use SQL::Translator::Schema::Constants;
+use SQL::Transpose::Schema::Constants;
 
-require_ok( 'SQL::Translator' );
-require_ok( 'SQL::Translator::Schema' );
+require_ok( 'SQL::Transpose' );
+require_ok( 'SQL::Transpose::Schema' );
 
 {
     #
     # Schema
     #
-    my $schema = SQL::Translator::Schema->new(
+    my $schema = SQL::Transpose::Schema->new(
         name => 'foo',
         database => 'MySQL',
     );
-    isa_ok( $schema, 'SQL::Translator::Schema' );
+    isa_ok( $schema, 'SQL::Transpose::Schema' );
 
     is( $schema->name, 'foo', 'Schema name is "foo"' );
     is( $schema->name('bar'), 'bar', 'Schema name changed to "bar"' );
@@ -36,16 +36,16 @@ require_ok( 'SQL::Translator::Schema' );
     # $schema->add_*
     #
     my $foo_table = $schema->add_table(name => 'foo') or warn $schema->error;
-    isa_ok( $foo_table, 'SQL::Translator::Schema::Table', 'Table "foo"' );
+    isa_ok( $foo_table, 'SQL::Transpose::Schema::Table', 'Table "foo"' );
 
-    my $bar_table = SQL::Translator::Schema::Table->new( name => 'bar' ) or
-        warn SQL::Translator::Schema::Table->error;
+    my $bar_table = SQL::Transpose::Schema::Table->new( name => 'bar' ) or
+        warn SQL::Transpose::Schema::Table->error;
     $bar_table = $schema->add_table( $bar_table );
-    isa_ok( $bar_table, 'SQL::Translator::Schema::Table', 'Table "bar"' );
+    isa_ok( $bar_table, 'SQL::Transpose::Schema::Table', 'Table "bar"' );
     is( $bar_table->name, 'bar', 'Add table "bar"' );
 
     $schema = $bar_table->schema( $schema );
-    isa_ok( $schema, 'SQL::Translator::Schema', 'Schema' );
+    isa_ok( $schema, 'SQL::Transpose::Schema', 'Schema' );
 
     is( $bar_table->name('foo'), undef,
         q[Can't change name of table "bar" to "foo"...]);
@@ -62,19 +62,19 @@ require_ok( 'SQL::Translator::Schema' );
     like( $schema->error, qr/No table name/i,
         '... because it has no name ' );
 
-    $redundant_table = SQL::Translator::Schema::Table->new(name => '');
+    $redundant_table = SQL::Transpose::Schema::Table->new(name => '');
     is( $redundant_table, undef, qq[Can't create an anonymous table] );
-    like( SQL::Translator::Schema::Table->error, qr/No table name/i,
+    like( SQL::Transpose::Schema::Table->error, qr/No table name/i,
         '... because it has no name ' );
 
     #
     # $schema-> drop_table
     #
     my $dropped_table = $schema->drop_table($foo_table->name, cascade => 1);
-    isa_ok($dropped_table, 'SQL::Translator::Schema::Table', 'Dropped table "foo"' );
+    isa_ok($dropped_table, 'SQL::Transpose::Schema::Table', 'Dropped table "foo"' );
     $schema->add_table($foo_table);
     my $dropped_table2 = $schema->drop_table($foo_table, cascade => 1);
-    isa_ok($dropped_table2, 'SQL::Translator::Schema::Table', 'Dropped table "foo" by object' );
+    isa_ok($dropped_table2, 'SQL::Transpose::Schema::Table', 'Dropped table "foo" by object' );
     my $dropped_table3 = $schema->drop_table($foo_table->name, cascade => 1);
     like( $schema->error, qr/doesn't exist/, qq[Can't drop non-existant table "foo"] );
 
@@ -111,7 +111,7 @@ require_ok( 'SQL::Translator::Schema' );
     #
     my $f1 = $person_table->add_field(name => 'foo') or
         warn $person_table->error;
-    isa_ok( $f1, 'SQL::Translator::Schema::Field', 'Field' );
+    isa_ok( $f1, 'SQL::Transpose::Schema::Field', 'Field' );
     is( $f1->name, 'foo', 'Field name is "foo"' );
     is( $f1->full_name, 'person.foo', 'Field full_name is "person.foo"' );
     is( "$f1", 'foo', 'Field stringifies to "foo"' );
@@ -124,12 +124,12 @@ require_ok( 'SQL::Translator::Schema' );
     is( $f1->table, 'person', 'Field table is person' );
     is( $f1->schema->database, 'PostgreSQL', 'Field schema shortcut works' );
 
-    my $f2 = SQL::Translator::Schema::Field->new (
+    my $f2 = SQL::Transpose::Schema::Field->new (
         name     => 'f2',
         comments => 'foo',
-    ) or warn SQL::Translator::Schema::Field->error;
+    ) or warn SQL::Transpose::Schema::Field->error;
     $f2 = $person_table->add_field( $f2 );
-    isa_ok( $f1, 'SQL::Translator::Schema::Field', 'f2' );
+    isa_ok( $f1, 'SQL::Transpose::Schema::Field', 'f2' );
     is( $f2->name, 'f2', 'Add field "f2"' );
     is( $f2->is_nullable(0), 0, 'Field cannot be NULL' );
     is( $f2->is_nullable(''), 0, 'Field cannot be NULL' );
@@ -141,7 +141,7 @@ require_ok( 'SQL::Translator::Schema' );
     is( $f2->comments, "foo\nbar", 'Field comment = "foo,bar"' );
 
     $person_table = $f2->table( $person_table );
-    isa_ok( $person_table, 'SQL::Translator::Schema::Table', 'person_table' );
+    isa_ok( $person_table, 'SQL::Transpose::Schema::Table', 'person_table' );
 
     is( $f2->name('foo'), undef, q[Can't set field name of "f2" to "foo"...] );
     like( $f2->error, qr/can't use field name/i, '...because name exists' );
@@ -156,9 +156,9 @@ require_ok( 'SQL::Translator::Schema' );
     like( $person_table->error, qr/No field name/i,
         '... because it has no name' );
 
-    $redundant_field = SQL::Translator::Schema::Field->new(name => '');
+    $redundant_field = SQL::Transpose::Schema::Field->new(name => '');
     is( $redundant_field, undef, qq[Didn't create a "" field...] );
-    like( SQL::Translator::Schema::Field->error, qr/No field name/i,
+    like( SQL::Transpose::Schema::Field->error, qr/No field name/i,
         '... because it has no name' );
 
     my @fields = $person_table->get_fields;
@@ -175,10 +175,10 @@ require_ok( 'SQL::Translator::Schema' );
     # $table-> drop_field
     #
     my $dropped_field = $person_table->drop_field($f2->name, cascade => 1);
-    isa_ok($dropped_field, 'SQL::Translator::Schema::Field', 'Dropped field "f2"' );
+    isa_ok($dropped_field, 'SQL::Transpose::Schema::Field', 'Dropped field "f2"' );
     $person_table->add_field($f2);
     my $dropped_field2 = $person_table->drop_field($f2, cascade => 1);
-    isa_ok($dropped_field2, 'SQL::Translator::Schema::Field', 'Dropped field "f2" by object' );
+    isa_ok($dropped_field2, 'SQL::Transpose::Schema::Field', 'Dropped field "f2" by object' );
     my $dropped_field3 = $person_table->drop_field($f2->name, cascade => 1);
     like( $person_table->error, qr/doesn't exist/, qq[Can't drop non-existant field "f2"] );
 
@@ -223,7 +223,7 @@ require_ok( 'SQL::Translator::Schema' );
     like( $person_table->error, qr/no indices/i, 'Error for no indices' );
     my $index1 = $person_table->add_index( name => "foo" )
         or warn $person_table->error;
-    isa_ok( $index1, 'SQL::Translator::Schema::Index', 'Index' );
+    isa_ok( $index1, 'SQL::Transpose::Schema::Index', 'Index' );
     is( $index1->name, 'foo', 'Index name is "foo"' );
 
     is( $index1->is_valid, undef, 'Index name is not valid...' );
@@ -242,10 +242,10 @@ require_ok( 'SQL::Translator::Schema' );
 
     is( $index1->type, NORMAL, 'Index type is "normal"' );
 
-    my $index2 = SQL::Translator::Schema::Index->new( name => "bar" )
-        or warn SQL::Translator::Schema::Index->error;
+    my $index2 = SQL::Transpose::Schema::Index->new( name => "bar" )
+        or warn SQL::Transpose::Schema::Index->error;
     $index2    = $person_table->add_index( $index2 );
-    isa_ok( $index2, 'SQL::Translator::Schema::Index', 'Index' );
+    isa_ok( $index2, 'SQL::Transpose::Schema::Index', 'Index' );
     is( $index2->name, 'bar', 'Index name is "bar"' );
 
     my $indices = $person_table->get_indices;
@@ -257,10 +257,10 @@ require_ok( 'SQL::Translator::Schema' );
     # $table-> drop_index
     #
     my $dropped_index = $person_table->drop_index($index1->name);
-    isa_ok($dropped_index, 'SQL::Translator::Schema::Index', 'Dropped index "foo"' );
+    isa_ok($dropped_index, 'SQL::Transpose::Schema::Index', 'Dropped index "foo"' );
     $person_table->add_index($index1);
     my $dropped_index2 = $person_table->drop_index($index1);
-    isa_ok($dropped_index2, 'SQL::Translator::Schema::Index', 'Dropped index "foo" by object' );
+    isa_ok($dropped_index2, 'SQL::Transpose::Schema::Index', 'Dropped index "foo" by object' );
     is($dropped_index2->name, $index1->name, 'Dropped correct index "foo"');
     my $dropped_index3 = $person_table->drop_index($index1->name);
     like( $person_table->error, qr/doesn't exist/, qq[Can't drop non-existant index "foo"] );
@@ -276,15 +276,15 @@ require_ok( 'SQL::Translator::Schema' );
         'Error for no constraints' );
     my $constraint1 = $person_table->add_constraint( name => 'foo' )
         or warn $person_table->error;
-    isa_ok( $constraint1, 'SQL::Translator::Schema::Constraint', 'Constraint' );
+    isa_ok( $constraint1, 'SQL::Transpose::Schema::Constraint', 'Constraint' );
     is( $constraint1->name, 'foo', 'Constraint name is "foo"' );
 
     $fields = join(',', $constraint1->fields('age') );
     is( $fields, 'age', 'Constraint field = "age"' );
 
     $fields = $constraint1->fields;
-    ok( ref $fields[0] && $fields[0]->isa("SQL::Translator::Schema::Field"),
-        'Constraint fields returns a SQL::Translator::Schema::Field' );
+    ok( ref $fields[0] && $fields[0]->isa("SQL::Transpose::Schema::Field"),
+        'Constraint fields returns a SQL::Transpose::Schema::Field' );
 
     $fields = join(',', $constraint1->fields('age,age') );
     is( $fields, 'age', 'Constraint field = "age"' );
@@ -315,16 +315,16 @@ require_ok( 'SQL::Translator::Schema' );
     is( $constraint1->match_type('FULL'), 'full',
         'Constraint match type = "full"' );
 
-    my $constraint2 = SQL::Translator::Schema::Constraint->new( name => 'bar' );
+    my $constraint2 = SQL::Transpose::Schema::Constraint->new( name => 'bar' );
     $constraint2    = $person_table->add_constraint( $constraint2 );
-    isa_ok( $constraint2, 'SQL::Translator::Schema::Constraint', 'Constraint' );
+    isa_ok( $constraint2, 'SQL::Transpose::Schema::Constraint', 'Constraint' );
     is( $constraint2->name, 'bar', 'Constraint name is "bar"' );
 
     my $constraint3 = $person_table->add_constraint(
         type       => 'check',
         expression => 'foo bar',
     ) or die $person_table->error;
-    isa_ok( $constraint3, 'SQL::Translator::Schema::Constraint', 'Constraint' );
+    isa_ok( $constraint3, 'SQL::Transpose::Schema::Constraint', 'Constraint' );
     is( $constraint3->type, CHECK_C, 'Constraint type is "CHECK"' );
     is( $constraint3->expression, 'foo bar',
         'Constraint expression is "foo bar"' );
@@ -338,10 +338,10 @@ require_ok( 'SQL::Translator::Schema' );
     # $table-> drop_constraint
     #
     my $dropped_con = $person_table->drop_constraint($constraint1->name);
-    isa_ok($dropped_con, 'SQL::Translator::Schema::Constraint', 'Dropped constraint "foo"' );
+    isa_ok($dropped_con, 'SQL::Transpose::Schema::Constraint', 'Dropped constraint "foo"' );
     $person_table->add_constraint($constraint1);
     my $dropped_con2 = $person_table->drop_constraint($constraint1);
-    isa_ok($dropped_con2, 'SQL::Translator::Schema::Constraint', 'Dropped constraint "foo" by object' );
+    isa_ok($dropped_con2, 'SQL::Transpose::Schema::Constraint', 'Dropped constraint "foo" by object' );
     is($dropped_con2->name, $constraint1->name, 'Dropped correct constraint "foo"');
     my $dropped_con3 = $person_table->drop_constraint($constraint1->name);
     like( $person_table->error, qr/doesn't exist/, qq[Can't drop non-existant constraint "foo"] );
@@ -352,12 +352,12 @@ require_ok( 'SQL::Translator::Schema' );
     # View
     #
     my $view = $schema->add_view( name => 'view1' ) or warn $schema->error;
-    isa_ok( $view, 'SQL::Translator::Schema::View', 'View' );
+    isa_ok( $view, 'SQL::Transpose::Schema::View', 'View' );
     my $view_sql = 'select * from table';
     is( $view->sql( $view_sql ), $view_sql, 'View SQL is good' );
 
-    my $view2 = SQL::Translator::Schema::View->new(name => 'view2') or
-        warn SQL::Translator::Schema::View->error;
+    my $view2 = SQL::Transpose::Schema::View->new(name => 'view2') or
+        warn SQL::Transpose::Schema::View->error;
     my $check_view = $schema->add_view( $view2 );
     is( $check_view->name, 'view2', 'Add view "view2"' );
 
@@ -369,10 +369,10 @@ require_ok( 'SQL::Translator::Schema' );
     # $schema-> drop_view
     #
     my $dropped_view = $schema->drop_view($view->name);
-    isa_ok($dropped_view, 'SQL::Translator::Schema::View', 'Dropped view "view1"' );
+    isa_ok($dropped_view, 'SQL::Transpose::Schema::View', 'Dropped view "view1"' );
     $schema->add_view($view);
     my $dropped_view2 = $schema->drop_view($view);
-    isa_ok($dropped_view2, 'SQL::Translator::Schema::View', 'Dropped view "view1" by object' );
+    isa_ok($dropped_view2, 'SQL::Transpose::Schema::View', 'Dropped view "view1" by object' );
     is($dropped_view2->name, $view->name, 'Dropped correct view "view1"');
     my $dropped_view3 = $schema->drop_view($view->name);
     like( $schema->error, qr/doesn't exist/, qq[Can't drop non-existant view "view1"] );
@@ -397,10 +397,10 @@ require_ok( 'SQL::Translator::Schema' );
         'Error on bad arg to get_view' );
 
     my $good_table = $schema->get_table('foo');
-    isa_ok( $good_table, 'SQL::Translator::Schema::Table', 'Table "foo"' );
+    isa_ok( $good_table, 'SQL::Transpose::Schema::Table', 'Table "foo"' );
 
     my $good_view = $schema->get_view('view1');
-    isa_ok( $good_view, 'SQL::Translator::Schema::View', 'View "view1"' );
+    isa_ok( $good_view, 'SQL::Transpose::Schema::View', 'View "view1"' );
     is( $view->sql( $view_sql ), $view_sql, 'View SQL is good' );
 
     #
@@ -418,7 +418,7 @@ require_ok( 'SQL::Translator::Schema' );
 # Test ability to introspect some values
 #
 {
-    my $s        =  SQL::Translator::Schema->new(
+    my $s        =  SQL::Transpose::Schema->new(
         name     => 'foo',
         database => 'PostgreSQL',
     );
@@ -439,7 +439,7 @@ require_ok( 'SQL::Translator::Schema' );
 # FK constraint validity
 #
 {
-    my $s = SQL::Translator::Schema->new;
+    my $s = SQL::Transpose::Schema->new;
     my $t = $s->add_table( name => 'person' ) or warn $s->error;
     my $c = $t->add_constraint or warn $t->error;
 
@@ -505,7 +505,7 @@ require_ok( 'SQL::Translator::Schema' );
 # $table->primary_key test
 #
 {
-    my $s = SQL::Translator::Schema->new;
+    my $s = SQL::Transpose::Schema->new;
     my $t = $s->add_table( name => 'person' );
 
     is( $t->primary_key, undef, 'No primary key' );
@@ -517,7 +517,7 @@ require_ok( 'SQL::Translator::Schema' );
     $t->add_field( name => 'person_id' );
     my $c = $t->primary_key('person_id');
 
-    isa_ok( $c, 'SQL::Translator::Schema::Constraint', 'Constraint' );
+    isa_ok( $c, 'SQL::Transpose::Schema::Constraint', 'Constraint' );
 
     is( join('', $c->fields), 'person_id', 'Constraint now on "person_id"' );
 
@@ -533,7 +533,7 @@ require_ok( 'SQL::Translator::Schema' );
 # FK finds PK
 #
 {
-    my $s  = SQL::Translator::Schema->new;
+    my $s  = SQL::Transpose::Schema->new;
     my $t1 = $s->add_table( name => 'person' );
     my $t2 = $s->add_table( name => 'pet' );
     $t1->add_field( name => 'id' );
@@ -554,7 +554,7 @@ require_ok( 'SQL::Translator::Schema' );
 # View
 #
 {
-    my $s      = SQL::Translator::Schema->new( name => 'ViewTest' );
+    my $s      = SQL::Transpose::Schema->new( name => 'ViewTest' );
     my $name   = 'foo_view';
     my $sql    = 'select name, age from person';
     my $fields = 'name, age';
@@ -565,8 +565,8 @@ require_ok( 'SQL::Translator::Schema' );
         schema => $s,
     );
 
-    isa_ok( $v, 'SQL::Translator::Schema::View', 'View' );
-    isa_ok( $v->schema, 'SQL::Translator::Schema', 'Schema' );
+    isa_ok( $v, 'SQL::Transpose::Schema::View', 'View' );
+    isa_ok( $v->schema, 'SQL::Transpose::Schema', 'Schema' );
     is( $v->schema->name, 'ViewTest', qq[Schema name is "'ViewTest'"] );
     is( $v->name, $name, qq[Name is "$name"] );
     is( $v->sql, $sql, qq[Name is "$sql"] );
@@ -576,7 +576,7 @@ require_ok( 'SQL::Translator::Schema' );
     is( scalar @views, 1, 'Number of views is 1' );
 
     my $v1 = $s->get_view( $name );
-    isa_ok( $v1, 'SQL::Translator::Schema::View', 'View' );
+    isa_ok( $v1, 'SQL::Transpose::Schema::View', 'View' );
     is( $v1->name, $name, qq[Name is "$name"] );
 }
 
@@ -584,7 +584,7 @@ require_ok( 'SQL::Translator::Schema' );
 # Trigger
 #
 {
-    my $s                   = SQL::Translator::Schema->new(name => 'TrigTest');
+    my $s                   = SQL::Transpose::Schema->new(name => 'TrigTest');
     $s->add_table(name=>'foo') or die "Couldn't create table: ", $s->error;
     my $name                = 'foo_trigger';
     my $perform_action_when = 'after';
@@ -599,27 +599,27 @@ require_ok( 'SQL::Translator::Schema' );
         action              => $action,
     ) or die $s->error;
 
-    isa_ok( $t, 'SQL::Translator::Schema::Trigger', 'Trigger' );
-    isa_ok( $t->schema, 'SQL::Translator::Schema', 'Schema' );
+    isa_ok( $t, 'SQL::Transpose::Schema::Trigger', 'Trigger' );
+    isa_ok( $t->schema, 'SQL::Transpose::Schema', 'Schema' );
     is( $t->schema->name, 'TrigTest', qq[Schema name is "'TrigTest'"] );
     is( $t->name, $name, qq[Name is "$name"] );
     is( $t->perform_action_when, $perform_action_when,
         qq[Perform action when is "$perform_action_when"] );
     is( join(',', $t->database_events), $database_events,
         qq[Database event is "$database_events"] );
-    isa_ok( $t->table, 'SQL::Translator::Schema::Table', qq[table is a Table"] );
+    isa_ok( $t->table, 'SQL::Transpose::Schema::Table', qq[table is a Table"] );
     is( $t->action, $action, qq[Action is "$action"] );
 
     my @triggs = $s->get_triggers;
     is( scalar @triggs, 1, 'Number of triggers is 1' );
 
     my $t1 = $s->get_trigger( $name );
-    isa_ok( $t1, 'SQL::Translator::Schema::Trigger', 'Trigger' );
+    isa_ok( $t1, 'SQL::Transpose::Schema::Trigger', 'Trigger' );
     is( $t1->name, $name, qq[Name is "$name"] );
 
 
 
-    my $s2                   = SQL::Translator::Schema->new(name => 'TrigTest2');
+    my $s2                   = SQL::Transpose::Schema->new(name => 'TrigTest2');
     $s2->add_table(name=>'foo') or die "Couldn't create table: ", $s2->error;
     my $t2                   = $s2->add_trigger(
         name                => 'foo_trigger',
@@ -628,8 +628,8 @@ require_ok( 'SQL::Translator::Schema' );
         on_table            => 'foo',
         action              => 'update modified=timestamp();',
     ) or die $s2->error;
-    isa_ok( $t2, 'SQL::Translator::Schema::Trigger', 'Trigger' );
-    isa_ok( $t2->schema, 'SQL::Translator::Schema', 'Schema' );
+    isa_ok( $t2, 'SQL::Transpose::Schema::Trigger', 'Trigger' );
+    isa_ok( $t2->schema, 'SQL::Transpose::Schema', 'Schema' );
     is( $t2->schema->name, 'TrigTest2', qq[Schema name is "'TrigTest2'"] );
     is( $t2->name, 'foo_trigger', qq[Name is "foo_trigger"] );
     is_deeply(
@@ -661,10 +661,10 @@ require_ok( 'SQL::Translator::Schema' );
     # $schema-> drop_trigger
     #
     my $dropped_trig = $s->drop_trigger($t->name);
-    isa_ok($dropped_trig, 'SQL::Translator::Schema::Trigger', 'Dropped trigger "foo_trigger"' );
+    isa_ok($dropped_trig, 'SQL::Transpose::Schema::Trigger', 'Dropped trigger "foo_trigger"' );
     $s->add_trigger($t);
     my $dropped_trig2 = $s->drop_trigger($t);
-    isa_ok($dropped_trig2, 'SQL::Translator::Schema::Trigger', 'Dropped trigger "foo_trigger" by object' );
+    isa_ok($dropped_trig2, 'SQL::Transpose::Schema::Trigger', 'Dropped trigger "foo_trigger" by object' );
     is($dropped_trig2->name, $t->name, 'Dropped correct trigger "foo_trigger"');
     my $dropped_trig3 = $s->drop_trigger($t->name);
     like( $s->error, qr/doesn't exist/, qq[Can't drop non-existant trigger "foo_trigger"] );
@@ -676,7 +676,7 @@ require_ok( 'SQL::Translator::Schema' );
 # Procedure
 #
 {
-    my $s          = SQL::Translator::Schema->new( name => 'ProcTest' );
+    my $s          = SQL::Transpose::Schema->new( name => 'ProcTest' );
     my $name       = 'foo_proc';
     my $sql        = 'select foo from bar';
     my $parameters = 'foo, bar';
@@ -690,8 +690,8 @@ require_ok( 'SQL::Translator::Schema' );
         comments   => $comments,
     ) or die $s->error;
 
-    isa_ok( $p, 'SQL::Translator::Schema::Procedure', 'Procedure' );
-    isa_ok( $p->schema, 'SQL::Translator::Schema', 'Schema' );
+    isa_ok( $p, 'SQL::Transpose::Schema::Procedure', 'Procedure' );
+    isa_ok( $p->schema, 'SQL::Transpose::Schema', 'Schema' );
     is( $p->schema->name, 'ProcTest', qq[Schema name is "'ProcTest'"] );
     is( $p->name, $name, qq[Name is "$name"] );
     is( $p->sql, $sql, qq[SQL is "$sql"] );
@@ -702,17 +702,17 @@ require_ok( 'SQL::Translator::Schema' );
     is( scalar @procs, 1, 'Number of procedures is 1' );
 
     my $p1 = $s->get_procedure( $name );
-    isa_ok( $p1, 'SQL::Translator::Schema::Procedure', 'Procedure' );
+    isa_ok( $p1, 'SQL::Transpose::Schema::Procedure', 'Procedure' );
     is( $p1->name, $name, qq[Name is "$name"] );
 
     #
     # $schema-> drop_procedure
     #
     my $dropped_proc = $s->drop_procedure($p->name);
-    isa_ok($dropped_proc, 'SQL::Translator::Schema::Procedure', 'Dropped procedure "foo_proc"' );
+    isa_ok($dropped_proc, 'SQL::Transpose::Schema::Procedure', 'Dropped procedure "foo_proc"' );
     $s->add_procedure($p);
     my $dropped_proc2 = $s->drop_procedure($p);
-    isa_ok($dropped_proc2, 'SQL::Translator::Schema::Procedure', 'Dropped procedure "foo_proc" by object' );
+    isa_ok($dropped_proc2, 'SQL::Transpose::Schema::Procedure', 'Dropped procedure "foo_proc" by object' );
     is($dropped_proc2->name, $p->name, 'Dropped correct procedure "foo_proc"');
     my $dropped_proc3 = $s->drop_procedure($p->name);
     like( $s->error, qr/doesn't exist/, qq[Can't drop non-existant procedure "foo_proc"] );
@@ -724,7 +724,7 @@ require_ok( 'SQL::Translator::Schema' );
 # Test field order
 #
 {
-    my $s  = SQL::Translator::Schema->new;
+    my $s  = SQL::Transpose::Schema->new;
     my $t  = $s->add_table( name => 'person'          );
     my $f3 = $t->add_field( name => 'age', order => 3 );
     my $f1 = $t->add_field( name => 'person_id', order => 1 );
@@ -753,7 +753,7 @@ require_ok( 'SQL::Translator::Schema' );
 #
 
 {
-    my $s = SQL::Translator::Schema->new;
+    my $s = SQL::Transpose::Schema->new;
     my $t1 = $s->add_table( name => 'person' );
     $t1->add_field( name => 'id' );
     $t1->primary_key( 'id' );

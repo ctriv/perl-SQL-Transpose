@@ -7,7 +7,7 @@
 use strict;
 use Test::More;
 use Test::Exception;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 use Data::Dumper;
 use FindBin qw/$Bin/;
@@ -17,20 +17,20 @@ use FindBin qw/$Bin/;
 
 BEGIN {
     maybe_plan(6,
-        'SQL::Translator::Parser::XML::SQLFairy',
+        'SQL::Transpose::Parser::XML::SQLFairy',
         'Template 2.20',
         'Test::Differences'
     );
 }
 use Test::Differences;
 
-use SQL::Translator;
-use SQL::Translator::Producer::TTSchema;
+use SQL::Transpose;
+use SQL::Transpose::Producer::TTSchema;
 
 # Main test. Template whole schema and test tt_vars
 {
     my $obj;
-    $obj = SQL::Translator->new(
+    $obj = SQL::Transpose->new(
         show_warnings  => 0,
         from           => "XML-SQLFairy",
         filename       => "$Bin/data/xml/schema.xml",
@@ -60,7 +60,7 @@ use SQL::Translator::Producer::TTSchema;
     Table: $table
     [%- END %]};
     my $obj;
-    $obj = SQL::Translator->new(
+    $obj = SQL::Transpose->new(
         show_warnings  => 0,
         from           => "XML-SQLFairy",
         filename       => "$Bin/data/xml/schema.xml",

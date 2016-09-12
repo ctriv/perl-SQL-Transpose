@@ -2,17 +2,16 @@ use warnings;
 use strict;
 use Test::More;
 use Test::Differences;
-use Test::SQL::Translator qw(maybe_plan);
-use SQL::Translator;
+use Test::SQL::Transpose qw(maybe_plan);
+use SQL::Transpose;
 use FindBin '$Bin';
 
 BEGIN {
     maybe_plan(2,
-        'SQL::Translator::Parser::SQLite',
-        'SQL::Translator::Producer::YAML');
+        'SQL::Transpose::Parser::SQLite',
+        'SQL::Transpose::Producer::YAML');
 }
 
-my $sqlt_version = $SQL::Translator::VERSION;
 use YAML qw(Dump Load);
 my $yaml = Dump(Load(<<YAML));
 ---
@@ -227,19 +226,18 @@ translator:
   filename: ~
   no_comments: 0
   parser_args: {}
-  parser_type: SQL::Translator::Parser::SQLite
+  parser_type: SQL::Transpose::Parser::SQLite
   producer_args: {}
-  producer_type: SQL::Translator::Producer::YAML
+  producer_type: SQL::Transpose::Producer::YAML
   show_warnings: 0
   trace: 0
-  version: $sqlt_version
 YAML
 
 my $file = "$Bin/data/sqlite/create.sql";
 open FH, "<$file" or die "Can't read '$file': $!\n";
 local $/;
 my $data = <FH>;
-my $tr   = SQL::Translator->new(
+my $tr   = SQL::Transpose->new(
     parser   => 'SQLite',
     producer => 'YAML',
     data     => $data,

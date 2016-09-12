@@ -1,13 +1,13 @@
 use strict;
 use Test::More;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
     maybe_plan(1,
-        'SQL::Translator::Parser::DBI::Oracle',
+        'SQL::Transpose::Parser::DBI::Oracle',
     );
 }
 
-use_ok('SQL::Translator::Parser::DBI::Oracle');
+use_ok('SQL::Transpose::Parser::DBI::Oracle');
 
 1;

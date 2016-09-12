@@ -68,7 +68,7 @@ sqlt-graph - Automatically create a graph from a database schema
 =head1 DESCRIPTION
 
 This script will create a graph of your schema.  Only the database
-driver argument (for SQL::Translator) is required.  If no output file
+driver argument (for SQL::Transpose) is required.  If no output file
 name is given, then image will be printed to STDOUT, so you should
 redirect the output into a file.
 
@@ -105,7 +105,7 @@ use Data::Dumper;
 use Getopt::Long;
 use GraphViz;
 use Pod::Usage;
-use SQL::Translator;
+use SQL::Transpose;
 
 use vars '$VERSION';
 $VERSION = '1.59';
@@ -160,7 +160,7 @@ pod2usage(1) if $help;
 pod2usage( -message => "No db driver specified" ) unless $db_driver;
 pod2usage( -message => 'No input file'          ) unless @files;
 
-my $translator           =  SQL::Translator->new(
+my $translator           =  SQL::Transpose->new(
     from                 => $db_driver,
     to                   => 'GraphViz',
     debug                => $debug || 0,
@@ -189,7 +189,7 @@ my $translator           =  SQL::Translator->new(
         graphattrs       => \%graphattrs,
         show_fields      => $no_fields ? 0 : 1,
     },
-) or die SQL::Translator->error;
+) or die SQL::Transpose->error;
 
 for my $file (@files) {
     my $output = $translator->translate( $file ) or die
@@ -212,6 +212,6 @@ Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl, SQL::Translator.
+perl, SQL::Transpose.
 
 =cut

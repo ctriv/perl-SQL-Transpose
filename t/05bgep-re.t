@@ -7,9 +7,9 @@ use strict;
 use File::Spec::Functions qw(catfile tmpdir);
 use File::Temp qw(tempfile);
 use FindBin qw($Bin);
-use SQL::Translator;
+use SQL::Transpose;
 use Test::More;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 # This aggravates me; XML::Writer produces tons of warnings.
 local $SIG{__WARN__} = sub {
@@ -19,8 +19,8 @@ local $SIG{__WARN__} = sub {
 
 BEGIN {
     maybe_plan(2,
-        'SQL::Translator::Parser::MySQL',
-        'SQL::Translator::Producer::XML::SQLFairy');
+        'SQL::Transpose::Parser::MySQL',
+        'SQL::Transpose::Producer::XML::SQLFairy');
 }
 
 my @data = qw(data mysql BGEP-RE-create.sql);
@@ -28,7 +28,7 @@ my $test_data = (-d "t")
     ? catfile($Bin, @data)
     : catfile($Bin, "t", @data);
 
-my $tr       =  SQL::Translator->new(
+my $tr       =  SQL::Transpose->new(
     parser   => 'MySQL',
     producer => 'XML-SQLFairy',
     filename => $test_data

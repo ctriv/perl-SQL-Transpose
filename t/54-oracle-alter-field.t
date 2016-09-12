@@ -2,15 +2,15 @@
 
 use FindBin qw/$Bin/;
 use Test::More;
-use Test::SQL::Translator;
+use Test::SQL::Transpose;
 use Test::Exception;
 use Data::Dumper;
-use SQL::Translator;
-use SQL::Translator::Diff;
+use SQL::Transpose;
+use SQL::Transpose::Diff;
 
 BEGIN {
-    maybe_plan(3, 'SQL::Translator::Parser::YAML',
-                  'SQL::Translator::Producer::Oracle');
+    maybe_plan(3, 'SQL::Transpose::Parser::YAML',
+                  'SQL::Transpose::Producer::Oracle');
 }
 
 my $schema1 = $Bin.'/data/oracle/schema_diff_a.yaml';
@@ -29,13 +29,13 @@ my ($yaml1, $yaml2);
 close $io1;
 close $io2;
 
-my $s = SQL::Translator->new(from => 'YAML');
+my $s = SQL::Transpose->new(from => 'YAML');
 $s->parser->($s,$yaml1);
 
-my $t = SQL::Translator->new(from => 'YAML');
+my $t = SQL::Transpose->new(from => 'YAML');
 $t->parser->($t,$yaml2);
 
-my $d = SQL::Translator::Diff->new
+my $d = SQL::Transpose::Diff->new
   ({
     output_db => 'Oracle',
     target_db => 'Oracle',

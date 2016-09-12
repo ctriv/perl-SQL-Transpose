@@ -3,7 +3,7 @@
 
 #=============================================================================
 # Test Package based filters that oks when called.
-package SQL::Translator::Filter::Ok;
+package SQL::Transpose::Filter::Ok;
 use strict;
 
 sub filter { Test::More::pass(
@@ -11,12 +11,12 @@ sub filter { Test::More::pass(
 ) }
 
 # Hack to allow sqlt to see our module as it wasn't loaded from a .pm
-$INC{'SQL/Translator/Filter/Ok.pm'} = 'lib/SQL/Translator/Filter/Ok.pm';
+$INC{'SQL/Transpose/Filter/Ok.pm'} = 'lib/SQL/Transpose/Filter/Ok.pm';
 
 #=============================================================================
-# SQL::Translator::Filter::HelloWorld - Test filter in a package
+# SQL::Transpose::Filter::HelloWorld - Test filter in a package
 package   # hide from cpan
-    SQL::Translator::Filter::HelloWorld;
+    SQL::Transpose::Filter::HelloWorld;
 
 use strict;
 
@@ -29,8 +29,8 @@ sub filter {
 }
 
 # Hack to allow sqlt to see our module as it wasn't loaded from a .pm
-$INC{'SQL/Translator/Filter/HelloWorld.pm'}
-    = 'lib/SQL/Translator/Filter/HelloWorld.pm';
+$INC{'SQL/Transpose/Filter/HelloWorld.pm'}
+    = 'lib/SQL/Transpose/Filter/HelloWorld.pm';
 
 #=============================================================================
 
@@ -39,18 +39,18 @@ package main;
 use strict;
 use Test::More;
 use Test::Exception;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 use Data::Dumper;
 
 BEGIN {
     maybe_plan(16, 'Template 2.20', 'Test::Differences',
-               'SQL::Translator::Parser::YAML',
-              'SQL::Translator::Producer::YAML')
+               'SQL::Transpose::Parser::YAML',
+              'SQL::Transpose::Producer::YAML')
 
 }
 use Test::Differences;
-use SQL::Translator;
+use SQL::Transpose;
 
 my $in_yaml = qq{--- #YAML:1.0
 schema:
@@ -63,7 +63,6 @@ schema:
           name: First_Name
 };
 
-my $sqlt_version = $SQL::Translator::VERSION;
 my $ans_yaml = qq{---
 schema:
   procedures: {}
@@ -106,17 +105,16 @@ translator:
   filename: ~
   no_comments: 0
   parser_args: {}
-  parser_type: SQL::Translator::Parser::YAML
+  parser_type: SQL::Transpose::Parser::YAML
   producer_args: {}
-  producer_type: SQL::Translator::Producer::YAML
+  producer_type: SQL::Transpose::Producer::YAML
   show_warnings: 1
   trace: 0
-  version: $sqlt_version
 };
 
 # Parse the test XML schema
 my $obj;
-$obj = SQL::Translator->new(
+$obj = SQL::Transpose->new(
     debug          => 0,
     show_warnings  => 1,
     parser         => "YAML",
@@ -126,19 +124,19 @@ $obj = SQL::Translator->new(
         # Check they get called ok
         sub {
             pass("Filter 1 called");
-            isa_ok($_[0],"SQL::Translator::Schema", "Filter 1, arg0 ");
+            isa_ok($_[0],"SQL::Transpose::Schema", "Filter 1, arg0 ");
             is( $#_, 0, "Filter 1, got no args");
         },
         sub {
             pass("Filter 2 called");
-            isa_ok($_[0],"SQL::Translator::Schema", "Filter 2, arg0 ");
+            isa_ok($_[0],"SQL::Transpose::Schema", "Filter 2, arg0 ");
             is( $#_, 0, "Filter 2, got no args");
         },
 
         # Sub filter with args
         [ sub {
             pass("Filter 3 called");
-            isa_ok($_[0],"SQL::Translator::Schema", "Filter 3, arg0 ");
+            isa_ok($_[0],"SQL::Transpose::Schema", "Filter 3, arg0 ");
             is( $#_, 2, "Filter 3, go 2 args");
             is( $_[1], "hello", "Filter 3, arg1=hello");
             is( $_[2], "world", "Filter 3, arg2=world");
@@ -161,13 +159,13 @@ $obj = SQL::Translator->new(
             }
         },
 
-        # Filter from SQL::Translator::Filter::*
+        # Filter from SQL::Transpose::Filter::*
         'Ok',
         [ 'HelloWorld' ],
         [ 'HelloWorld', greeting => 'Gday' ],
     ],
 
-) or die "Failed to create translator object: ".SQL::Translator->error;
+) or die "Failed to create translator object: ".SQL::Transpose->error;
 
 my $out;
 lives_ok { $out = $obj->translate; }  "Translate ran";

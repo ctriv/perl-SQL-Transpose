@@ -5,7 +5,7 @@
 
 use strict;
 
-use SQL::Translator;
+use SQL::Transpose;
 use Test::More tests => 9;
 
 sub silly_parser {
@@ -26,7 +26,7 @@ sub silly_parser {
 # The "data" to be parsed
 my $data = q(Id|Name|Phone Number|Favorite Flavor|);
 
-my $tr = SQL::Translator->new;
+my $tr = SQL::Transpose->new;
 
 # Pass parser_args as an explicit method call
 $tr->parser(\&silly_parser);
@@ -65,7 +65,7 @@ $table = shift @tables;
 is(scalar @fields, 4, "right number of fields");
 
 undef $tr;
-$tr = SQL::Translator->new(parser => \&silly_parser,
+$tr = SQL::Transpose->new(parser => \&silly_parser,
                            parser_args => { delimiter => ":" });
 $data =~ s/\t/:/g;
 $pargs = $tr->parser_args;

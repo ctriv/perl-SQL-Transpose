@@ -6,9 +6,9 @@ use warnings;
 use Test::More tests => 3;
 use Test::Exception;
 use Test::Differences;
-use SQL::Translator;
-use SQL::Translator::Parser::SQLite;
-use SQL::Translator::Diff;
+use SQL::Transpose;
+use SQL::Transpose::Parser::SQLite;
+use SQL::Transpose::Diff;
 
 my $ddl = <<DDL;
 CREATE TABLE "Foo" (
@@ -23,7 +23,7 @@ my %common_args = (
   from => 'SQLite',
   to => 'SQLite');
 
-my $unquoted = SQL::Translator
+my $unquoted = SQL::Transpose
   ->new(%common_args)
   ->translate(\$ddl);
 
@@ -39,11 +39,11 @@ CREATE TABLE Foo (
 COMMIT;
 DDL
 
-dies_ok { SQL::Translator
+dies_ok { SQL::Transpose
   ->new(%common_args, quote_table_names=>0, quote_field_names => 1)
   ->translate(\$ddl) } 'mix and match quotes is asinine';
 
-my $quoteall = SQL::Translator
+my $quoteall = SQL::Transpose
   ->new(%common_args, quote_identifiers=>1)
   ->translate(\$ddl);
 

@@ -11,11 +11,11 @@ use strict;
 use FindBin qw/$Bin/;
 
 use Test::More;
-use Test::SQL::Translator;
+use Test::SQL::Transpose;
 use Test::Exception;
 use Data::Dumper;
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
 
 # Simple options. -d for debug
 my %opt;
@@ -27,13 +27,13 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 #=============================================================================
 
 BEGIN {
-    maybe_plan(238, 'SQL::Translator::Parser::XML::SQLFairy');
+    maybe_plan(238, 'SQL::Transpose::Parser::XML::SQLFairy');
 }
 
 my $testschema = "$Bin/data/xml/schema.xml";
 
 my $sqlt;
-$sqlt = SQL::Translator->new(
+$sqlt = SQL::Transpose->new(
     debug          => DEBUG,
     show_warnings  => 1,
     add_drop_table => 1,

@@ -3,17 +3,17 @@
 
 use strict;
 use Test::More;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 use FindBin qw/$Bin/;
 
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
 
 BEGIN {
     maybe_plan(25,
-        'SQL::Translator::Parser::SQLite');
+        'SQL::Transpose::Parser::SQLite');
 }
-SQL::Translator::Parser::SQLite->import('parse');
+SQL::Transpose::Parser::SQLite->import('parse');
 
 my $file = "$Bin/data/sqlite/create.sql";
 
@@ -21,7 +21,7 @@ my $file = "$Bin/data/sqlite/create.sql";
     local $/;
     open my $fh, "<$file" or die "Can't read file '$file': $!\n";
     my $data = <$fh>;
-    my $t = SQL::Translator->new;
+    my $t = SQL::Transpose->new;
     parse($t, $data);
 
     my $schema = $t->schema;
@@ -62,7 +62,7 @@ $file = "$Bin/data/sqlite/named.sql";
     local $/;
     open my $fh, "<$file" or die "Can't read file '$file': $!\n";
     my $data = <$fh>;
-    my $t = SQL::Translator->new;
+    my $t = SQL::Transpose->new;
     parse($t, $data);
 
     my $schema = $t->schema;

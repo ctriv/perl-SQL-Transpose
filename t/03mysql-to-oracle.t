@@ -3,8 +3,8 @@
 
 use strict;
 use Test::More;
-use SQL::Translator;
-use Test::SQL::Translator qw(maybe_plan);
+use SQL::Transpose;
+use Test::SQL::Transpose qw(maybe_plan);
 
 my $create = q|
 CREATE TABLE random (
@@ -20,11 +20,11 @@ CREATE INDEX random_foo ON random(foo);
 
 BEGIN {
     maybe_plan(undef,
-        'SQL::Translator::Parser::MySQL',
-        'SQL::Translator::Producer::Oracle');
+        'SQL::Transpose::Parser::MySQL',
+        'SQL::Transpose::Producer::Oracle');
 }
 
-my $tr       = SQL::Translator->new(
+my $tr       = SQL::Transpose->new(
     parser   => "MySQL",
     producer => "Oracle",
     quote_table_names => 0,

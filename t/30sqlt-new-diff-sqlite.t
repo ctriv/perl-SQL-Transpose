@@ -3,22 +3,22 @@
 
 use strict;
 use warnings;
-use SQL::Translator;
+use SQL::Transpose;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
 use FindBin qw($Bin);
 use Test::More;
 use Test::Differences;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 plan tests => 4;
 
-use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
+use_ok('SQL::Transpose::Diff') or die "Cannot continue\n";
 
-my $tr            = SQL::Translator->new;
+my $tr            = SQL::Transpose->new;
 
 my ( $source_schema, $target_schema ) = map {
-    my $t = SQL::Translator->new;
+    my $t = SQL::Transpose->new;
     $t->parser( 'YAML' )
       or die $tr->error;
     my $out = $t->translate( catfile($Bin, qw/data diff/, $_ ) )
@@ -32,7 +32,7 @@ my ( $source_schema, $target_schema ) = map {
 } (qw/create1.yml create2.yml/);
 
 # Test for differences
-my $out = SQL::Translator::Diff::schema_diff( $source_schema, 'SQLite', $target_schema, 'SQLite',
+my $out = SQL::Transpose::Diff::schema_diff( $source_schema, 'SQLite', $target_schema, 'SQLite',
   { no_batch_alters => 1,
     ignore_missing_methods => 1,
     output_db => 'SQLite',
@@ -56,15 +56,15 @@ DROP INDEX UC_age_name;
 
 DROP INDEX u_name;
 
--- SQL::Translator::Producer::SQLite cant drop_field;
+-- SQL::Transpose::Producer::SQLite cant drop_field;
 
 ALTER TABLE new_name ADD COLUMN new_field int;
 
 ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) DEFAULT 1;
 
--- SQL::Translator::Producer::SQLite cant alter_field;
+-- SQL::Transpose::Producer::SQLite cant alter_field;
 
--- SQL::Translator::Producer::SQLite cant rename_field;
+-- SQL::Transpose::Producer::SQLite cant rename_field;
 
 CREATE UNIQUE INDEX unique_name ON person (name);
 
@@ -80,7 +80,7 @@ COMMIT;
 ## END OF DIFF
 
 
-$out = SQL::Translator::Diff::schema_diff($source_schema, 'SQLite', $target_schema, 'SQLite',
+$out = SQL::Transpose::Diff::schema_diff($source_schema, 'SQLite', $target_schema, 'SQLite',
     { ignore_index_names => 1,
       ignore_constraint_names => 1,
       output_db => 'SQLite',
@@ -170,7 +170,7 @@ COMMIT;
 # the main schema object
 
 # Test for sameness
-$out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL' );
+$out = SQL::Transpose::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL' );
 
 eq_or_diff($out, <<'## END OF DIFF', "No differences found");
 -- Convert schema 'create1.yml' to 'create1.yml':;

@@ -7,7 +7,7 @@ use File::Spec::Functions qw(catfile updir tmpdir);
 use FindBin qw($Bin);
 use Test::More;
 use IPC::Open3;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 use Text::ParseWords qw(shellwords);
 
 my @script = qw(script sqlt-diff-old);
@@ -20,9 +20,9 @@ my $create2 = catfile($Bin, @create2);
 
 BEGIN {
     maybe_plan(21,
-        'SQL::Translator::Parser::SQLite',
-        'SQL::Translator::Parser::MySQL',
-        'SQL::Translator::Parser::Oracle',
+        'SQL::Transpose::Parser::SQLite',
+        'SQL::Transpose::Parser::MySQL',
+        'SQL::Transpose::Parser::Oracle',
         );
 }
 

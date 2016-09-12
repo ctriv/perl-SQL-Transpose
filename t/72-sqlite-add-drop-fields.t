@@ -5,12 +5,12 @@ use warnings;
 
 use Test::More tests => 4;
 use Test::Differences;
-use SQL::Translator;
-use SQL::Translator::Parser::SQLite;
-use SQL::Translator::Diff;
+use SQL::Transpose;
+use SQL::Transpose::Parser::SQLite;
+use SQL::Transpose::Diff;
 
 
-ok my $version1 = SQL::Translator->new(from=>'SQLite')
+ok my $version1 = SQL::Transpose->new(from=>'SQLite')
   ->translate(\<<SQL);
 CREATE TABLE "Foo" (
   "foo" INTEGER PRIMARY KEY NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE "Foo" (
 );
 SQL
 
-ok my $version2 = SQL::Translator->new(from=>'SQLite')
+ok my $version2 = SQL::Transpose->new(from=>'SQLite')
   ->translate(\<<SQL);
 CREATE TABLE "Foo" (
   "foo" INTEGER PRIMARY KEY NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE "Foo" (
 );
 SQL
 
-ok my $upgrade_sql = SQL::Translator::Diff->new({
+ok my $upgrade_sql = SQL::Transpose::Diff->new({
   output_db     => 'SQLite',
   source_schema => $version1,
   target_schema => $version2,

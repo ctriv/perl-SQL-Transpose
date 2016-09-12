@@ -3,7 +3,7 @@
 
 use strict;
 use warnings;
-use SQL::Translator;
+use SQL::Transpose;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
 use FindBin qw($Bin);
@@ -12,12 +12,12 @@ use Test::Differences;
 
 plan tests => 10;
 
-use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
+use_ok('SQL::Transpose::Diff') or die "Cannot continue\n";
 
-my $tr            = SQL::Translator->new;
+my $tr            = SQL::Transpose->new;
 
 my ( $source_schema, $target_schema ) = map {
-    my $t = SQL::Translator->new;
+    my $t = SQL::Transpose->new;
     $t->parser( 'YAML' )
       or die $tr->error;
     my $out = $t->translate( catfile($Bin, qw/data diff /, $_ ) )
@@ -31,7 +31,7 @@ my ( $source_schema, $target_schema ) = map {
 } (qw/create1.yml create2.yml/);
 
 # Test for differences
-my $diff = SQL::Translator::Diff->new({
+my $diff = SQL::Transpose::Diff->new({
   source_schema => $source_schema,
   source_db     => 'MySQL',
   target_schema => $target_schema,
@@ -79,7 +79,7 @@ eq_or_diff(
 );
 
 
-$diff = SQL::Translator::Diff->new({
+$diff = SQL::Transpose::Diff->new({
   source_schema => $source_schema,
   source_db     => 'MySQL',
   target_schema => $target_schema,
@@ -114,7 +114,7 @@ eq_or_diff($diff_hash->{person},
 
 
 # Test for sameness
-$diff = SQL::Translator::Diff->new({
+$diff = SQL::Transpose::Diff->new({
   source_schema => $source_schema,
   source_db     => 'MySQL',
   target_schema => $source_schema,

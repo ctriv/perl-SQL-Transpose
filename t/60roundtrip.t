@@ -7,8 +7,8 @@ use Test::Exception;
 use Test::Differences;
 use FindBin qw/$Bin/;
 
-use SQL::Translator;
-use SQL::Translator::Utils qw/ddl_parser_instance/;
+use SQL::Transpose;
+use SQL::Transpose::Utils qw/ddl_parser_instance/;
 
 
 ### Set $ENV{SQLTTEST_RT_DEBUG} = 1 for more output
@@ -91,7 +91,7 @@ my $plan = [
 my $base_file = "$Bin/data/roundtrip_autogen.yaml";
 open (my $base_fh, '<', $base_file) or die "$base_file: $!";
 
-my $base_t = SQL::Translator->new;
+my $base_t = SQL::Transpose->new;
 $base_t->$_ (1) for qw/add_drop_table no_comments quote_identifiers/;
 
 my $base_schema = $base_t->translate (
@@ -124,8 +124,8 @@ for my $args (@$plan) {
       );
     }
 
-    use_ok("SQL::Translator::Producer::$args->{engine}");
-    use_ok("SQL::Translator::Parser::$args->{engine}");
+    use_ok("SQL::Transpose::Producer::$args->{engine}");
+    use_ok("SQL::Transpose::Parser::$args->{engine}");
 
     ok(ddl_parser_instance($args->{engine}), 'Got proper parser instance')
       unless $args->{no_grammar};
@@ -169,7 +169,7 @@ sub check_roundtrip {
   };
 
 # parse the sql back
-  my $parser_t = SQL::Translator->new;
+  my $parser_t = SQL::Transpose->new;
   $parser_t->$_ (1) for qw/add_drop_table no_comments quote_identifiers/;
   my $mid_schema = $parser_t->translate (
     data => $base_out,
@@ -177,7 +177,7 @@ sub check_roundtrip {
     parser_args => $args->{parser_args},
   );
 
-  isa_ok ($mid_schema, 'SQL::Translator::Schema', "First $args->{name} parser pass produced a schema:")
+  isa_ok ($mid_schema, 'SQL::Transpose::Schema', "First $args->{name} parser pass produced a schema:")
     or do {
       diag (_gen_diag ( $parser_t->error, $base_out ) );
       my $i;
@@ -200,7 +200,7 @@ sub check_roundtrip {
 
 # Producing a schema with a Translator different from the one the schema was generated
 # from does not work. This is arguably a bug, 61translator_agnostic.t works with that
-#  my $producer_t = SQL::Translator->new;
+#  my $producer_t = SQL::Transpose->new;
 #  $producer_t->$_ (1) for qw/add_drop_table no_comments/;
 
 #  my $rt_sql = $producer_t->translate (

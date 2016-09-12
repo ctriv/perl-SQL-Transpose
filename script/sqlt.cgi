@@ -20,13 +20,13 @@
 
 =head1 NAME
 
-sqlt.cgi - CGI front-end for SQL::Translator
+sqlt.cgi - CGI front-end for SQL::Transpose
 
 =head1 DESCRIPTION
 
 Place this script in your "cgi-bin" directory and point your browser
 to it.  This script is meant to be a simple graphical interface to
-all the parsers and producers of SQL::Translator.
+all the parsers and producers of SQL::Transpose.
 
 =cut
 
@@ -35,7 +35,7 @@ all the parsers and producers of SQL::Translator.
 use strict;
 use warnings;
 use CGI;
-use SQL::Translator;
+use SQL::Transpose;
 
 use vars '$VERSION';
 $VERSION = '1.59';
@@ -62,7 +62,7 @@ eval {
             : ''
         ;
 
-        my $t                    =  SQL::Translator->new(
+        my $t                    =  SQL::Transpose->new(
             from                 => $q->param('parser'),
             producer_args        => {
                 add_drop_table   => $q->param('add_drop_table'),
@@ -93,7 +93,7 @@ eval {
                 field_separator  => $q->param('fs'),
                 record_separator => $q->param('rs'),
             },
-        ) or die SQL::Translator->error;
+        ) or die SQL::Transpose->error;
 
         my $image_type = '';
         my $text_type  = 'plain';
@@ -134,7 +134,7 @@ if ( my $error = $@ ) {
 # -------------------------------------------------------------------
 sub show_form {
     my $q     = shift;
-    my $title = 'SQL::Translator';
+    my $title = 'SQL::Transpose';
 
     print $q->header,
         $q->start_html( -title => $title ),
@@ -551,6 +551,6 @@ Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 =head1 SEE ALSO
 
 L<perl>,
-L<SQL::Translator>
+L<SQL::Transpose>
 
 =cut

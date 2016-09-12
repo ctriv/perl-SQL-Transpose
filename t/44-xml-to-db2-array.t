@@ -3,22 +3,22 @@ use strict;
 
 use FindBin qw/$Bin/;
 use Test::More;
-use Test::SQL::Translator;
+use Test::SQL::Transpose;
 use Test::Exception;
 use Data::Dumper;
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
 
 
 BEGIN {
-    maybe_plan(1, 'SQL::Translator::Parser::XML::SQLFairy',
-              'SQL::Translator::Producer::DB2');
+    maybe_plan(1, 'SQL::Transpose::Parser::XML::SQLFairy',
+              'SQL::Transpose::Producer::DB2');
 }
 
 my $xmlfile = "$Bin/data/xml/schema.xml";
 
 my $sqlt;
-$sqlt = SQL::Translator->new(
+$sqlt = SQL::Transpose->new(
     no_comments => 1,
     show_warnings  => 0,
     add_drop_table => 1,

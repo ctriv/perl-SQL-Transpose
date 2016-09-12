@@ -6,19 +6,19 @@ use strict;
 
 use FindBin '$Bin';
 use Test::More 'no_plan';
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
-use Test::SQL::Translator qw(maybe_plan table_ok);
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
+use Test::SQL::Transpose qw(maybe_plan table_ok);
 
 #BEGIN {
-#    maybe_plan(180, "SQL::Translator::Parser::Access");
-#    SQL::Translator::Parser::Access->import('parse');
+#    maybe_plan(180, "SQL::Transpose::Parser::Access");
+#    SQL::Transpose::Parser::Access->import('parse');
 #}
 
-use SQL::Translator::Parser::Access 'parse';
+use SQL::Transpose::Parser::Access 'parse';
 
 {
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
 
     my $file = "$Bin/data/access/gdpdm.ddl";
     open FH, "<$file" or die "Can't read '$file': $!\n";

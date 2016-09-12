@@ -5,9 +5,9 @@ use warnings;
 
 use Test::More;
 use Test::Exception;
-use Test::SQL::Translator;
-use SQL::Translator;
-use SQL::Translator::Diff;
+use Test::SQL::Transpose;
+use SQL::Transpose;
+use SQL::Transpose::Diff;
 
 maybe_plan(undef, 'DBD::Pg');
 
@@ -46,14 +46,14 @@ CREATE TABLE sqlt_test_fluff (
 );
 DDL
 
-my $source_sqlt = SQL::Translator->new(
+my $source_sqlt = SQL::Transpose->new(
     no_comments => 1,
-    parser   => 'SQL::Translator::Parser::PostgreSQL',
+    parser   => 'SQL::Transpose::Parser::PostgreSQL',
 )->translate(\$source_ddl);
 
-my $target_sqlt = SQL::Translator->new(
+my $target_sqlt = SQL::Transpose->new(
     no_comments => 1,
-    parser   => 'SQL::Translator::Parser::PostgreSQL',
+    parser   => 'SQL::Transpose::Parser::PostgreSQL',
 )->translate(\$target_ddl);
 
 my $table = $target_sqlt->get_table('sqlt_test_fluff');
@@ -61,7 +61,7 @@ $table->extra( renamed_from => 'sqlt_test_foo' );
 my $field = $table->get_field('biff');
 $field->extra( renamed_from => 'bar' );
 
-my @diff = SQL::Translator::Diff->new({
+my @diff = SQL::Transpose::Diff->new({
     output_db => 'PostgreSQL',
     source_schema => $source_sqlt,
     target_schema => $target_sqlt,

@@ -4,7 +4,7 @@ package Producer::BaseTest;
 # A trivial little sub-class to test sub-classing the TT::Base producer.
 #
 
-use base qw/SQL::Translator::Producer::TT::Base/;
+use base qw/SQL::Transpose::Producer::TT::Base/;
 
 # Make sure we use our new class as the producer
 sub produce { return __PACKAGE__->new( translator => shift )->run; };

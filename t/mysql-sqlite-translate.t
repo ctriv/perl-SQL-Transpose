@@ -2,21 +2,21 @@
 use warnings;
 use strict;
 use Test::More;
-use_ok( "SQL::Translator" );
-use_ok( "SQL::Translator::Parser::MySQL" );
-use_ok( "SQL::Translator::Producer::SQLite" );
+use_ok( "SQL::Transpose" );
+use_ok( "SQL::Transpose::Parser::MySQL" );
+use_ok( "SQL::Transpose::Producer::SQLite" );
 
-# This test reproduces a bug in SQL::Translator::Producer::SQLite.
+# This test reproduces a bug in SQL::Transpose::Producer::SQLite.
 #
 # When tables are created their names are not added to %global_names, and
 # may be duplicated.
 #
-# SQL::Translator::Producer::SQLite version 1.59.
+# SQL::Transpose::Producer::SQLite version 1.59.
 # compliments of SymKat <symkat@symkat.com>
 
 
 
-my $output = SQL::Translator
+my $output = SQL::Transpose
     ->new( data => do { local $/; <DATA> })
     ->translate( from => 'MySQL', to => 'SQLite' );
 

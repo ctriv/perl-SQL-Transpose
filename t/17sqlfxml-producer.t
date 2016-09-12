@@ -9,7 +9,7 @@ local $^W = 0;
 use strict;
 use Test::More;
 use Test::Exception;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 use Data::Dumper;
 my %opt;
@@ -33,12 +33,12 @@ BEGIN {
     maybe_plan(14,
         'XML::Writer',
         'Test::Differences',
-        'SQL::Translator::Producer::XML::SQLFairy');
+        'SQL::Transpose::Producer::XML::SQLFairy');
 }
 
 use Test::Differences;
-use SQL::Translator;
-use SQL::Translator::Producer::XML::SQLFairy;
+use SQL::Transpose;
+use SQL::Transpose::Producer::XML::SQLFairy;
 
 # Due to formatters being able to change style, e.g. by entries in .rc files
 # in $HOME, the layout and or indent might differ slightly. As leading white
@@ -103,7 +103,7 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-$obj = SQL::Translator->new(
+$obj = SQL::Transpose->new(
     debug          => DEBUG,
     trace          => TRACE,
     show_warnings  => 1,
@@ -142,7 +142,7 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-    $obj = SQL::Translator->new(
+    $obj = SQL::Transpose->new(
         debug          => DEBUG,
         trace          => TRACE,
         show_warnings  => 1,
@@ -202,7 +202,7 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-    $obj = SQL::Translator->new(
+    $obj = SQL::Transpose->new(
         debug          => DEBUG,
         trace          => TRACE,
         show_warnings  => 1,
@@ -258,7 +258,7 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-    $obj = SQL::Translator->new(
+    $obj = SQL::Transpose->new(
         debug          => DEBUG,
         trace          => TRACE,
         show_warnings  => 1,
@@ -328,7 +328,7 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-    $obj = SQL::Translator->new(
+    $obj = SQL::Transpose->new(
         debug          => DEBUG,
         trace          => TRACE,
         show_warnings  => 1,

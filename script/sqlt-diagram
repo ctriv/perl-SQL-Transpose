@@ -50,7 +50,7 @@ sqlt-diagram - Automatically create a diagram from a database schema
 =head1 DESCRIPTION
 
 This script will create a picture of your schema.  Only the database
-driver argument (for SQL::Translator) is required.  If no output file
+driver argument (for SQL::Transpose) is required.  If no output file
 name is given, then image will be printed to STDOUT, so you should
 redirect the output into a file.
 
@@ -74,7 +74,7 @@ use warnings;
 use Data::Dumper;
 use Getopt::Long;
 use Pod::Usage;
-use SQL::Translator;
+use SQL::Transpose;
 
 use vars '$VERSION';
 $VERSION = '1.59';
@@ -114,7 +114,7 @@ pod2usage(1) if $help;
 pod2usage( -message => "No db driver specified" ) unless $db_driver;
 pod2usage( -message => 'No input file'          ) unless @files;
 
-my $translator       =  SQL::Translator->new(
+my $translator       =  SQL::Transpose->new(
     from             => $db_driver,
     to               => 'Diagram',
     debug            => $debug || 0,
@@ -134,7 +134,7 @@ my $translator       =  SQL::Translator->new(
         skip_tables      => $skip_tables,
         skip_tables_like => $skip_tables_like,
     },
-) or die SQL::Translator->error;
+) or die SQL::Transpose->error;
 
 binmode STDOUT unless $out_file;
 

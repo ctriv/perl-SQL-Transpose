@@ -40,7 +40,7 @@ sqlt-dumper - create a dumper script from a schema
 
 =head1 DESCRIPTION
 
-This script uses SQL::Translator to parse the SQL schema and create a
+This script uses SQL::Transpose to parse the SQL schema and create a
 Perl script that can connect to the database and dump the data as
 INSERT statements (a la mysqldump) or MySQL's LOAD FILE syntax.  You may
 specify tables to "skip" (also using a "skiplike" regular expression)
@@ -59,7 +59,7 @@ use strict;
 use warnings;
 use Pod::Usage;
 use Getopt::Long;
-use SQL::Translator;
+use SQL::Transpose;
 use File::Basename qw(basename);
 
 use vars '$VERSION';
@@ -83,7 +83,7 @@ $db_pass ||= 'password';
 $dsn     ||= "dbi:$db:_";
 
 my $file            = shift @ARGV or pod2usage( -msg => 'No input file' );
-my $t               = SQL::Translator->new(
+my $t               = SQL::Transpose->new(
     from            => $db,
     to              => 'Dumper',
     producer_args   => {
@@ -109,6 +109,6 @@ Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl, SQL::Translator, SQL::Translator::Producer::Dumper.
+perl, SQL::Transpose, SQL::Transpose::Producer::Dumper.
 
 =cut

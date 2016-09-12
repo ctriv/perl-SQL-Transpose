@@ -3,21 +3,21 @@ use strict;
 
 use FindBin qw/$Bin/;
 use Test::More;
-use Test::SQL::Translator;
+use Test::SQL::Transpose;
 use Test::Exception;
 use Data::Dumper;
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
 
 BEGIN {
-    maybe_plan(2, 'SQL::Translator::Parser::YAML',
-                  'SQL::Translator::Producer::Oracle');
+    maybe_plan(2, 'SQL::Transpose::Parser::YAML',
+                  'SQL::Transpose::Producer::Oracle');
 }
 
 my $yamlfile = "$Bin/data/oracle/schema_with_options.yaml";
 
 my $sqlt;
-$sqlt = SQL::Translator->new(
+$sqlt = SQL::Transpose->new(
     show_warnings  => 0,
     add_drop_table => 0,
     producer_args  => { 'delay_constraints' => 1 },

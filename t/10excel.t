@@ -2,16 +2,16 @@
 # vim: set ft=perl:
 
 use Test::More;
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
-use Test::SQL::Translator qw(maybe_plan);
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
+use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(31, 'SQL::Translator::Parser::Excel');
-    SQL::Translator::Parser::Excel->import('parse');
+    maybe_plan(31, 'SQL::Transpose::Parser::Excel');
+    SQL::Transpose::Parser::Excel->import('parse');
 }
 
-my $tr     = SQL::Translator->new(parser => "Excel");
+my $tr     = SQL::Transpose->new(parser => "Excel");
 my $t      = $tr->translate(filename => "t/data/Excel/t.xls");
 my $schema = $tr->schema;
 

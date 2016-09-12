@@ -3,16 +3,16 @@
 
 use strict;
 use Test::More;
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
-use Test::SQL::Translator qw(maybe_plan);
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
+use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(undef, 'SQL::Translator::Parser::PostgreSQL');
-    SQL::Translator::Parser::PostgreSQL->import('parse');
+    maybe_plan(undef, 'SQL::Transpose::Parser::PostgreSQL');
+    SQL::Transpose::Parser::PostgreSQL->import('parse');
 }
 
-my $t   = SQL::Translator->new( trace => 0 );
+my $t   = SQL::Transpose->new( trace => 0 );
 my $sql = q{
     -- comment on t_test1
     create table t_test1 (
@@ -129,7 +129,7 @@ $| = 1;
 my $data   = parse( $t, $sql );
 my $schema = $t->schema;
 
-isa_ok( $schema, 'SQL::Translator::Schema', 'Schema object' );
+isa_ok( $schema, 'SQL::Transpose::Schema', 'Schema object' );
 my @tables = $schema->get_tables;
 is( scalar @tables, 5, 'Five tables' );
 
@@ -225,7 +225,7 @@ is( $f10->default_value, undef, 'Default value is undefined' );
 is( $f10->is_primary_key, 0, 'Field is not PK' );
 is( $f10->is_foreign_key, 1, 'Field is a FK' );
 my $fk_ref1 = $f10->foreign_key_reference;
-isa_ok( $fk_ref1, 'SQL::Translator::Schema::Constraint', 'FK' );
+isa_ok( $fk_ref1, 'SQL::Transpose::Schema::Constraint', 'FK' );
 is( $fk_ref1->reference_table, 't_test2', 'FK is to "t_test2" table' );
 
 my $f11 = shift @t1_fields;
@@ -301,7 +301,7 @@ is( $f18->is_primary_key, 0, 'Field is not PK' );
 is( $f18->is_foreign_key, 0, 'Field is not FK' );
 
 # my $fk_ref2 = $f11->foreign_key_reference;
-# isa_ok( $fk_ref2, 'SQL::Translator::Schema::Constraint', 'FK' );
+# isa_ok( $fk_ref2, 'SQL::Transpose::Schema::Constraint', 'FK' );
 # is( $fk_ref2->reference_table, 't_test2', 'FK is to "t_test2" table' );
 
 my @t1_constraints = $t1->get_constraints;

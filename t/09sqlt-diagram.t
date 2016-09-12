@@ -5,7 +5,7 @@ use File::Spec::Functions qw(catfile updir tmpdir);
 use File::Temp qw(mktemp);
 use FindBin qw($Bin);
 use Test::More;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 use Text::ParseWords qw(shellwords);
 
 BEGIN {
@@ -13,8 +13,8 @@ BEGIN {
         3,
         'GD',
         'Graph::Directed',
-        'SQL::Translator::Producer::Diagram',
-        'SQL::Translator::Parser::MySQL',
+        'SQL::Transpose::Producer::Diagram',
+        'SQL::Transpose::Parser::MySQL',
     );
 }
 

@@ -7,13 +7,13 @@
 use strict;
 use Test::More;
 use Test::Exception;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
     maybe_plan(3, 'YAML', 'Test::Differences')
 }
 use Test::Differences;
-use SQL::Translator;
+use SQL::Transpose;
 
 # The _GLOBAL_ table should be removed and its fields copied onto all other
 # tables.
@@ -50,14 +50,14 @@ schema:
 
 # Parse the test XML schema
 my $obj;
-$obj = SQL::Translator->new(
+$obj = SQL::Transpose->new(
     debug         => 0,
     show_warnings => 1,
     from          => "YAML",
     to            => "YAML",
     data          => $in_yaml,
     filters => [
-        # Filter from SQL::Translator::Filter::*
+        # Filter from SQL::Transpose::Filter::*
         [ 'Globals',
             # A global field to add given in the args
             fields => [
@@ -75,7 +75,7 @@ $obj = SQL::Translator->new(
         ],
     ],
 
-) or die "Failed to create translator object: ".SQL::Translator->error;
+) or die "Failed to create translator object: ".SQL::Transpose->error;
 
 my $struct;
 lives_ok { $struct = YAML::Load($obj->translate) }  "Translate/yaml reload ran";
@@ -174,11 +174,10 @@ is_deeply ($struct, {
     filename => undef,
     no_comments => 0,
     parser_args => {},
-    parser_type => "SQL::Translator::Parser::YAML",
+    parser_type => "SQL::Transpose::Parser::YAML",
     producer_args => {},
-    producer_type => "SQL::Translator::Producer::YAML",
+    producer_type => "SQL::Transpose::Producer::YAML",
     show_warnings => 1,
     trace => 0,
-    version => $SQL::Translator::VERSION,
   }
 }, 'Expected final yaml-schema');

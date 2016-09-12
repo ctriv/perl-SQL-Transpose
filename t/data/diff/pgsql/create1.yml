@@ -236,7 +236,7 @@ translator:
     record_separator: ~
     scan_fields: 1
     trim_fields: 1
-  parser_type: SQL::Translator::Parser::PostgreSQL
+  parser_type: SQL::Transpose::Parser::PostgreSQL
   producer_args:
     add_prefix: ~
     add_truncate: ~
@@ -256,7 +256,7 @@ translator:
     tt_conf: {}
     tt_vars: {}
     ttfile: ~
-  producer_type: SQL::Translator::Producer::YAML
+  producer_type: SQL::Transpose::Producer::YAML
   show_warnings: 0
   trace: 0
   version: 0.0899_01

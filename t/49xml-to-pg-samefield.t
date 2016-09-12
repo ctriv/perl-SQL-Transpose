@@ -3,22 +3,22 @@ use strict;
 
 use FindBin qw/$Bin/;
 use Test::More;
-use Test::SQL::Translator;
+use Test::SQL::Transpose;
 use Test::Exception;
 use Data::Dumper;
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
 
 
 BEGIN {
-    maybe_plan(1, 'SQL::Translator::Parser::XML::SQLFairy',
-              'SQL::Translator::Producer::PostgreSQL');
+    maybe_plan(1, 'SQL::Transpose::Parser::XML::SQLFairy',
+              'SQL::Transpose::Producer::PostgreSQL');
 }
 
 my $xmlfile = "$Bin/data/xml/samefield.xml";
 
 my $sqlt;
-$sqlt = SQL::Translator->new(
+$sqlt = SQL::Transpose->new(
     no_comments => 1,
     show_warnings  => 1,
     add_drop_table => 1,
@@ -50,5 +50,5 @@ SQL
 # my $table = $sqlt->schema->get_table('two');
 # $table->add_field(name => 'same');
 # print Dumper($table);
-# $sql = SQL::Translator::Producer::PostgreSQL::produce($sqlt);
+# $sql = SQL::Transpose::Producer::PostgreSQL::produce($sqlt);
 # print ">>$sql<<\n";

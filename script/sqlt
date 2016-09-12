@@ -21,7 +21,7 @@
 
 =head1 NAME
 
-sqlt - convert SQL schema using SQL::Translator
+sqlt - convert SQL schema using SQL::Transpose
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ To translate a schema:
 
     -d|--debug         Print debug info
     -v|--validate      Validate the schema
-    --version          Show the version of SQL::Translator
+    --version          Show the version of SQL::Transpose
     --trace            Print parser trace info
     --show-warnings    Print warnings to STDERR
 
@@ -150,7 +150,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Pod::Usage;
-use SQL::Translator;
+use SQL::Transpose;
 
 use vars qw( $VERSION );
 $VERSION = '1.59';
@@ -160,7 +160,7 @@ my $to;               # the destination database
 my $help;             # show POD and bail
 my $stdin;            # whether to read STDIN for create script
 my $no_comments;      # whether to put comments in out file
-my $show_warnings;    # whether to show warnings from SQL::Translator
+my $show_warnings;    # whether to show warnings from SQL::Transpose
 my $add_drop_table;   # whether to add "DROP table" statements
 my $quote_table_names;  # whether to quote table names
 my $quote_field_names;  # whether to quote field names
@@ -273,11 +273,11 @@ unless ( @files ) {
 pod2usage(1) if $help;
 
 if ( $show_version ) {
-    print "SQL::Translator v", $SQL::Translator::VERSION, "\n";
+    print "SQL::Transpose v", $SQL::Transpose::VERSION, "\n";
     exit(0);
 }
 
-my $translator           =  SQL::Translator->new(
+my $translator           =  SQL::Transpose->new(
     debug                => $debug          ||  0,
     trace                => $trace          ||  0,
     no_comments          => $no_comments    ||  0,
@@ -370,6 +370,6 @@ darren chamberlain E<lt>darren@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-SQL::Translator, L<http://sqlfairy.sourceforge.net>.
+SQL::Transpose, L<http://sqlfairy.sourceforge.net>.
 
 =cut

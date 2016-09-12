@@ -96,7 +96,7 @@ new index as such:
 =back
 
 ALTER, CREATE, DROP statements are created by
-SQL::Translator::Producer::*, see there for support/problems.
+SQL::Transpose::Producer::*, see there for support/problems.
 
 Currently (v0.0900), only MySQL is supported by this code.
 
@@ -109,9 +109,9 @@ use warnings;
 use Pod::Usage;
 use Data::Dumper;
 use Getopt::Long;
-use SQL::Translator;
-use SQL::Translator::Diff;
-use SQL::Translator::Schema::Constants;
+use SQL::Transpose;
+use SQL::Transpose::Diff;
+use SQL::Transpose::Schema::Constants;
 
 use vars qw( $VERSION );
 $VERSION = '1.59';
@@ -143,7 +143,7 @@ for my $arg ( @ARGV ) {
     }
 }
 
-my $tr            = SQL::Translator->new;
+my $tr            = SQL::Transpose->new;
 my @parsers       = $tr->list_parsers;
 my %valid_parsers = map { $_, 1 } @parsers;
 
@@ -164,7 +164,7 @@ my ( $source_schema, $source_db, $target_schema, $target_db ) = map {
     die "Unable to read file '$file'\n" unless -r $file;
     die "'$parser' is an invalid parser\n" unless $valid_parsers{ $parser };
 
-    my $t = SQL::Translator->new(parser_args => {
+    my $t = SQL::Transpose->new(parser_args => {
         mysql_parser_version => $mysql_parser_version
     });
     $t->debug( $debug );
@@ -179,7 +179,7 @@ my ( $source_schema, $source_db, $target_schema, $target_db ) = map {
     ($schema, $parser);
 } @input;
 
-my $result = SQL::Translator::Diff::schema_diff(
+my $result = SQL::Transpose::Diff::schema_diff(
     $source_schema, $source_db,
     $target_schema, $target_db,
     {
@@ -221,6 +221,6 @@ Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-SQL::Translator, L<http://sqlfairy.sourceforge.net>.
+SQL::Transpose, L<http://sqlfairy.sourceforge.net>.
 
 =cut

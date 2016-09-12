@@ -12,7 +12,7 @@
 use strict;
 
 use IO::File;
-use SQL::Translator;
+use SQL::Transpose;
 use Test::More tests => 3;
 
 # The filename, holder for all the data, and the filehandle
@@ -22,14 +22,14 @@ my $fh = IO::File->new($datafile);
 
 my ($v1, $v2);
 {
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
     # Pass filename: simplest way
     $tr->translate($datafile);
     $v1 = $tr->schema;
 }
 
 {
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
     # Pass string reference
     read($fh, $data, -s $datafile);
     $tr->translate(\$data);

@@ -3,14 +3,14 @@
 
 use strict;
 use Test::More;
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
-use Test::SQL::Translator qw(maybe_plan);
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
+use Test::SQL::Transpose qw(maybe_plan);
 
-maybe_plan(99, 'SQL::Translator::Parser::Oracle');
-SQL::Translator::Parser::Oracle->import('parse');
+maybe_plan(99, 'SQL::Transpose::Parser::Oracle');
+SQL::Transpose::Parser::Oracle->import('parse');
 
-my $t   = SQL::Translator->new( trace => 0 );
+my $t   = SQL::Transpose->new( trace => 0 );
 my $sql = q[
     CREATE TABLE qtl_trait_category
     (
@@ -113,7 +113,7 @@ $| = 1;
 my $data   = parse( $t, $sql );
 my $schema = $t->schema;
 
-isa_ok( $schema, 'SQL::Translator::Schema', 'Schema object' );
+isa_ok( $schema, 'SQL::Transpose::Schema', 'Schema object' );
 my @tables = $schema->get_tables;
 is( scalar @tables, 4, 'Found four tables' );
 
@@ -211,7 +211,7 @@ is( $t2_f4->size, 11, 'Size is "11"' );
 is( $t2_f4->is_nullable, 0, 'Field cannot be null' );
 is( $t2_f4->is_foreign_key, 1, 'Field is a FK' );
 my $f4_fk = $t2_f4->foreign_key_reference;
-isa_ok( $f4_fk, 'SQL::Translator::Schema::Constraint', 'FK' );
+isa_ok( $f4_fk, 'SQL::Transpose::Schema::Constraint', 'FK' );
 is( $f4_fk->reference_table, 'qtl_trait_category',
     'FK references table "qtl_trait_category"' );
 is( join(',', $f4_fk->reference_fields), 'qtl_trait_category_id',

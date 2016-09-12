@@ -9,15 +9,15 @@
 use strict;
 use vars qw(%HANDLERS);
 use Test::More;
-use Test::SQL::Translator qw(maybe_plan);
-use SQL::Translator;
+use Test::SQL::Transpose qw(maybe_plan);
+use SQL::Transpose;
 
 BEGIN {
     maybe_plan(5,
         'CGI',
         'HTML::Parser',
-        'SQL::Translator::Parser::MySQL',
-        'SQL::Translator::Producer::HTML');
+        'SQL::Transpose::Parser::MySQL',
+        'SQL::Transpose::Producer::HTML');
 }
 
 my ($p, $tables, $classes);
@@ -31,7 +31,7 @@ CREATE TABLE foo (
 );
 |;
 
-my $tr = SQL::Translator->new(parser => 'MySQL', producer => 'HTML');
+my $tr = SQL::Transpose->new(parser => 'MySQL', producer => 'HTML');
 my $parsed = $tr->translate(data => $create) or die $tr->error;
 my $status;
 

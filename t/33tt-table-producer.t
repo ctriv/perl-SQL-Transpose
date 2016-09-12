@@ -7,7 +7,7 @@
 use strict;
 use Test::More;
 use Test::Exception;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 use Data::Dumper;
 use vars '%opt';
@@ -25,15 +25,15 @@ BEGIN {
 }
 use Test::Differences;
 
-use SQL::Translator;
-use SQL::Translator::Producer::TT::Table;
+use SQL::Transpose;
+use SQL::Transpose::Producer::TT::Table;
 
 # Setup a tmp directory we can output files to.
 my $tdir = tempdir( CLEANUP => 1 );
 
 # Parse the test XML schema
 my $obj;
-$obj = SQL::Translator->new(
+$obj = SQL::Transpose->new(
     debug          => DEBUG, #$opt{d},
     show_warnings  => 1,
     add_drop_table => 1,

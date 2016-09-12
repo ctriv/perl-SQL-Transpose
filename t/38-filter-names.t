@@ -7,7 +7,7 @@
 use strict;
 use Test::More;
 use Test::Exception;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 use Data::Dumper;
 
@@ -15,7 +15,7 @@ BEGIN {
     maybe_plan(4, 'YAML', 'Test::Differences')
 }
 use Test::Differences;
-use SQL::Translator;
+use SQL::Transpose;
 
 my $in_yaml = qq{---
 schema:
@@ -56,31 +56,30 @@ translator:
   filename: ~
   no_comments: 0
   parser_args: {}
-  parser_type: SQL::Translator::Parser::YAML
+  parser_type: SQL::Transpose::Parser::YAML
   producer_args: {}
-  producer_type: SQL::Translator::Producer::YAML
+  producer_type: SQL::Transpose::Producer::YAML
   show_warnings: 1
   trace: 0
-  version: SUPPRESSED
 };
 
 # Parse the test schema
 my $obj;
-$obj = SQL::Translator->new(
+$obj = SQL::Transpose->new(
     debug         => 0,
     show_warnings => 1,
     from          => "YAML",
     to            => "YAML",
     data          => $in_yaml,
     filters => [
-        # Filter from SQL::Translator::Filter::*
+        # Filter from SQL::Transpose::Filter::*
         [ 'Names', {
             tables => 'lc',
             fields => 'ucfirst',
         } ],
     ],
 
-) or die "Failed to create translator object: ".SQL::Translator->error;
+) or die "Failed to create translator object: ".SQL::Transpose->error;
 
 my $out;
 lives_ok { $out = $obj->translate; }  "Translate ran";

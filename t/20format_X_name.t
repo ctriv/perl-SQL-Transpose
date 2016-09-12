@@ -3,7 +3,7 @@
 
 use strict;
 
-use SQL::Translator;
+use SQL::Transpose;
 use Test::More tests => 25;
 
 my ($tr, $ret);
@@ -15,7 +15,7 @@ my %format_X_name = (
     format_pk_name      => sub { "pk_$_[0]"      },
 );
 
-ok($tr = SQL::Translator->new);
+ok($tr = SQL::Transpose->new);
 
 is(($ret = $tr->format_table_name("foo")), "foo",
     '$tr->format_table_name("foo") == "foo"');

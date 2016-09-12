@@ -7,16 +7,16 @@
 use strict;
 use Test::More;
 use Test::Exception;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
     maybe_plan(4, 'Template 2.20',
                'Test::Differences',
-               'SQL::Translator::Parser::XML::SQLFairy')
+               'SQL::Transpose::Parser::XML::SQLFairy')
 }
 use Test::Differences;
 
-use SQL::Translator;
+use SQL::Transpose;
 use FindBin qw/$Bin/;
 # Access to test libs. We want Producer/BaseTest.pm from here.
 use lib ("$Bin/lib");
@@ -24,7 +24,7 @@ use lib ("$Bin/lib");
 
 # Parse the test XML schema
 my $obj;
-$obj = SQL::Translator->new(
+$obj = SQL::Transpose->new(
     debug          => 0,
     show_warnings  => 0,
     add_drop_table => 1,

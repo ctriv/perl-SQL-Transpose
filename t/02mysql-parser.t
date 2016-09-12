@@ -5,19 +5,19 @@
 use strict;
 
 use Test::More;
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw//;
-use Test::SQL::Translator qw(maybe_plan);
+use SQL::Transpose;
+use SQL::Transpose::Schema::Constants;
+use SQL::Transpose::Utils qw//;
+use Test::SQL::Transpose qw(maybe_plan);
 use FindBin qw/$Bin/;
 
 BEGIN {
-    maybe_plan(undef, "SQL::Translator::Parser::MySQL");
-    SQL::Translator::Parser::MySQL->import('parse');
+    maybe_plan(undef, "SQL::Transpose::Parser::MySQL");
+    SQL::Transpose::Parser::MySQL->import('parse');
 }
 
 {
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
     my $data = q|create table "sessions" (
         id char(32) not null default '0' primary key,
         a_session text,
@@ -68,7 +68,7 @@ BEGIN {
 }
 
 {
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
     my $data = parse($tr,
         q[
             CREATE TABLE `check` (
@@ -248,7 +248,7 @@ BEGIN {
 }
 
 {
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
     my $data = parse($tr,
         q[
             CREATE TABLE orders (
@@ -346,7 +346,7 @@ BEGIN {
     is( $f7->is_nullable, 0, 'Field cannot be null' );
     is( $f7->is_foreign_key, 1, 'Field is a FK' );
     my $fk_ref = $f7->foreign_key_reference;
-    isa_ok( $fk_ref, 'SQL::Translator::Schema::Constraint', 'FK' );
+    isa_ok( $fk_ref, 'SQL::Transpose::Schema::Constraint', 'FK' );
     is( $fk_ref->reference_table, 'store', 'FK is to "store" table' );
 
     my $f8 = shift @fields;
@@ -436,7 +436,7 @@ BEGIN {
 #    Ignoring INSERT statements
 #
 {
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
     my $data = parse($tr,
         q[
             USE database_name;
@@ -509,7 +509,7 @@ BEGIN {
 #    charset table option
 #
 {
-    my $tr = SQL::Translator->new(parser_args => {mysql_parser_version => 50013});
+    my $tr = SQL::Transpose->new(parser_args => {mysql_parser_version => 50013});
     my $data = parse($tr,
         q[
             DELIMITER ;;
@@ -702,7 +702,7 @@ BEGIN {
 
 # Tests for collate table option
 {
-    my $tr = SQL::Translator->new(parser_args => {mysql_parser_version => 50003});
+    my $tr = SQL::Transpose->new(parser_args => {mysql_parser_version => 50003});
     my $data = parse($tr,
         q[
           CREATE TABLE test ( id int ) DEFAULT CHARACTER SET latin1 COLLATE latin1_bin;
@@ -748,7 +748,7 @@ my $parse_as = {
 for my $target (keys %$parse_as) {
     for my $str (keys %{$parse_as->{$target}}) {
         cmp_ok (
-            SQL::Translator::Utils::parse_mysql_version ($str, $target),
+            SQL::Transpose::Utils::parse_mysql_version ($str, $target),
             '==',
             $parse_as->{$target}{$str},
             "'$str' parsed as $target version '$parse_as->{$target}{$str}'",
@@ -756,11 +756,11 @@ for my $target (keys %$parse_as) {
     }
 }
 
-eval { SQL::Translator::Utils::parse_mysql_version ('bogus5.1') };
+eval { SQL::Transpose::Utils::parse_mysql_version ('bogus5.1') };
 ok ($@, 'Exception thrown on invalid version string');
 
 {
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
     my $data = q|create table merge_example (
        id int(11) NOT NULL auto_increment,
        shape_field geometry NOT NULL,
@@ -837,7 +837,7 @@ ok ($@, 'Exception thrown on invalid version string');
         ) ENGINE=innodb;|,
     );
     for my $data (@data) {
-        my $tr = SQL::Translator->new;
+        my $tr = SQL::Transpose->new;
 
         my $val = parse($tr, $data);
         my $schema = $tr->schema;
@@ -869,7 +869,7 @@ ok ($@, 'Exception thrown on invalid version string');
 }
 
 {
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
     my $data = q|create table "sessions" (
         id char(32) not null default '0' primary key,
         ssn varchar(12) NOT NULL default 'test single quotes like in you''re',
@@ -919,7 +919,7 @@ ok ($@, 'Exception thrown on invalid version string');
     local $::RD_ERRORS = 0;
     local $::RD_WARN = 0;
     local $::RD_HINT = 0;
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
     my $data = q|create table "sessions" (
         id char(32) not null default,
         ssn varchar(12) NOT NULL default 'test single quotes like in you''re',
@@ -933,7 +933,7 @@ ok ($@, 'Exception thrown on invalid version string');
 
 {
     # make sure empty string default value still works
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Transpose->new;
     my $data = q|create table "sessions" (
         id char(32) not null DEFAULT '',
         ssn varchar(12) NOT NULL default "",
@@ -953,7 +953,7 @@ ok ($@, 'Exception thrown on invalid version string');
     # test rt70437 and rt71468
     my $file = "$Bin/data/mysql/cashmusic_db.sql";
     ok (-f $file,"File exists");
-    my $tr = SQL::Translator->new( parser => 'MySQL');
+    my $tr = SQL::Transpose->new( parser => 'MySQL');
     ok ($tr->translate($file),'File translated');
     ok (!$tr->error, 'no error');
     ok (my $schema = $tr->schema, 'got schema');

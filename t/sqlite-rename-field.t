@@ -6,9 +6,9 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use DBI;
-use SQL::Translator;
-use SQL::Translator::Parser::SQLite;
-use SQL::Translator::Diff;
+use SQL::Transpose;
+use SQL::Transpose::Parser::SQLite;
+use SQL::Transpose::Diff;
 
 eval "use DBD::SQLite";
 plan skip_all => "DBD::SQLite required" if $@;
@@ -37,21 +37,21 @@ CREATE TABLE "Foo" (
 );
 DDL
 
-my $source_sqlt = SQL::Translator->new(
+my $source_sqlt = SQL::Transpose->new(
     no_comments => 1,
-    parser   => 'SQL::Translator::Parser::SQLite',
+    parser   => 'SQL::Transpose::Parser::SQLite',
 )->translate(\$source_ddl);
 
-my $target_sqlt = SQL::Translator->new(
+my $target_sqlt = SQL::Transpose->new(
     no_comments => 1,
-    parser   => 'SQL::Translator::Parser::SQLite',
+    parser   => 'SQL::Transpose::Parser::SQLite',
 )->translate(\$target_ddl);
 
 my $table = $target_sqlt->get_table('Foo');
 my $field = $table->get_field('biff');
 $field->extra( renamed_from => 'bar' );
 
-my @diff = SQL::Translator::Diff->new({
+my @diff = SQL::Transpose::Diff->new({
     output_db => 'SQLite',
     source_schema => $source_sqlt,
     target_schema => $target_sqlt,

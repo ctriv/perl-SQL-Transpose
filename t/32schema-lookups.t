@@ -10,12 +10,12 @@ use strict;
 use FindBin qw/$Bin/;
 
 use Test::More;
-use Test::SQL::Translator;
+use Test::SQL::Transpose;
 #use Test::Exception;
 use Data::Dumper;
-use SQL::Translator;
-use SQL::Translator::Schema;
-use SQL::Translator::Schema::Constants;
+use SQL::Transpose;
+use SQL::Transpose::Schema;
+use SQL::Transpose::Schema::Constants;
 
 # Simple options. -d for debug
 my %opt;
@@ -25,7 +25,7 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 # Setup a (somewaht contrived!) test schema
 #=============================================================================
 
-my $schema = SQL::Translator::Schema->new( name => "Lookup-tests" );
+my $schema = SQL::Transpose::Schema->new( name => "Lookup-tests" );
 
 my $tbl_order = $schema->add_table( name => "Order" );
 
@@ -83,24 +83,24 @@ my (@flds,@cons);
 
 @flds = $tbl_order->pkey_fields;
 is( join(",",@flds), "order_id", "pkey_fields" );
-isa_ok( $flds[0], "SQL::Translator::Schema::Field" );
+isa_ok( $flds[0], "SQL::Transpose::Schema::Field" );
 
 @flds = $tbl_order->fkey_fields;
 is( join(",",@flds), "customer_id", "fkey_fields" );
-isa_ok( $flds[0], "SQL::Translator::Schema::Field" );
+isa_ok( $flds[0], "SQL::Transpose::Schema::Field" );
 
 @flds = $tbl_order->nonpkey_fields;
 is( join(",",@flds), "customer_id,invoice_number,notes", "nonpkey_fields" );
-isa_ok( $flds[0], "SQL::Translator::Schema::Field" );
-isa_ok( $flds[1], "SQL::Translator::Schema::Field" );
+isa_ok( $flds[0], "SQL::Transpose::Schema::Field" );
+isa_ok( $flds[1], "SQL::Transpose::Schema::Field" );
 
 @flds = $tbl_order->data_fields;
 is( join(",",@flds), "invoice_number,notes", "data_fields" );
-isa_ok( $flds[0], "SQL::Translator::Schema::Field" );
+isa_ok( $flds[0], "SQL::Transpose::Schema::Field" );
 
 @flds = $tbl_order->unique_fields;
 is( join(",",@flds), "invoice_number", "unique_fields" );
-isa_ok( $flds[0], "SQL::Translator::Schema::Field" );
+isa_ok( $flds[0], "SQL::Transpose::Schema::Field" );
 
 @cons = $tbl_order->unique_constraints;
 is( scalar @cons, 1, "Number of unique_constraints is 1" );

@@ -6,11 +6,11 @@
 
 use strict;
 
-use SQL::Translator;
+use SQL::Transpose;
 use Test::More tests => 2;
 
 my $datafile = "t/data/mysql/Apache-Session-MySQL.sql";
-my $tr0 = SQL::Translator->new(filename => $datafile);
-my $tr1 = SQL::Translator->new(filename => [$datafile]);
+my $tr0 = SQL::Transpose->new(filename => $datafile);
+my $tr1 = SQL::Transpose->new(filename => [$datafile]);
 ok($tr0, "filename takes a Str");
 ok($tr1, "filename takes an ArrayRef");
