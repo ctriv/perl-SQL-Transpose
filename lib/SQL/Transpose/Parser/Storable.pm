@@ -37,7 +37,8 @@ sub parse {
     if (defined($data)) {
         $translator->{'schema'} = Storable::thaw($data);
         return 1;
-    } elsif (defined($translator->filename)) {
+    }
+    elsif (defined($translator->filename)) {
         $translator->{'schema'} = Storable::retrieve($translator->filename);
         return 1;
     }

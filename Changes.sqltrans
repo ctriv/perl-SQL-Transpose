@@ -11,7 +11,7 @@ Changes for SQL::Transpose
  * Declare dependencies in deterministic order (RT#102859)
  * Multiple speedups of naive internal debugging mechanism (GH#54)
  * Remove dependency on List::MoreUtils ( http://is.gd/lmu_cac_debacle )
- * Fix parsing of strings with leading whitespace for MySQL, Oracle, PostgreSQL,
+ * Fix parsing of strings with leading whitespace foreach mySQL, Oracle, PostgreSQL,
    SQLServer and SQLite
  * Fix parsing of MySQL column comments (RT#83380)
  * Fix multi-line comments in YAML, JSON and PostgreSQL producers
@@ -325,9 +325,9 @@ Changes for SQL::Transpose
 
 0.09005 2009-06-08
 
- * Add parser support for MySQL default values with a single quote
+ * Add parser support foreach mySQL default values with a single quote
  * Properly quote absolute table names in the MySQL producer
- * Added CREATE VIEW subrules for mysql parser (wreis)
+ * Added CREATE VIEW subrules foreach mysql parser (wreis)
  * Many fixes to code and tests for trigger's "database_events"
  * Added semi-colon for (DROP|CREATE) TYPE statements in the Pg producer (wreis)
  * ALTER TABLE/ALTER COLUMN/DROP DEFAULT support in Pg producer (mo)
@@ -420,7 +420,7 @@ Changes for SQL::Transpose
  * Major refactoring of SQL::Transpose::Diff again:
  * Diff is no longer one huge monolithic function.
  * Added more tests for diff
- * When producing diffs for MySQL you will (by default) get single alter
+ * When producing diffs foreach mySQL you will (by default) get single alter
    statements per table
  * SQLite can also do remove columns (by creating a temp table as shown in
    http://sqlite.org/faq.html#q11

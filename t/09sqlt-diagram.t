@@ -9,17 +9,11 @@ use Test::SQL::Transpose qw(maybe_plan);
 use Text::ParseWords qw(shellwords);
 
 BEGIN {
-    maybe_plan(
-        3,
-        'GD',
-        'Graph::Directed',
-        'SQL::Transpose::Producer::Diagram',
-        'SQL::Transpose::Parser::MySQL',
-    );
+    maybe_plan(3, 'GD', 'Graph::Directed', 'SQL::Transpose::Producer::Diagram', 'SQL::Transpose::Parser::MySQL',);
 }
 
 my @script = qw(script sqlt-diagram);
-my @data = qw(data mysql create2.sql);
+my @data   = qw(data mysql create2.sql);
 
 my $sqlt_diagram = catfile($Bin, updir, @script);
 my $test_data = catfile($Bin, @data);
@@ -27,7 +21,7 @@ my $test_data = catfile($Bin, @data);
 my $tmp = mktemp('sqlXXXXX');
 
 ok(-e $sqlt_diagram);
-my @cmd = ($^X, shellwords($ENV{HARNESS_PERL_SWITCHES}||''), $sqlt_diagram, "-d", "MySQL", "-o", $tmp, $test_data);
+my @cmd = ($^X, shellwords($ENV{HARNESS_PERL_SWITCHES} || ''), $sqlt_diagram, "-d", "MySQL", "-o", $tmp, $test_data);
 eval { system(@cmd); };
 ok(!$@ && ($? == 0));
 ok(-e $tmp);

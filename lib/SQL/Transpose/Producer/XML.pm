@@ -29,5 +29,4 @@ $DEBUG = 1 unless defined $DEBUG;
 
 use base 'SQL::Transpose::Producer::XML::SQLFairy';
 
-
 1;

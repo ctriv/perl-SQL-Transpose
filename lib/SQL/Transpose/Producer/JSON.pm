@@ -26,63 +26,53 @@ sub produce {
     my $translator = shift;
     my $schema     = $translator->schema;
 
-    return to_json({
-        schema => {
-            tables => {
-                map { ($_->name => view_table($_)) }
-                    $schema->get_tables,
+    return to_json(
+        {
+            schema => {
+                tables     => {map { ($_->name => view_table($_)) } $schema->get_tables,},
+                views      => {map { ($_->name => view_view($_)) } $schema->get_views,},
+                triggers   => {map { ($_->name => view_trigger($_)) } $schema->get_triggers,},
+                procedures => {map { ($_->name => view_procedure($_)) } $schema->get_procedures,},
             },
-            views => {
-                map { ($_->name => view_view($_)) }
-                    $schema->get_views,
+            translator => {
+                add_drop_table => $translator->add_drop_table,
+                filename       => $translator->filename,
+                no_comments    => $translator->no_comments,
+                parser_args    => $translator->parser_args,
+                producer_args  => $translator->producer_args,
+                parser_type    => $translator->parser_type,
+                producer_type  => $translator->producer_type,
+                show_warnings  => $translator->show_warnings,
+                trace          => $translator->trace,
             },
-            triggers => {
-                map { ($_->name => view_trigger($_)) }
-                    $schema->get_triggers,
-            },
-            procedures => {
-                map { ($_->name => view_procedure($_)) }
-                    $schema->get_procedures,
-            },
-        },
-        translator => {
-            add_drop_table => $translator->add_drop_table,
-            filename       => $translator->filename,
-            no_comments    => $translator->no_comments,
-            parser_args    => $translator->parser_args,
-            producer_args  => $translator->producer_args,
-            parser_type    => $translator->parser_type,
-            producer_type  => $translator->producer_type,
-            show_warnings  => $translator->show_warnings,
-            trace          => $translator->trace,
-        },
-        keys %{$schema->extra} ? ('extra' => { $schema->extra } ) : (),
-    }, {
-        allow_blessed => 1,
-        allow_unknown => 1,
-        %{$translator->producer_args},
-    });
+            keys %{$schema->extra} ? ('extra' => {$schema->extra}) : (),
+        }, {
+            allow_blessed => 1,
+            allow_unknown => 1,
+            %{$translator->producer_args},
+        }
+    );
 }
 
 sub view_table {
     my $table = shift;
 
     return {
-        'name'        => $table->name,
-        'order'       => $table->order,
-        'options'     => $table->options  || [],
-        $table->comments ? ('comments'    => [ $table->comments ] ) : (),
+        'name'    => $table->name,
+        'order'   => $table->order,
+        'options' => $table->options || [],
+        $table->comments ? ('comments' => [$table->comments]) : (),
         'constraints' => [
             map { view_constraint($_) } $table->get_constraints
         ],
-        'indices'     => [
+        'indices' => [
             map { view_index($_) } $table->get_indices
         ],
-        'fields'      => {
+        'fields' => {
             map { ($_->name => view_field($_)) }
                 $table->get_fields
         },
-        keys %{$table->extra} ? ('extra' => { $table->extra } ) : (),
+        keys %{$table->extra} ? ('extra' => {$table->extra}) : (),
     };
 }
 
@@ -92,16 +82,16 @@ sub view_constraint {
     return {
         'deferrable'       => scalar $constraint->deferrable,
         'expression'       => scalar $constraint->expression,
-        'fields'           => [ map { ref $_ ? $_->name : $_ } $constraint->field_names ],
+        'fields'           => [map { ref $_ ? $_->name : $_ } $constraint->field_names],
         'match_type'       => scalar $constraint->match_type,
         'name'             => scalar $constraint->name,
         'options'          => scalar $constraint->options,
         'on_delete'        => scalar $constraint->on_delete,
         'on_update'        => scalar $constraint->on_update,
-        'reference_fields' => [ map { ref $_ ? $_->name : $_ } $constraint->reference_fields ],
+        'reference_fields' => [map { ref $_ ? $_->name : $_ } $constraint->reference_fields],
         'reference_table'  => scalar $constraint->reference_table,
         'type'             => scalar $constraint->type,
-        keys %{$constraint->extra} ? ('extra' => { $constraint->extra } ) : (),
+        keys %{$constraint->extra} ? ('extra' => {$constraint->extra}) : (),
     };
 }
 
@@ -109,17 +99,17 @@ sub view_field {
     my $field = shift;
 
     return {
-        'order'             => scalar $field->order,
-        'name'              => scalar $field->name,
-        'data_type'         => scalar $field->data_type,
-        'size'              => [ $field->size ],
-        'default_value'     => scalar $field->default_value,
-        'is_nullable'       => scalar $field->is_nullable,
-        'is_primary_key'    => scalar $field->is_primary_key,
-        'is_unique'         => scalar $field->is_unique,
-        $field->is_auto_increment ? ('is_auto_increment' => 1) : (),
-        $field->comments ? ('comments' => [ $field->comments ]) : (),
-        keys %{$field->extra} ? ('extra' => { $field->extra } ) : (),
+        'order'          => scalar $field->order,
+        'name'           => scalar $field->name,
+        'data_type'      => scalar $field->data_type,
+        'size'           => [$field->size],
+        'default_value'  => scalar $field->default_value,
+        'is_nullable'    => scalar $field->is_nullable,
+        'is_primary_key' => scalar $field->is_primary_key,
+        'is_unique'      => scalar $field->is_unique,
+        $field->is_auto_increment ? ('is_auto_increment' => 1)                  : (),
+        $field->comments          ? ('comments'          => [$field->comments]) : (),
+        keys %{$field->extra}     ? ('extra'             => {$field->extra})    : (),
     };
 }
 
@@ -133,7 +123,7 @@ sub view_procedure {
         'parameters' => scalar $procedure->parameters,
         'owner'      => scalar $procedure->owner,
         'comments'   => scalar $procedure->comments,
-        keys %{$procedure->extra} ? ('extra' => { $procedure->extra } ) : (),
+        keys %{$procedure->extra} ? ('extra' => {$procedure->extra}) : (),
     };
 }
 
@@ -148,7 +138,7 @@ sub view_trigger {
         'fields'              => scalar $trigger->fields,
         'on_table'            => scalar $trigger->on_table,
         'action'              => scalar $trigger->action,
-        keys %{$trigger->extra} ? ('extra' => { $trigger->extra } ) : (),
+        keys %{$trigger->extra} ? ('extra' => {$trigger->extra}) : (),
     };
 }
 
@@ -160,7 +150,7 @@ sub view_view {
         'name'   => scalar $view->name,
         'sql'    => scalar $view->sql,
         'fields' => scalar $view->fields,
-        keys %{$view->extra} ? ('extra' => { $view->extra } ) : (),
+        keys %{$view->extra} ? ('extra' => {$view->extra}) : (),
     };
 }
 
@@ -168,11 +158,11 @@ sub view_index {
     my $index = shift;
 
     return {
-        'name'      => scalar $index->name,
-        'type'      => scalar $index->type,
-        'fields'    => scalar $index->fields,
-        'options'   => scalar $index->options,
-        keys %{$index->extra} ? ('extra' => { $index->extra } ) : (),
+        'name'    => scalar $index->name,
+        'type'    => scalar $index->type,
+        'fields'  => scalar $index->fields,
+        'options' => scalar $index->options,
+        keys %{$index->extra} ? ('extra' => {$index->extra}) : (),
     };
 }
 

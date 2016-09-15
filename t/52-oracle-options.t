@@ -10,8 +10,7 @@ use SQL::Transpose;
 use SQL::Transpose::Schema::Constants;
 
 BEGIN {
-    maybe_plan(3, 'SQL::Transpose::Parser::YAML',
-                  'SQL::Transpose::Producer::Oracle');
+    maybe_plan(3, 'SQL::Transpose::Parser::YAML', 'SQL::Transpose::Producer::Oracle');
 }
 
 my $yamlfile = "$Bin/data/oracle/schema_with_options.yaml";
@@ -28,6 +27,6 @@ my $sql_string = $sqlt->translate(
     filename => $yamlfile,
 );
 
-ok($sql_string, 'Translation successfull');
+ok($sql_string,                        'Translation successfull');
 ok($sql_string =~ /TABLESPACE\s+DATA/, 'Table options');
 ok($sql_string =~ /TABLESPACE\s+INDX/, 'Index options');

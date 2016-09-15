@@ -13,7 +13,10 @@ I<documentation volunteers needed>
 
 use Moo;
 
-has quote_chars => ( is => 'ro', default => sub { +[qw(` `)] } );
+has quote_chars => (
+    is      => 'ro',
+    default => sub { +[qw(` `)] }
+);
 
 with 'SQL::Transpose::Generator::Role::Quote';
 

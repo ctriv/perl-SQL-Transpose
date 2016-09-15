@@ -11,7 +11,10 @@ use Test::SQL::Transpose qw(maybe_plan);
 
 use Data::Dumper;
 use vars '%opt';
-BEGIN { map { $opt{$_}=1 if s/^-// } @ARGV; }
+
+BEGIN {
+    map { $opt{$_} = 1 if s/^-// } @ARGV;
+}
 use constant DEBUG => (exists $opt{d} ? 1 : 0);
 
 use FindBin qw/$Bin/;
@@ -21,7 +24,7 @@ use File::Temp qw/tempdir/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(8, 'Template 2.20', 'Test::Differences')
+    maybe_plan(8, 'Template 2.20', 'Test::Differences');
 }
 use Test::Differences;
 
@@ -29,19 +32,19 @@ use SQL::Transpose;
 use SQL::Transpose::Producer::TT::Table;
 
 # Setup a tmp directory we can output files to.
-my $tdir = tempdir( CLEANUP => 1 );
+my $tdir = tempdir(CLEANUP => 1);
 
 # Parse the test XML schema
 my $obj;
 $obj = SQL::Transpose->new(
-    debug          => DEBUG, #$opt{d},
+    debug          => DEBUG,                        #$opt{d},
     show_warnings  => 1,
     add_drop_table => 1,
     from           => "SQLite",
     filename       => "$Bin/data/sqlite/create.sql",
     to             => "TT-Table",
     producer_args  => {
-        tt_table => "$Bin/data/template/table.tt",
+        tt_table      => "$Bin/data/template/table.tt",
         mk_files      => 1,
         mk_files_base => "$tdir",
         mk_file_ext   => "txt",
@@ -49,23 +52,20 @@ $obj = SQL::Transpose->new(
     },
 );
 my $out;
-lives_ok { $out = $obj->translate; }  "Translate ran";
-ok $out ne ""                        ,"Produced something!";
+lives_ok { $out = $obj->translate; } "Translate ran";
+ok $out ne "", "Produced something!";
 warn $obj->error unless $out;
 
 # Normal output looks ok
 local $/ = undef; # slurp
-eq_or_diff
-  $out,
-  do { local (@ARGV, $/) = "$Bin/data/template/testresult_table.txt"; <> },
-  "Output looks right"
-;
+eq_or_diff $out, do { local (@ARGV, $/) = "$Bin/data/template/testresult_table.txt"; <> },
+    "Output looks right";
 
 # File output
 my @files = glob("$tdir/*.txt");
-ok( @files == 2, "Wrote 2 files." );
-is( $files[0], "$tdir/person.txt" , "Wrote person.txt" );
-is( $files[1], "$tdir/pet.txt"    , "Wrote pet.txt" );
+ok(@files == 2, "Wrote 2 files.");
+is($files[0], "$tdir/person.txt", "Wrote person.txt");
+is($files[1], "$tdir/pet.txt",    "Wrote pet.txt");
 
 open(FILE, "$tdir/person.txt") || die "Couldn't open $tdir/person.txt : $!";
 eq_or_diff <FILE>, qq{Table: person
@@ -74,7 +74,7 @@ eq_or_diff <FILE>, qq{Table: person
   Data Fields:  name, age, weight, iq, description
 
 }
-, "person.txt looks right";
+    , "person.txt looks right";
 close(FILE);
 
 open(FILE, "$tdir/pet.txt") || die "Couldn't open $tdir/pet.txt : $!";
@@ -84,8 +84,9 @@ eq_or_diff <FILE>, qq{Table: pet
   Data Fields:  name, age
 
 }
-, "pet.txt looks right";
+    , "pet.txt looks right";
 close(FILE);
 
 print $out if DEBUG;
+
 #print "Debug:", Dumper($obj) if DEBUG;

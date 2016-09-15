@@ -32,24 +32,23 @@ use warnings;
 
 sub filter {
     my $schema = shift;
-    my %args = %{$_[0]};
+    my %args   = %{$_[0]};
 
     # Tables
     #if ( my $func = $args{tables} ) {
     #    _filtername($_,$func) foreach ( $schema->get_tables );
     #}
     # ,
-    foreach my $type ( qw/tables procedures triggers views/ ) {
-        if ( my $func = $args{$type} ) {
+    foreach my $type (qw/tables procedures triggers views/) {
+        if (my $func = $args{$type}) {
             my $meth = "get_$type";
-            _filtername($_,$func) foreach $schema->$meth;
+            _filtername($_, $func) foreach $schema->$meth;
         }
     }
 
     # Fields
-    if ( my $func = $args{fields} ) {
-        _filtername($_,$func)
-        foreach map { $_->get_fields } $schema->get_tables ;
+    if (my $func = $args{fields}) {
+        _filtername($_, $func) foreach map { $_->get_fields } $schema->get_tables;
     }
 
 }
@@ -59,12 +58,12 @@ sub filter {
 # Objects with no name are skipped.
 # Returns true if the name was changed. Dies if there is an error running func.
 sub _filtername {
-    my ($obj,$func) = @_;
+    my ($obj, $func) = @_;
     return unless my $name = $obj->name;
     $func = _getfunc($func);
     my $newname = eval { $func->($name) };
-    die "$@" if $@; # TODO - Better message!
-    return if $name eq $newname;
+    die "$@" if $@;               # TODO - Better message!
+    return   if $name eq $newname;
     $_->name($newname);
 }
 
@@ -77,15 +76,13 @@ sub _getfunc {
     \&$func;
 }
 
-
-
 # The name munging functions
 #=============================================================================
 # Get called with name to munge as first arg and return the new name. Die on
 # errors.
 
-sub lc { lc shift; }
-sub uc { uc shift; }
+sub lc      { lc shift; }
+sub uc      { uc shift; }
 sub ucfirst { ucfirst shift; }
 
 1; #==========================================================================

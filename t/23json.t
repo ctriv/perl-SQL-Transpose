@@ -7,15 +7,11 @@ use SQL::Transpose;
 use FindBin '$Bin';
 
 BEGIN {
-    maybe_plan(
-        2,
-        'SQL::Transpose::Parser::SQLite',
-        'SQL::Transpose::Producer::JSON',
-    );
+    maybe_plan(2, 'SQL::Transpose::Parser::SQLite', 'SQL::Transpose::Producer::JSON',);
 }
 
 use JSON;
-my $json = to_json(from_json(<<JSON), { canonical => 1, pretty => 1 });
+my $json = to_json(from_json(<<JSON), {canonical => 1, pretty => 1});
 {
    "schema" : {
       "procedures" : {},
@@ -292,16 +288,16 @@ my $file = "$Bin/data/sqlite/create.sql";
 open my $fh, '<', $file or die "Can't read '$file': $!\n";
 local $/;
 my $data = <$fh>;
-my $tr = SQL::Transpose->new(
-    parser => 'SQLite',
-    producer => 'JSON',
+my $tr   = SQL::Transpose->new(
+    parser        => 'SQLite',
+    producer      => 'JSON',
     producer_args => {
         canonical => 1,
-        pretty => 1,
+        pretty    => 1,
     },
     data => $data,
 );
 
 my $out;
-ok( $out = $tr->translate, 'Translate SQLite to JSON' ) || die $tr->error;
-eq_or_diff( $out, $json, 'JSON matches expected' );
+ok($out = $tr->translate, 'Translate SQLite to JSON') || die $tr->error;
+eq_or_diff($out, $json, 'JSON matches expected');

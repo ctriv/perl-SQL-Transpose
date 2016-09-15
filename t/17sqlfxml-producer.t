@@ -13,7 +13,10 @@ use Test::SQL::Transpose qw(maybe_plan);
 
 use Data::Dumper;
 my %opt;
-BEGIN { map { $opt{$_}=1 if s/^-// } @ARGV; }
+
+BEGIN {
+    map { $opt{$_} = 1 if s/^-// } @ARGV;
+}
 use constant DEBUG => (exists $opt{d} ? 1 : 0);
 use constant TRACE => (exists $opt{t} ? 1 : 0);
 
@@ -30,10 +33,7 @@ local $SIG{__WARN__} = sub {
 #=============================================================================
 
 BEGIN {
-    maybe_plan(14,
-        'XML::Writer',
-        'Test::Differences',
-        'SQL::Transpose::Producer::XML::SQLFairy');
+    maybe_plan(14, 'XML::Writer', 'Test::Differences', 'SQL::Transpose::Producer::XML::SQLFairy');
 }
 
 use Test::Differences;
@@ -43,10 +43,9 @@ use SQL::Transpose::Producer::XML::SQLFairy;
 # Due to formatters being able to change style, e.g. by entries in .rc files
 # in $HOME, the layout and or indent might differ slightly. As leading white
 # is not important in XML, strip it when comparing
-sub xml_equals
-{
+sub xml_equals {
     my ($got, $expect, $msg) = (@_, "XML looks right");
-    $got    =~ s/^ +//gm;
+    $got =~ s/^ +//gm;
     $expect =~ s/^ +//gm;
     eq_or_diff $got, $expect, $msg;
 }
@@ -55,9 +54,9 @@ sub xml_equals
 # basic stuff
 #
 {
-my ($obj,$ans,$xml);
+    my ($obj, $ans, $xml);
 
-$ans = <<EOXML;
+    $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables>
@@ -103,20 +102,21 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-$obj = SQL::Transpose->new(
-    debug          => DEBUG,
-    trace          => TRACE,
-    show_warnings  => 1,
-    add_drop_table => 1,
-    from           => "MySQL",
-    to             => "XML-SQLFairy",
-);
-$xml = $obj->translate($file) or die $obj->error;
-ok("$xml" ne ""                             ,"Produced something!");
-print "XML:\n$xml" if DEBUG;
-# Strip sqlf header with its variable date so we diff safely
-$xml =~ s/^([^\n]*\n){7}//m;
-xml_equals $xml, $ans;
+    $obj = SQL::Transpose->new(
+        debug          => DEBUG,
+        trace          => TRACE,
+        show_warnings  => 1,
+        add_drop_table => 1,
+        from           => "MySQL",
+        to             => "XML-SQLFairy",
+    );
+    $xml = $obj->translate($file) or die $obj->error;
+    ok("$xml" ne "", "Produced something!");
+    print "XML:\n$xml" if DEBUG;
+
+    # Strip sqlf header with its variable date so we diff safely
+    $xml =~ s/^([^\n]*\n){7}//m;
+    xml_equals $xml, $ans;
 
 } # end basic stuff
 
@@ -125,9 +125,9 @@ xml_equals $xml, $ans;
 #
 # Thanks to Ken for the schema setup lifted from 13schema.t
 {
-my ($obj,$ans,$xml);
+    my ($obj, $ans, $xml);
 
-$ans = <<EOXML;
+    $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables></tables>
@@ -158,15 +158,16 @@ EOXML
         name   => $name,
         sql    => $sql,
         fields => $fields,
-        extra  => { hello => "world" },
+        extra  => {hello => "world"},
         schema => $s,
     ) or die $s->error;
 
     # As we have created a Schema we give translate a dummy string so that
     # it will run the produce.
-    lives_ok {$xml =$obj->translate("FOO");} "Translate (View) ran";
-    ok("$xml" ne ""                             ,"Produced something!");
+    lives_ok { $xml = $obj->translate("FOO"); } "Translate (View) ran";
+    ok("$xml" ne "", "Produced something!");
     print "XML attrib_values=>1:\n$xml" if DEBUG;
+
     # Strip sqlf header with its variable date so we diff safely
     $xml =~ s/^([^\n]*\n){7}//m;
     xml_equals $xml, $ans;
@@ -177,9 +178,9 @@ EOXML
 #
 # Thanks to Ken for the schema setup lifted from 13schema.t
 {
-my ($obj,$ans,$xml);
+    my ($obj, $ans, $xml);
 
-$ans = <<EOXML;
+    $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables>
@@ -215,21 +216,22 @@ EOXML
     my $perform_action_when = 'after';
     my $database_event      = 'insert';
     my $action              = 'update modified=timestamp();';
-    my $table = $s->add_table( name => "Basic" ) or die $s->error;
+    my $table               = $s->add_table(name => "Basic") or die $s->error;
     my $t                   = $s->add_trigger(
         name                => $name,
         perform_action_when => $perform_action_when,
         database_events     => [$database_event],
         table               => $table,
         action              => $action,
-        extra               => { hello => "world" },
+        extra               => {hello => "world"},
     ) or die $s->error;
 
     # As we have created a Schema we give translate a dummy string so that
     # it will run the produce.
-    lives_ok {$xml =$obj->translate("FOO");} "Translate (Trigger) ran";
-    ok("$xml" ne ""                             ,"Produced something!");
+    lives_ok { $xml = $obj->translate("FOO"); } "Translate (Trigger) ran";
+    ok("$xml" ne "", "Produced something!");
     print "XML attrib_values=>1:\n$xml" if DEBUG;
+
     # Strip sqlf header with its variable date so we diff safely
     $xml =~ s/^([^\n]*\n){7}//m;
     xml_equals $xml, $ans;
@@ -240,9 +242,9 @@ EOXML
 #
 # Thanks to Ken for the schema setup lifted from 13schema.t
 {
-my ($obj,$ans,$xml);
+    my ($obj, $ans, $xml);
 
-$ans = <<EOXML;
+    $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables></tables>
@@ -278,14 +280,15 @@ EOXML
         parameters => $parameters,
         owner      => $owner,
         comments   => $comments,
-        extra      => { hello => "world" },
+        extra      => {hello => "world"},
     ) or die $s->error;
 
     # As we have created a Schema we give translate a dummy string so that
     # it will run the produce.
-    lives_ok {$xml =$obj->translate("FOO");} "Translate (Procedure) ran";
-    ok("$xml" ne ""                             ,"Produced something!");
+    lives_ok { $xml = $obj->translate("FOO"); } "Translate (Procedure) ran";
+    ok("$xml" ne "", "Produced something!");
     print "XML attrib_values=>1:\n$xml" if DEBUG;
+
     # Strip sqlf header with its variable date so we diff safely
     $xml =~ s/^([^\n]*\n){7}//m;
     xml_equals $xml, $ans;
@@ -295,9 +298,9 @@ EOXML
 # Field.extra
 #
 {
-my ($obj,$ans,$xml);
+    my ($obj, $ans, $xml);
 
-$ans = <<EOXML;
+    $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables>
@@ -337,7 +340,7 @@ EOXML
         to             => "XML-SQLFairy",
     );
     my $s = $obj->schema;
-    my $t = $s->add_table( name => "Basic" ) or die $s->error;
+    my $t = $s->add_table(name => "Basic") or die $s->error;
     my $f = $t->add_field(
         name      => "foo",
         data_type => "integer",
@@ -353,15 +356,15 @@ EOXML
     $t->add_field(
         name      => "baz",
         data_type => "decimal",
-        size      => [8,3],
+        size      => [8, 3],
     ) or die $t->error;
-
 
     # As we have created a Schema we give translate a dummy string so that
     # it will run the produce.
-    lives_ok {$xml =$obj->translate("FOO");} "Translate (Field.extra) ran";
-    ok("$xml" ne ""                             ,"Produced something!");
+    lives_ok { $xml = $obj->translate("FOO"); } "Translate (Field.extra) ran";
+    ok("$xml" ne "", "Produced something!");
     print "XML:\n$xml" if DEBUG;
+
     # Strip sqlf header with its variable date so we diff safely
     $xml =~ s/^([^\n]*\n){7}//m;
     xml_equals $xml, $ans;

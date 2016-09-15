@@ -24,47 +24,46 @@ use SQL::Transpose::Schema::Constants;
 use SQL::Transpose::Utils qw(debug header_comment parse_dbms_version batch_alter_table_statements);
 use SQL::Transpose::Generator::DDL::SQLite;
 
-our ( $DEBUG, $WARN );
+our ($DEBUG, $WARN);
 $DEBUG = 0 unless defined $DEBUG;
-$WARN = 0 unless defined $WARN;
+$WARN  = 0 unless defined $WARN;
 
-our $max_id_length    = 30;
+our $max_id_length = 30;
 my %global_names;
 
 # HIDEOUS TEMPORARY DEFAULT WITHOUT QUOTING!
 our $NO_QUOTES = 1;
 {
 
-  my ($quoting_generator, $nonquoting_generator);
-  sub _generator {
-    $NO_QUOTES
-      ? $nonquoting_generator ||= SQL::Transpose::Generator::DDL::SQLite->new(quote_chars => [])
-      : $quoting_generator ||= SQL::Transpose::Generator::DDL::SQLite->new
-  }
+    my ($quoting_generator, $nonquoting_generator);
+
+    sub _generator {
+        $NO_QUOTES
+            ? $nonquoting_generator ||= SQL::Transpose::Generator::DDL::SQLite->new(quote_chars => [])
+            : $quoting_generator ||= SQL::Transpose::Generator::DDL::SQLite->new;
+    }
 }
 
 sub produce {
-    my $self           = shift;
-    my $translator     = shift;
-    local $DEBUG       = $translator->debug;
-    local $WARN        = $translator->show_warnings;
+    my $self       = shift;
+    my $translator = shift;
+    local $DEBUG = $translator->debug;
+    local $WARN  = $translator->show_warnings;
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
     my $producer_args  = $translator->producer_args;
-    my $sqlite_version = parse_dbms_version(
-        $producer_args->{sqlite_version}, 'perl'
-    );
+    my $sqlite_version = parse_dbms_version($producer_args->{sqlite_version}, 'perl');
     my $no_txn         = $producer_args->{no_transaction};
 
     debug("PKG: Beginning production\n");
 
-    %global_names = ();   #reset
+    %global_names = (); #reset
 
     # only quote if quotes were requested for real
     # 0E0 indicates "the default of true" was assumed
     local $NO_QUOTES = 0
-      if $translator->quote_identifiers and $translator->quote_identifiers ne '0E0';
+        if $translator->quote_identifiers and $translator->quote_identifiers ne '0E0';
 
     my $head = (header_comment() . "\n") unless $no_comments;
 
@@ -72,36 +71,44 @@ sub produce {
 
     push @create, "BEGIN TRANSACTION" unless $no_txn;
 
-    for my $table ( $schema->get_tables ) {
-        push @create, $self->create_table($table, { no_comments => $no_comments,
-                                             sqlite_version => $sqlite_version,
-                                          add_drop_table => $add_drop_table,});
+    foreach my $table ($schema->get_tables) {
+        push @create,
+            $self->create_table(
+            $table, {
+                no_comments    => $no_comments,
+                sqlite_version => $sqlite_version,
+                add_drop_table => $add_drop_table,
+            }
+            );
     }
 
-    for my $view ( $schema->get_views ) {
-      push @create, $self->create_view($view, {
-        add_drop_view => $add_drop_table,
-        no_comments   => $no_comments,
-      });
+    foreach my $view ($schema->get_views) {
+        push @create,
+            $self->create_view(
+            $view, {
+                add_drop_view => $add_drop_table,
+                no_comments   => $no_comments,
+            }
+            );
     }
 
-    for my $trigger ( $schema->get_triggers ) {
-      push @create, $self->create_trigger($trigger, {
-        add_drop_trigger => $add_drop_table,
-        no_comments   => $no_comments,
-      });
+    foreach my $trigger ($schema->get_triggers) {
+        push @create,
+            $self->create_trigger(
+            $trigger, {
+                add_drop_trigger => $add_drop_table,
+                no_comments      => $no_comments,
+            }
+            );
     }
 
     push @create, "COMMIT" unless $no_txn;
 
     if (wantarray) {
-      return ($head||(), @create);
-    } else {
-      return join ('',
-        $head||(),
-        join(";\n\n", @create ),
-        ";\n",
-      );
+        return ($head || (), @create);
+    }
+    else {
+        return join('', $head || (), join(";\n\n", @create), ";\n",);
     }
 }
 
@@ -109,19 +116,18 @@ sub mk_name {
     my ($self, $name, $scope, $critical) = @_;
 
     $scope ||= \%global_names;
-    if ( my $prev = $scope->{ $name } ) {
+    if (my $prev = $scope->{$name}) {
         my $name_orig = $name;
-        $name        .= sprintf( "%02d", ++$prev );
+        $name .= sprintf("%02d", ++$prev);
         substr($name, $max_id_length - 3) = "00"
-            if length( $name ) > $max_id_length;
+            if length($name) > $max_id_length;
 
-        warn "The name '$name_orig' has been changed to ",
-             "'$name' to make it unique.\n" if $WARN;
+        warn "The name '$name_orig' has been changed to ", "'$name' to make it unique.\n" if $WARN;
 
-        $scope->{ $name_orig }++;
+        $scope->{$name_orig}++;
     }
 
-    $scope->{ $name }++;
+    $scope->{$name}++;
     return $self->_generator()->quote($name);
 }
 
@@ -140,39 +146,37 @@ sub create_view {
     push @create, "DROP VIEW IF EXISTS $view_name" if $add_drop_view;
 
     my $create_view = 'CREATE';
-    $create_view .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
+    $create_view .= " TEMPORARY"     if exists($extra->{temporary})     && $extra->{temporary};
     $create_view .= ' VIEW';
     $create_view .= " IF NOT EXISTS" if exists($extra->{if_not_exists}) && $extra->{if_not_exists};
     $create_view .= " ${view_name}";
 
-    if( my $sql = $view->sql ){
-      $create_view .= " AS\n    ${sql}";
+    if (my $sql = $view->sql) {
+        $create_view .= " AS\n    ${sql}";
     }
     push @create, $create_view;
 
     # Tack the comment onto the first statement.
     unless ($options->{no_comments}) {
-      $create[0] = "--\n-- View: ${view_name}\n--\n" . $create[0];
+        $create[0] = "--\n-- View: ${view_name}\n--\n" . $create[0];
     }
 
     return @create;
 }
 
-
-sub create_table
-{
+sub create_table {
     my ($self, $table, $options) = @_;
 
     my $table_name = $self->_generator()->quote($table->name);
     $global_names{$table->name} = 1;
 
-    my $no_comments = $options->{no_comments};
+    my $no_comments    = $options->{no_comments};
     my $add_drop_table = $options->{add_drop_table};
     my $sqlite_version = $options->{sqlite_version} || 0;
 
     debug("PKG: Looking at table '$table_name'\n");
 
-    my ( @index_defs, @constraint_defs );
+    my (@index_defs, @constraint_defs);
     my @fields = $table->get_fields or die "No fields in $table_name";
 
     my $temp = $options->{temporary_table} ? 'TEMPORARY ' : '';
@@ -182,11 +186,12 @@ sub create_table
     my $exists = ($sqlite_version >= 3.003) ? ' IF EXISTS' : '';
     my @create;
     my ($comment, $create_table) = "";
-    $comment =  "--\n-- Table: $table_name\n--\n" unless $no_comments;
+    $comment = "--\n-- Table: $table_name\n--\n" unless $no_comments;
     if ($add_drop_table) {
-      push @create, $comment . qq[DROP TABLE$exists $table_name];
-    } else {
-      $create_table = $comment;
+        push @create, $comment . qq[DROP TABLE$exists $table_name];
+    }
+    else {
+        $create_table = $comment;
     }
 
     $create_table .= "CREATE ${temp}TABLE $table_name (\n";
@@ -194,45 +199,42 @@ sub create_table
     #
     # Comments
     #
-    if ( $table->comments and !$no_comments ){
+    if ($table->comments and !$no_comments) {
         $create_table .= "-- Comments: \n-- ";
-        $create_table .= join "\n-- ",  $table->comments;
+        $create_table .= join "\n-- ", $table->comments;
         $create_table .= "\n--\n\n";
     }
 
     #
     # How many fields in PK?
     #
-    my $pk        = $table->primary_key;
+    my $pk = $table->primary_key;
     my @pk_fields = $pk ? $pk->fields : ();
 
     #
     # Fields
     #
-    my ( @field_defs, $pk_set );
-    for my $field ( @fields ) {
+    my (@field_defs, $pk_set);
+    foreach my $field (@fields) {
         push @field_defs, $self->create_field($field);
     }
 
-    if (
-         scalar @pk_fields > 1
-         ||
-         ( @pk_fields && !grep /INTEGER PRIMARY KEY/, @field_defs )
-         ) {
-        push @field_defs, 'PRIMARY KEY (' . join(', ', map { $self->_generator()->quote($_) } @pk_fields ) . ')';
+    if (scalar @pk_fields > 1
+        || (@pk_fields && !grep /INTEGER PRIMARY KEY/, @field_defs)) {
+        push @field_defs, 'PRIMARY KEY (' . join(', ', map { $self->_generator()->quote($_) } @pk_fields) . ')';
     }
 
     #
     # Indices
     #
-    for my $index ( $table->get_indices ) {
+    foreach my $index ($table->get_indices) {
         push @index_defs, $self->create_index($index);
     }
 
     #
     # Constraints
     #
-    for my $c ( $table->get_constraints ) {
+    foreach my $c ($table->get_constraints) {
         if ($c->type eq "FOREIGN KEY") {
             push @field_defs, $self->create_foreignkey($c);
         }
@@ -243,33 +245,33 @@ sub create_table
         push @constraint_defs, $self->create_constraint($c);
     }
 
-    $create_table .= join(",\n", map { "  $_" } @field_defs ) . "\n)";
+    $create_table .= join(",\n", map { "  $_" } @field_defs) . "\n)";
 
-    return (@create, $create_table, @index_defs, @constraint_defs );
+    return (@create, $create_table, @index_defs, @constraint_defs);
 }
 
 sub create_check_constraint {
     my $self  = shift;
     my $c     = shift;
     my $check = '';
-    $check .= 'CONSTRAINT ' . _generator->quote( $c->name ) . ' ' if $c->name;
+    $check .= 'CONSTRAINT ' . _generator->quote($c->name) . ' ' if $c->name;
     $check .= 'CHECK(' . $c->expression . ')';
     return $check;
 }
 
 sub create_foreignkey {
     my $self = shift;
-    my $c = shift;
+    my $c    = shift;
 
     my @fields = $c->fields;
     my @rfields = map { $_ || () } $c->reference_fields;
-    unless ( @rfields ) {
+    unless (@rfields) {
         my $rtable_name = $c->reference_table;
-        if ( my $ref_table = $c->schema->get_table( $rtable_name ) ) {
+        if (my $ref_table = $c->schema->get_table($rtable_name)) {
             push @rfields, $ref_table->primary_key;
 
             die "FK constraint on " . $rtable_name . '.' . join('', @fields) . " has no reference fields\n"
-              unless @rfields;
+                unless @rfields;
         }
         else {
             die "Can't find reference table '$rtable_name' in schema\n";
@@ -277,10 +279,9 @@ sub create_foreignkey {
     }
 
     my $fk_sql = sprintf 'FOREIGN KEY (%s) REFERENCES %s(%s)',
-        join (', ', map { $self->_generator()->quote($_) } @fields ),
+        join(', ', map { $self->_generator()->quote($_) } @fields),
         $self->_generator()->quote($c->reference_table),
-        join (', ', map { $self->_generator()->quote($_) } @rfields )
-    ;
+        join(', ', map { $self->_generator()->quote($_) } @rfields);
 
     $fk_sql .= " ON DELETE " . $c->{on_delete} if $c->{on_delete};
     $fk_sql .= " ON UPDATE " . $c->{on_update} if $c->{on_update};
@@ -290,254 +291,251 @@ sub create_foreignkey {
 
 sub create_field { return shift->_generator()->field(@_) }
 
-sub create_index
-{
+sub create_index {
     my ($self, $index, $options) = @_;
 
     (my $index_table_name = $index->table->name) =~ s/^.+?\.//; # table name may not specify schema
-    my $name   = $self->mk_name($index->name || "${index_table_name}_idx");
+    my $name = $self->mk_name($index->name || "${index_table_name}_idx");
 
-    my $type   = $index->type eq 'UNIQUE' ? "UNIQUE " : '';
+    my $type = $index->type eq 'UNIQUE' ? "UNIQUE " : '';
 
     # strip any field size qualifiers as SQLite doesn't like these
     my @fields = map { s/\(\d+\)$//; $self->_generator()->quote($_) } $index->fields;
     $index_table_name = $self->_generator()->quote($index_table_name);
     warn "removing schema name from '" . $index->table->name . "' to make '$index_table_name'\n" if $WARN;
-    my $index_def =
-    "CREATE ${type}INDEX $name ON " . $index_table_name .
-        ' (' . join( ', ', @fields ) . ')';
+    my $index_def = "CREATE ${type}INDEX $name ON " . $index_table_name . ' (' . join(', ', @fields) . ')';
 
     return $index_def;
 }
 
-sub create_constraint
-{
+sub create_constraint {
     my ($self, $c, $options) = @_;
 
     (my $index_table_name = $c->table->name) =~ s/^.+?\.//; # table name may not specify schema
-    my $name   = $self->mk_name($c->name || "${index_table_name}_idx");
+    my $name = $self->mk_name($c->name || "${index_table_name}_idx");
     my @fields = map { $self->_generator()->quote($_) } $c->fields;
     $index_table_name = $self->_generator()->quote($index_table_name);
     warn "removing schema name from '" . $c->table->name . "' to make '$index_table_name'\n" if $WARN;
 
-    my $c_def =
-    "CREATE UNIQUE INDEX $name ON " . $index_table_name .
-        ' (' . join( ', ', @fields ) . ')';
+    my $c_def = "CREATE UNIQUE INDEX $name ON " . $index_table_name . ' (' . join(', ', @fields) . ')';
 
     return $c_def;
 }
 
 sub create_trigger {
-  my ($self, $trigger, $options) = @_;
-  my $add_drop = $options->{add_drop_trigger};
+    my ($self, $trigger, $options) = @_;
+    my $add_drop = $options->{add_drop_trigger};
 
-  my @statements;
+    my @statements;
 
-  my $trigger_name = $trigger->name;
-  $global_names{$trigger_name} = 1;
+    my $trigger_name = $trigger->name;
+    $global_names{$trigger_name} = 1;
 
-  my $events = $trigger->database_events;
-  for my $evt ( @$events ) {
+    my $events = $trigger->database_events;
+    foreach my $evt (@$events) {
 
-    my $trig_name = $trigger_name;
-    if (@$events > 1) {
-      $trig_name .= "_$evt";
+        my $trig_name = $trigger_name;
+        if (@$events > 1) {
+            $trig_name .= "_$evt";
 
-      warn "Multiple database events supplied for trigger '$trigger_name', ",
-        "creating trigger '$trig_name' for the '$evt' event.\n" if $WARN;
+            warn "Multiple database events supplied for trigger '$trigger_name', ", "creating trigger '$trig_name' for the '$evt' event.\n" if $WARN;
+        }
+
+        $trig_name = $self->_generator()->quote($trig_name);
+        push @statements, "DROP TRIGGER IF EXISTS $trig_name" if $add_drop;
+
+        $DB::single = 1;
+        my $action = "";
+        if (not ref $trigger->action) {
+            $action = $trigger->action;
+            $action = "BEGIN " . $action . " END"
+                unless $action =~ /^ \s* BEGIN [\s\;] .*? [\s\;] END [\s\;]* $/six;
+        }
+        else {
+            $action = $trigger->action->{for_each} . " "
+                if $trigger->action->{for_each};
+
+            $action = $trigger->action->{when} . " "
+                if $trigger->action->{when};
+
+            my $steps = $trigger->action->{steps} || [];
+
+            $action .= "BEGIN ";
+            $action .= $_ . "; " for (@$steps);
+            $action .= "END";
+        }
+
+        push @statements,
+            sprintf(
+            'CREATE TRIGGER %s %s %s on %s %s',
+            $trig_name, $trigger->perform_action_when,
+            $evt, $self->_generator()->quote($trigger->on_table), $action
+            );
     }
 
-    $trig_name = $self->_generator()->quote($trig_name);
-    push @statements,  "DROP TRIGGER IF EXISTS $trig_name" if $add_drop;
-
-
-    $DB::single = 1;
-    my $action = "";
-    if (not ref $trigger->action) {
-      $action = $trigger->action;
-      $action = "BEGIN " . $action . " END"
-        unless $action =~ /^ \s* BEGIN [\s\;] .*? [\s\;] END [\s\;]* $/six;
-    }
-    else {
-      $action = $trigger->action->{for_each} . " "
-        if $trigger->action->{for_each};
-
-      $action = $trigger->action->{when} . " "
-        if $trigger->action->{when};
-
-      my $steps = $trigger->action->{steps} || [];
-
-      $action .= "BEGIN ";
-      $action .= $_ . "; " for (@$steps);
-      $action .= "END";
-    }
-
-    push @statements, sprintf (
-      'CREATE TRIGGER %s %s %s on %s %s',
-      $trig_name,
-      $trigger->perform_action_when,
-      $evt,
-      $self->_generator()->quote($trigger->on_table),
-      $action
-    );
-  }
-
-  return @statements;
+    return @statements;
 }
 
 sub alter_table { () } # Noop
 
 sub add_field {
-  my ($self, $field) = @_;
+    my ($self, $field) = @_;
 
-  return sprintf("ALTER TABLE %s ADD COLUMN %s",
-      $self->_generator()->quote($field->table->name), $self->create_field($field))
+    return sprintf("ALTER TABLE %s ADD COLUMN %s", $self->_generator()->quote($field->table->name), $self->create_field($field));
 }
 
 sub alter_create_index {
-  my ($self, $index) = @_;
+    my ($self, $index) = @_;
 
-  # This might cause name collisions
-  return $self->create_index($index);
+    # This might cause name collisions
+    return $self->create_index($index);
 }
 
 sub alter_create_constraint {
-  my ($self, $constraint) = @_;
+    my ($self, $constraint) = @_;
 
-  return $self->create_constraint($constraint) if $constraint->type eq 'UNIQUE';
+    return $self->create_constraint($constraint) if $constraint->type eq 'UNIQUE';
 }
 
 sub alter_drop_constraint { alter_drop_index(@_) }
 
 sub alter_drop_index {
-  my ($self, $constraint) = @_;
+    my ($self, $constraint) = @_;
 
-  return sprintf("DROP INDEX %s",
-      $self->_generator()->quote($constraint->name));
+    return sprintf("DROP INDEX %s", $self->_generator()->quote($constraint->name));
 }
 
 sub batch_alter_table {
-  my ($self, $table, $diffs, $options) = @_;
+    my ($self, $table, $diffs, $options) = @_;
 
-  # If we have any of the following
-  #
-  #  rename_field
-  #  alter_field
-  #  drop_field
-  #
-  # we need to do the following <http://www.sqlite.org/faq.html#q11>
-  #
-  # BEGIN TRANSACTION;
-  # CREATE TEMPORARY TABLE t1_backup(a,b);
-  # INSERT INTO t1_backup SELECT a,b FROM t1;
-  # DROP TABLE t1;
-  # CREATE TABLE t1(a,b);
-  # INSERT INTO t1 SELECT a,b FROM t1_backup;
-  # DROP TABLE t1_backup;
-  # COMMIT;
-  #
-  # Fun, eh?
-  #
-  # If we have rename_field we do similarly.
-  #
-  # We create the temporary table as a copy of the new table, copy all data
-  # to temp table, create new table and then copy as appropriate taking note
-  # of renamed fields.
+    # If we have any of the following
+    #
+    #  rename_field
+    #  alter_field
+    #  drop_field
+    #
+    # we need to do the following <http://www.sqlite.org/faq.html#q11>
+    #
+    # BEGIN TRANSACTION;
+    # CREATE TEMPORARY TABLE t1_backup(a,b);
+    # INSERT INTO t1_backup SELECT a,b FROM t1;
+    # DROP TABLE t1;
+    # CREATE TABLE t1(a,b);
+    # INSERT INTO t1 SELECT a,b FROM t1_backup;
+    # DROP TABLE t1_backup;
+    # COMMIT;
+    #
+    # Fun, eh?
+    #
+    # If we have rename_field we do similarly.
+    #
+    # We create the temporary table as a copy of the new table, copy all data
+    # to temp table, create new table and then copy as appropriate taking note
+    # of renamed fields.
 
-  my $table_name = $table->name;
+    my $table_name = $table->name;
 
-  if ( @{$diffs->{rename_field}} == 0 &&
-       @{$diffs->{alter_field}}  == 0 &&
-       @{$diffs->{drop_field}}   == 0
-       ) {
-    return batch_alter_table_statements($self, $diffs, $options);
-  }
+    if (   @{$diffs->{rename_field}} == 0
+        && @{$diffs->{alter_field}} == 0
+        && @{$diffs->{drop_field}} == 0) {
+        return batch_alter_table_statements($self, $diffs, $options);
+    }
 
-  my @sql;
+    my @sql;
 
-  # $table is the new table but we may need an old one
-  # TODO: this is NOT very well tested at the moment so add more tests
+    # $table is the new table but we may need an old one
+    # TODO: this is NOT very well tested at the moment so add more tests
 
-  my $old_table = $table;
+    my $old_table = $table;
 
-  if ( $diffs->{rename_table} && @{$diffs->{rename_table}} ) {
-    $old_table = $diffs->{rename_table}[0][0];
-  }
+    if ($diffs->{rename_table} && @{$diffs->{rename_table}}) {
+        $old_table = $diffs->{rename_table}[0][0];
+    }
 
-  my $temp_table_name = $table_name . '_temp_alter';
+    my $temp_table_name = $table_name . '_temp_alter';
 
-  # CREATE TEMPORARY TABLE t1_backup(a,b);
+    # CREATE TEMPORARY TABLE t1_backup(a,b);
 
-  my %temp_table_fields;
-  do {
-    local $table->{name} = $temp_table_name;
-    # We only want the table - don't care about indexes on tmp table
-    my ($table_sql) = $self->create_table($table, {no_comments => 1, temporary_table => 1});
-    push @sql,$table_sql;
+    my %temp_table_fields;
+    do {
+        local $table->{name} = $temp_table_name;
 
-    %temp_table_fields = map { $_ => 1} $table->get_fields;
-  };
+        # We only want the table - don't care about indexes on tmp table
+        my ($table_sql) = $self->create_table(
+            $table, {
+                no_comments     => 1,
+                temporary_table => 1
+            }
+        );
+        push @sql, $table_sql;
 
-  # record renamed fields for later
-  my %rename_field = map { $_->[1]->name => $_->[0]->name } @{$diffs->{rename_field}};
+        %temp_table_fields = map { $_ => 1 } $table->get_fields;
+    };
 
-  # drop added fields from %temp_table_fields
-  delete @temp_table_fields{@{$diffs->{add_field}}};
+    # record renamed fields for later
+    my %rename_field = map { $_->[1]->name => $_->[0]->name } @{$diffs->{rename_field}};
 
-  # INSERT INTO t1_backup SELECT a,b FROM t1;
+    # drop added fields from %temp_table_fields
+    delete @temp_table_fields{@{$diffs->{add_field}}};
 
-  push @sql, sprintf( 'INSERT INTO %s( %s) SELECT %s FROM %s',
+    # INSERT INTO t1_backup SELECT a,b FROM t1;
 
-    $self->_generator()->quote( $temp_table_name ),
+    push @sql, sprintf(
+        'INSERT INTO %s( %s) SELECT %s FROM %s',
 
-    join( ', ',
-        map  { $self->_generator()->quote($_) }
-        grep { $temp_table_fields{$_} } $table->get_fields ),
+        $self->_generator()->quote($temp_table_name),
 
-    join( ', ',
-        map { $self->_generator()->quote($_) }
-        map { $rename_field{$_} ? $rename_field{$_} : $_ }
-        grep { $temp_table_fields{$_} } $table->get_fields ),
+        join(
+            ', ', map { $self->_generator()->quote($_) }
+                grep { $temp_table_fields{$_} } $table->get_fields
+        ),
 
-    $self->_generator()->quote( $old_table->name )
-  );
+        join(', ',
+            map      { $self->_generator()->quote($_) }
+                map  { $rename_field{$_} ? $rename_field{$_} : $_ }
+                grep { $temp_table_fields{$_} } $table->get_fields),
 
-  # DROP TABLE t1;
+        $self->_generator()->quote($old_table->name)
+    );
 
-  push @sql, sprintf('DROP TABLE %s', $self->_generator()->quote($old_table->name));
+    # DROP TABLE t1;
 
-  # CREATE TABLE t1(a,b);
+    push @sql, sprintf('DROP TABLE %s', $self->_generator()->quote($old_table->name));
 
-  push @sql, $self->create_table($table, { no_comments => 1 });
+    # CREATE TABLE t1(a,b);
 
-  # INSERT INTO t1 SELECT a,b FROM t1_backup;
+    push @sql, $self->create_table($table, {no_comments => 1});
 
-  push @sql, sprintf('INSERT INTO %s SELECT %s FROM %s',
-    $self->_generator()->quote($table_name),
-    join(', ', map { $self->_generator()->quote($_) } $table->get_fields),
-    $self->_generator()->quote($temp_table_name)
-  );
+    # INSERT INTO t1 SELECT a,b FROM t1_backup;
 
-  # DROP TABLE t1_backup;
+    push @sql,
+        sprintf(
+        'INSERT INTO %s SELECT %s FROM %s',
+        $self->_generator()->quote($table_name),
+        join(', ', map { $self->_generator()->quote($_) } $table->get_fields),
+        $self->_generator()->quote($temp_table_name)
+        );
 
-  push @sql, sprintf('DROP TABLE %s', $self->_generator()->quote($temp_table_name));
+    # DROP TABLE t1_backup;
 
-  return wantarray ? @sql : join(";\n", @sql);
+    push @sql, sprintf('DROP TABLE %s', $self->_generator()->quote($temp_table_name));
+
+    return wantarray ? @sql : join(";\n", @sql);
 }
 
 sub drop_table {
-  my ($self, $table) = @_;
-  $table = $self->_generator()->quote($table);
-  return "DROP TABLE $table";
+    my ($self, $table) = @_;
+    $table = $self->_generator()->quote($table);
+    return "DROP TABLE $table";
 }
 
 sub rename_table {
-  my ($self, $old_table, $new_table, $options) = @_;
+    my ($self, $old_table, $new_table, $options) = @_;
 
-  $old_table = $self->_generator()->quote($old_table);
-  $new_table = $self->_generator()->quote($new_table);
+    $old_table = $self->_generator()->quote($old_table);
+    $new_table = $self->_generator()->quote($new_table);
 
-  return "ALTER TABLE $old_table RENAME TO $new_table";
+    return "ALTER TABLE $old_table RENAME TO $new_table";
 
 }
 

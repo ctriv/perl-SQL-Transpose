@@ -36,10 +36,10 @@ use Moo::Role;
 use Sub::Quote qw(quote_sub);
 
 has _ERROR => (
-    is => 'rw',
+    is       => 'rw',
     accessor => 'error',
     init_arg => undef,
-    default => quote_sub(q{ '' }),
+    default  => quote_sub(q{ '' }),
 );
 
 =head1 METHODS

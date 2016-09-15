@@ -12,7 +12,7 @@ use SQL::Transpose::Schema::Constraint;
 use SQL::Transpose::Producer::Oracle;
 
 {
-    my $table1 = SQL::Transpose::Schema::Table->new( name => 'table1' );
+    my $table1 = SQL::Transpose::Schema::Table->new(name => 'table1');
 
     my $table1_field1 = $table1->add_field(
         name              => 'fk_col1',
@@ -36,7 +36,7 @@ use SQL::Transpose::Producer::Oracle;
         is_unique         => 0
     );
 
-    my $table2 = SQL::Transpose::Schema::Table->new( name => 'table2' );
+    my $table2 = SQL::Transpose::Schema::Table->new(name => 'table2');
 
     my $table2_field1 = $table2->add_field(
         name              => 'fk_col1',
@@ -68,14 +68,11 @@ use SQL::Transpose::Producer::Oracle;
         type             => FOREIGN_KEY,
     );
 
-    my ($table1_def, $fk1_def, $trigger1_def,
-        $index1_def, $constraint1_def
-    ) = SQL::Transpose::Producer::Oracle->create_table($table1);
+    my ($table1_def, $fk1_def, $trigger1_def, $index1_def, $constraint1_def) = SQL::Transpose::Producer::Oracle->create_table($table1);
 
     is_deeply(
         $fk1_def,
-        [   'ALTER TABLE table1 ADD CONSTRAINT table1_fk_col1_fk_col2_fk FOREIGN KEY (fk_col1, fk_col2) REFERENCES table2 (fk_col1, fk_col2)'
-        ],
+        ['ALTER TABLE table1 ADD CONSTRAINT table1_fk_col1_fk_col2_fk FOREIGN KEY (fk_col1, fk_col2) REFERENCES table2 (fk_col1, fk_col2)'],
         'correct "CREATE CONSTRAINT" SQL'
     );
 }

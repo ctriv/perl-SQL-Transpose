@@ -18,17 +18,16 @@ local $SIG{__WARN__} = sub {
 };
 
 BEGIN {
-    maybe_plan(2,
-        'SQL::Transpose::Parser::MySQL',
-        'SQL::Transpose::Producer::XML::SQLFairy');
+    maybe_plan(2, 'SQL::Transpose::Parser::MySQL', 'SQL::Transpose::Producer::XML::SQLFairy');
 }
 
 my @data = qw(data mysql BGEP-RE-create.sql);
-my $test_data = (-d "t")
+my $test_data
+    = (-d "t")
     ? catfile($Bin, @data)
     : catfile($Bin, "t", @data);
 
-my $tr       =  SQL::Transpose->new(
+my $tr = SQL::Transpose->new(
     parser   => 'MySQL',
     producer => 'XML-SQLFairy',
     filename => $test_data
@@ -38,21 +37,20 @@ my $data = $tr->translate;
 ok($data, "MySQL->XML-SQLFairy");
 
 SKIP: {
-    eval {
-        require XML::Parser;
-    };
+    eval { require XML::Parser; };
     if ($@) {
         skip "Can't load XML::Parser" => 1;
     }
 
     # Can't get XML::Parser::parsestring to do Useful Things
-    my ($fh, $fname) = tempfile('sqlfXXXX',
-                                UNLINK => 1,
-                                SUFFIX => '.xml',
-                                DIR => tmpdir);
+    my ($fh, $fname) = tempfile(
+        'sqlfXXXX',
+        UNLINK => 1,
+        SUFFIX => '.xml',
+        DIR    => tmpdir
+    );
     print $fh $data;
     close $fh;
 
-    ok(XML::Parser->new->parsefile($fname),
-        "Successfully parsed output");
+    ok(XML::Parser->new->parsefile($fname), "Successfully parsed output");
 }

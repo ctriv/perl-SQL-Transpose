@@ -36,22 +36,22 @@ use warnings;
 
 sub filter {
     my $schema = shift;
-    my %args = { +shift };
+    my %args   = {+shift};
 
     # Tables
-    foreach ( $schema->get_tables ) {
+    foreach ($schema->get_tables) {
         my %extra = $_->extra;
 
         $extra{label} ||= ucfirst($_->name);
-        $_->extra( %extra );
+        $_->extra(%extra);
     }
 
     # Fields
-    foreach ( map { $_->get_fields } $schema->get_tables ) {
+    foreach (map { $_->get_fields } $schema->get_tables) {
         my %extra = $_->extra;
 
         $extra{label} ||= ucfirst($_->name);
-        $_->extra( %extra );
+        $_->extra(%extra);
     }
 }
 

@@ -15,9 +15,9 @@ sub silly_parser {
     my @fields = split /$pargs->{'delimiter'}/, $data;
 
     my $schema = $tr->schema;
-    my $table  = $schema->add_table( name => 'foo') or die $schema->error;
-    for my $value ( @fields ) {
-        my $field = $table->add_field( name => $value ) or die $table->error;
+    my $table = $schema->add_table(name => 'foo') or die $schema->error;
+    foreach my $value (@fields) {
+        my $field = $table->add_field(name => $value) or die $table->error;
     }
 
     return 1;
@@ -32,14 +32,14 @@ my $tr = SQL::Transpose->new;
 $tr->parser(\&silly_parser);
 $tr->parser_args(delimiter => '\|');
 
-my $pargs  = $tr->parser_args;
+my $pargs = $tr->parser_args;
 $tr->translate(\$data);
 my $schema = $tr->schema;
 
 is($pargs->{'delimiter'}, '\|', "parser_args works when called directly");
 my @tables = $schema->get_tables;
 is(scalar @tables, 1, "right number of tables");
-my $table = shift @tables;
+my $table  = shift @tables;
 my @fields = $table->get_fields;
 is(scalar @fields, 4, "right number of fields");
 
@@ -49,33 +49,33 @@ is(scalar @fields, 4, "right number of fields");
 $tr->reset;
 
 # Now, pass parser_args indirectly...
-$tr->parser(\&silly_parser, { delimiter => "\t" });
+$tr->parser(\&silly_parser, {delimiter => "\t"});
 $data =~ s/\|/\t/g;
 
 $pargs = $tr->parser_args;
 $tr->translate(\$data);
 
-is($pargs->{'delimiter'}, "\t",
-    "parser_args works when called indirectly");
+is($pargs->{'delimiter'}, "\t", "parser_args works when called indirectly");
 
 @tables = $schema->get_tables;
 is(scalar @tables, 1, "right number of tables");
-$table = shift @tables;
+$table  = shift @tables;
 @fields = $table->get_fields;
 is(scalar @fields, 4, "right number of fields");
 
 undef $tr;
-$tr = SQL::Transpose->new(parser => \&silly_parser,
-                           parser_args => { delimiter => ":" });
+$tr = SQL::Transpose->new(
+    parser      => \&silly_parser,
+    parser_args => {delimiter => ":"}
+);
 $data =~ s/\t/:/g;
 $pargs = $tr->parser_args;
 $tr->translate(\$data);
 
-is($pargs->{'delimiter'}, ":",
-    "parser_args works when called as constructor arg");
+is($pargs->{'delimiter'}, ":", "parser_args works when called as constructor arg");
 
 @tables = $schema->get_tables;
 is(scalar @tables, 1, "right number of tables");
-$table = shift @tables;
+$table  = shift @tables;
 @fields = $table->get_fields;
 is(scalar @fields, 4, "right number of fields with new delimiter");

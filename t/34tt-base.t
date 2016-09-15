@@ -10,17 +10,15 @@ use Test::Exception;
 use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(4, 'Template 2.20',
-               'Test::Differences',
-               'SQL::Transpose::Parser::XML::SQLFairy')
+    maybe_plan(4, 'Template 2.20', 'Test::Differences', 'SQL::Transpose::Parser::XML::SQLFairy');
 }
 use Test::Differences;
 
 use SQL::Transpose;
 use FindBin qw/$Bin/;
+
 # Access to test libs. We want Producer/BaseTest.pm from here.
 use lib ("$Bin/lib");
-
 
 # Parse the test XML schema
 my $obj;
@@ -48,7 +46,7 @@ Fields: id num
 
 END
 
-lives_ok { $out = $obj->translate; }  "Translate ran";
-is $obj->error, ''                   ,"No errors";
-ok $out ne ""                        ,"Produced something!";
-eq_or_diff $out, $expected              ,"Output looks right";
+lives_ok { $out = $obj->translate; } "Translate ran";
+is $obj->error, '', "No errors";
+ok $out ne "", "Produced something!";
+eq_or_diff $out, $expected, "Output looks right";

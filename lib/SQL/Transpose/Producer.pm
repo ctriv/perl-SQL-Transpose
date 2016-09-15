@@ -18,35 +18,39 @@ sub produce {
 ## They are special per Producer, and provide support for the old 'now()'
 ## default value exceptions
 sub _apply_default_value {
-  my ($self, $field, $field_ref, $exceptions) = @_;
-  my $default = $field->default_value;
-  return if !defined $default;
+    my ($self, $field, $field_ref, $exceptions) = @_;
+    my $default = $field->default_value;
+    return if !defined $default;
 
-  if ($exceptions and ! ref $default) {
-    for (my $i = 0; $i < @$exceptions; $i += 2) {
-      my ($pat, $val) = @$exceptions[ $i, $i + 1 ];
-      if (ref $pat and $default =~ $pat) {
-          $default = $val;
-          last;
-      } elsif (lc $default eq lc $pat) {
-          $default = $val;
-          last
-      }
+    if ($exceptions and !ref $default) {
+        for (my $i = 0; $i < @$exceptions; $i += 2) {
+            my ($pat, $val) = @$exceptions[$i, $i + 1];
+            if (ref $pat and $default =~ $pat) {
+                $default = $val;
+                last;
+            }
+            elsif (lc $default eq lc $pat) {
+                $default = $val;
+                last;
+            }
+        }
     }
-  }
 
-  my $type = lc $field->data_type;
-  my $is_numeric_datatype = ($type =~ /^(?:(?:big|medium|small|tiny)?int(?:eger)?|decimal|double|float|num(?:ber|eric)?|real)$/);
+    my $type                = lc $field->data_type;
+    my $is_numeric_datatype = ($type =~ /^(?:(?:big|medium|small|tiny)?int(?:eger)?|decimal|double|float|num(?:ber|eric)?|real)$/);
 
-  if (ref $default) {
-      $$field_ref .= " DEFAULT $$default";
-  } elsif ($is_numeric_datatype && Scalar::Util::looks_like_number ($default) ) {
-    # we need to check the data itself in addition to the datatype, for basic safety
-      $$field_ref .= " DEFAULT $default";
-  } else {
-      $default = $self->_quote_string($default);
-      $$field_ref .= " DEFAULT $default";
-  }
+    if (ref $default) {
+        $$field_ref .= " DEFAULT $$default";
+    }
+    elsif ($is_numeric_datatype && Scalar::Util::looks_like_number($default)) {
+
+        # we need to check the data itself in addition to the datatype, for basic safety
+        $$field_ref .= " DEFAULT $default";
+    }
+    else {
+        $default = $self->_quote_string($default);
+        $$field_ref .= " DEFAULT $default";
+    }
 
 }
 

@@ -2,7 +2,7 @@ package SQL::Transpose::Producer::SQLServer;
 
 use strict;
 use warnings;
-our ( $DEBUG, $WARN );
+our ($DEBUG, $WARN);
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Transpose::Schema::Constants;
@@ -10,12 +10,12 @@ use SQL::Transpose::Utils qw(debug header_comment);
 use SQL::Transpose::Generator::DDL::SQLServer;
 
 sub produce {
-  my $self = shift;
-  my $translator = shift;
-  SQL::Transpose::Generator::DDL::SQLServer->new(
-    add_comments    => !$translator->no_comments,
-    add_drop_table => $translator->add_drop_table,
-  )->schema($translator->schema)
+    my $self       = shift;
+    my $translator = shift;
+    SQL::Transpose::Generator::DDL::SQLServer->new(
+        add_comments   => !$translator->no_comments,
+        add_drop_table => $translator->add_drop_table,
+    )->schema($translator->schema);
 }
 
 1;

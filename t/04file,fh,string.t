@@ -23,6 +23,7 @@ my $fh = IO::File->new($datafile);
 my ($v1, $v2);
 {
     my $tr = SQL::Transpose->new;
+
     # Pass filename: simplest way
     $tr->translate($datafile);
     $v1 = $tr->schema;
@@ -30,6 +31,7 @@ my ($v1, $v2);
 
 {
     my $tr = SQL::Transpose->new;
+
     # Pass string reference
     read($fh, $data, -s $datafile);
     $tr->translate(\$data);
@@ -37,7 +39,7 @@ my ($v1, $v2);
 }
 
 # XXX- Hack to remove Graph hack!
-$_->translator (undef) for ($v1, $v2);
+$_->translator(undef) for ($v1, $v2);
 
 ok(length $v1, "passing string (filename) works");
 ok(length $v2, "passing string as SCALAR reference");

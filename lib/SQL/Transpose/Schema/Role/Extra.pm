@@ -20,12 +20,11 @@ for schema objects.
 use Moo::Role;
 use Sub::Quote qw(quote_sub);
 
-
 =head1 METHODS
 
 =head2 extra
 
-Get or set the objects "extra" attributes (e.g., "ZEROFILL" for MySQL fields).
+Get or set the objects "extra" attributes (e.g., "ZEROFILL" foreach mySQL fields).
 Call with no args to get all the extra data.
 Call with a single name arg to get the value of the named extra attribute,
 returned as a scalar. Call with a hash or hashref to set extra attributes.
@@ -40,7 +39,10 @@ Returns a hash or a hashref.
 
 =cut
 
-has extra => ( is => 'rwp', default => quote_sub(q{ +{} }) );
+has extra => (
+    is      => 'rwp',
+    default => quote_sub(q{ +{} })
+);
 
 around extra => sub {
     my ($orig, $self) = (shift, shift);
@@ -48,12 +50,12 @@ around extra => sub {
     @_ = %{$_[0]} if ref $_[0] eq "HASH";
     my $extra = $self->$orig;
 
-    if (@_==1) {
+    if (@_ == 1) {
         return $extra->{$_[0]};
     }
     elsif (@_) {
         my %args = @_;
-        while ( my ( $key, $value ) = each %args ) {
+        while (my ($key, $value) = each %args) {
             $extra->{$key} = $value;
         }
     }
@@ -77,7 +79,7 @@ certain extra attributes only.
 =cut
 
 sub remove_extra {
-    my ( $self, @keys ) = @_;
+    my ($self, @keys) = @_;
     unless (@keys) {
         $self->_set_extra({});
     }

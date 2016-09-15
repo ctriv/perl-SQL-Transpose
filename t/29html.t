@@ -13,11 +13,7 @@ use Test::SQL::Transpose qw(maybe_plan);
 use SQL::Transpose;
 
 BEGIN {
-    maybe_plan(5,
-        'CGI',
-        'HTML::Parser',
-        'SQL::Transpose::Parser::MySQL',
-        'SQL::Transpose::Producer::HTML');
+    maybe_plan(5, 'CGI', 'HTML::Parser', 'SQL::Transpose::Parser::MySQL', 'SQL::Transpose::Producer::HTML');
 }
 
 my ($p, $tables, $classes);
@@ -31,13 +27,14 @@ CREATE TABLE foo (
 );
 |;
 
-my $tr = SQL::Transpose->new(parser => 'MySQL', producer => 'HTML');
+my $tr = SQL::Transpose->new(
+    parser   => 'MySQL',
+    producer => 'HTML'
+);
 my $parsed = $tr->translate(data => $create) or die $tr->error;
 my $status;
 
-eval {
-    $status = $p->parse($parsed);
-};
+eval { $status = $p->parse($parsed); };
 if ($@) {
     daig $@;
     fail("Unable to parse the output!");
@@ -72,29 +69,32 @@ BEGIN {
             sub {
                 my $tagname = shift;
                 $tables++ if ($tagname eq 'table');
-            }, 'tagname',
+            },
+            'tagname',
         ],
 
         count_classes => [
             sub {
                 my ($tagname, $attr) = @_;
-                if ($tagname eq 'table' &&
-                    $attr->{'class'} &&
-                    $attr->{'class'} eq 'LinkTable') {
+                if (   $tagname eq 'table'
+                    && $attr->{'class'}
+                    && $attr->{'class'} eq 'LinkTable') {
                     $classes++;
                 }
-            }, 'tagname,attr',
+            },
+            'tagname,attr',
         ],
 
         sqlfairy => [
             sub {
                 my ($tagname, $attr) = @_;
-                if ($tagname eq 'a' &&
-                    $attr->{'href'} &&
-                    $attr->{'href'} =~ /sqlfairy/i) {
+                if (   $tagname eq 'a'
+                    && $attr->{'href'}
+                    && $attr->{'href'} =~ /sqlfairy/i) {
                     $classes++;
                 }
-            }, 'tagname,attr',
+            },
+            'tagname,attr',
         ],
     );
 }

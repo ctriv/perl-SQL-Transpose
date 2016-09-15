@@ -10,10 +10,8 @@ use Data::Dumper;
 use SQL::Transpose;
 use SQL::Transpose::Schema::Constants;
 
-
 BEGIN {
-    maybe_plan(2, 'SQL::Transpose::Parser::XML::SQLFairy',
-              'SQL::Transpose::Producer::SQLite');
+    maybe_plan(2, 'SQL::Transpose::Parser::XML::SQLFairy', 'SQL::Transpose::Producer::SQLite');
 }
 
 my $xmlfile = "$Bin/data/xml/schema.xml";
@@ -21,9 +19,9 @@ my $xmlfile = "$Bin/data/xml/schema.xml";
 my $sqlt;
 $sqlt = SQL::Transpose->new(
     quote_identifiers => 1,
-    no_comments => 1,
-    show_warnings  => 0,
-    add_drop_table => 1,
+    no_comments       => 1,
+    show_warnings     => 0,
+    add_drop_table    => 1,
 );
 
 die "Can't find test schema $xmlfile" unless -e $xmlfile;
@@ -93,11 +91,11 @@ my @sql = $sqlt->translate(
     filename => $xmlfile,
 ) or die $sqlt->error;
 
-eq_or_diff(\@sql,
-          [
-          'BEGIN TRANSACTION',
-          q<DROP TABLE "Basic">,
-          q<CREATE TABLE "Basic" (
+eq_or_diff(
+    \@sql, [
+        'BEGIN TRANSACTION',
+        q<DROP TABLE "Basic">,
+        q<CREATE TABLE "Basic" (
   "id" INTEGER PRIMARY KEY NOT NULL,
   "title" varchar(100) NOT NULL DEFAULT 'hello',
   "description" text DEFAULT '',
@@ -110,25 +108,26 @@ eq_or_diff(\@sql,
   "timest" timestamp,
   FOREIGN KEY ("another_id") REFERENCES "Another"("id")
 )>,
-          q<CREATE INDEX "titleindex" ON "Basic" ("title")>,
-          q<CREATE UNIQUE INDEX "emailuniqueindex" ON "Basic" ("email")>,
-          q<CREATE UNIQUE INDEX "very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms" ON "Basic" ("title")>,
-          q<DROP TABLE "Another">,
-          q<CREATE TABLE "Another" (
+        q<CREATE INDEX "titleindex" ON "Basic" ("title")>,
+        q<CREATE UNIQUE INDEX "emailuniqueindex" ON "Basic" ("email")>,
+        q<CREATE UNIQUE INDEX "very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms" ON "Basic" ("title")>,
+        q<DROP TABLE "Another">,
+        q<CREATE TABLE "Another" (
   "id" INTEGER PRIMARY KEY NOT NULL,
   "num" numeric(10,2)
 )>,
-          q<DROP VIEW IF EXISTS "email_list">,
-          q<CREATE VIEW "email_list" AS
+        q<DROP VIEW IF EXISTS "email_list">,
+        q<CREATE VIEW "email_list" AS
     SELECT email FROM Basic WHERE (email IS NOT NULL)>,
-          q<DROP TRIGGER IF EXISTS "foo_trigger">,
-          q<CREATE TRIGGER "foo_trigger" after insert on "Basic" BEGIN update modified=timestamp(); END>,
-          q<DROP TRIGGER IF EXISTS "bar_trigger_insert">,
-          q<CREATE TRIGGER "bar_trigger_insert" before insert on "Basic" BEGIN update modified2=timestamp(); END>,
-          q<DROP TRIGGER IF EXISTS "bar_trigger_update">,
-          q<CREATE TRIGGER "bar_trigger_update" before update on "Basic" BEGIN update modified2=timestamp(); END>,
-          'COMMIT',
+        q<DROP TRIGGER IF EXISTS "foo_trigger">,
+        q<CREATE TRIGGER "foo_trigger" after insert on "Basic" BEGIN update modified=timestamp(); END>,
+        q<DROP TRIGGER IF EXISTS "bar_trigger_insert">,
+        q<CREATE TRIGGER "bar_trigger_insert" before insert on "Basic" BEGIN update modified2=timestamp(); END>,
+        q<DROP TRIGGER IF EXISTS "bar_trigger_update">,
+        q<CREATE TRIGGER "bar_trigger_update" before update on "Basic" BEGIN update modified2=timestamp(); END>,
+        'COMMIT',
 
-          ], 'SQLite translate in list context matches');
-
+    ],
+    'SQLite translate in list context matches'
+);
 

@@ -13,22 +13,17 @@ use Symbol qw(gensym);
 use Text::ParseWords qw(shellwords);
 
 BEGIN {
-    maybe_plan(
-        5,
-        'DBI',
-        'SQL::Transpose::Parser::SQLite',
-        'SQL::Transpose::Producer::Dumper'
-    );
+    maybe_plan(5, 'DBI', 'SQL::Transpose::Parser::SQLite', 'SQL::Transpose::Producer::Dumper');
 }
 
-my $db_user         = 'nomar';
-my $db_pass         = 'gos0X!';
-my $dsn             = 'dbi:SQLite:dbname=/tmp/foo';
-my $file            = "$Bin/data/sqlite/create.sql";
-my $t               = SQL::Transpose->new(
-    from            => 'SQLite',
-    to              => 'Dumper',
-    producer_args   => {
+my $db_user = 'nomar';
+my $db_pass = 'gos0X!';
+my $dsn     = 'dbi:SQLite:dbname=/tmp/foo';
+my $file    = "$Bin/data/sqlite/create.sql";
+my $t       = SQL::Transpose->new(
+    from          => 'SQLite',
+    to            => 'Dumper',
+    producer_args => {
         skip        => 'pet',
         skiplike    => '',
         db_user     => $db_user,
@@ -37,25 +32,24 @@ my $t               = SQL::Transpose->new(
     }
 );
 
-my $output = $t->translate( $file );
-ok( $output, 'Got dumper script' );
+my $output = $t->translate($file);
+ok($output, 'Got dumper script');
 
-like( $output, qr{DBI->connect\(\s*'$dsn',\s*'$db_user',\s*'$db_pass',},
-    'Script contains correct DSN, db user and password' );
+like($output, qr{DBI->connect\(\s*'$dsn',\s*'$db_user',\s*'$db_pass',}, 'Script contains correct DSN, db user and password');
 
-like( $output, qr/table_name\s*=>\s*'person',/, 'Found "person" table' );
-unlike( $output, qr/table_name\s*=>\s*'pet',/, 'Skipped "pet" table' );
+like($output, qr/table_name\s*=>\s*'person',/, 'Found "person" table');
+unlike($output, qr/table_name\s*=>\s*'pet',/, 'Skipped "pet" table');
 
-my ( $fh, $filename ) = tempfile( 'XXXXXXXX' );
+my ($fh, $filename) = tempfile('XXXXXXXX');
 
 print $fh $output;
 close $fh or die "Can't close file '$filename': $!";
 
 my $out;
-my $pid = open3( undef, $out, undef, $^X, shellwords($ENV{HARNESS_PERL_SWITCHES}||''), '-cw', $filename );
+my $pid = open3(undef, $out, undef, $^X, shellwords($ENV{HARNESS_PERL_SWITCHES} || ''), '-cw', $filename);
 my $res = do { local $/; <$out> };
 waitpid($pid, 0);
 
-like( $res, qr/syntax OK/, 'Generated script syntax is OK' );
+like($res, qr/syntax OK/, 'Generated script syntax is OK');
 
 unlink $filename;

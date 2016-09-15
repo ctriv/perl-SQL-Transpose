@@ -32,13 +32,8 @@ use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Transpose::Schema::Object';
 
-my %VALID_CONSTRAINT_TYPE = (
-    PRIMARY_KEY, 1,
-    UNIQUE,      1,
-    CHECK_C,     1,
-    FOREIGN_KEY, 1,
-    NOT_NULL,    1,
-);
+# these are CONSTANTS, not strings....
+my %VALID_CONSTRAINT_TYPE = (PRIMARY_KEY, 1, UNIQUE, 1, CHECK_C, 1, FOREIGN_KEY, 1, NOT_NULL, 1,);
 
 =head2 new
 
@@ -87,8 +82,8 @@ False, so the following are equivalent:
 =cut
 
 has deferrable => (
-    is => 'rw',
-    coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
+    is      => 'rw',
+    coerce  => quote_sub(q{ $_[0] ? 1 : 0 }),
     default => quote_sub(q{ 1 }),
 );
 
@@ -100,7 +95,10 @@ Gets and set the expression used in a CHECK constraint.
 
 =cut
 
-has expression => ( is => 'rw', default => quote_sub(q{ '' }) );
+has expression => (
+    is      => 'rw',
+    default => quote_sub(q{ '' })
+);
 
 around expression => sub {
     my ($orig, $self, $arg) = @_;
@@ -120,50 +118,43 @@ Determine whether the constraint is valid or not.
 =cut
 
     my $self       = shift;
-    my $type       = $self->type   or return $self->error('No type');
-    my $table      = $self->table  or return $self->error('No table');
+    my $type       = $self->type or return $self->error('No type');
+    my $table      = $self->table or return $self->error('No table');
     my @fields     = $self->fields or return $self->error('No fields');
-    my $table_name = $table->name  or return $self->error('No table name');
+    my $table_name = $table->name or return $self->error('No table name');
 
-    for my $f ( @fields ) {
-        next if $table->get_field( $f );
-        return $self->error(
-            "Constraint references non-existent field '$f' ",
-            "in table '$table_name'"
-        );
+    foreach my $f (@fields) {
+        next if $table->get_field($f);
+        return $self->error("Constraint references non-existent field '$f' ", "in table '$table_name'");
     }
 
-    my $schema = $table->schema or return $self->error(
-        'Table ', $table->name, ' has no schema object'
-    );
+    my $schema = $table->schema or return $self->error('Table ', $table->name, ' has no schema object');
 
-    if ( $type eq FOREIGN_KEY ) {
+    if ($type eq FOREIGN_KEY) {
         return $self->error('Only one field allowed for foreign key')
             if scalar @fields > 1;
 
-        my $ref_table_name  = $self->reference_table or
-            return $self->error('No reference table');
+        my $ref_table_name = $self->reference_table
+            or return $self->error('No reference table');
 
-        my $ref_table = $schema->get_table( $ref_table_name ) or
-            return $self->error("No table named '$ref_table_name' in schema");
+        my $ref_table = $schema->get_table($ref_table_name)
+            or return $self->error("No table named '$ref_table_name' in schema");
 
         my @ref_fields = $self->reference_fields or return;
 
         return $self->error('Only one field allowed for foreign key reference')
             if scalar @ref_fields > 1;
 
-        for my $ref_field ( @ref_fields ) {
-            next if $ref_table->get_field( $ref_field );
-            return $self->error(
-                "Constraint from field(s) ".
-                join(', ', map {qq['$table_name.$_']} @fields).
-                " to non-existent field '$ref_table_name.$ref_field'"
-            );
+        foreach my $ref_field (@ref_fields) {
+            next if $ref_table->get_field($ref_field);
+            return $self->error("Constraint from field(s) "
+                    . join(', ', map { qq['$table_name.$_'] } @fields)
+                    . " to non-existent field '$ref_table_name.$ref_field'");
         }
     }
-    elsif ( $type eq CHECK_C ) {
-        return $self->error('No expression for CHECK') unless
-            $self->expression;
+    elsif ($type eq CHECK_C) {
+        return $self->error('No expression for CHECK')
+            unless $self->expression;
     }
 
     return 1;
@@ -192,12 +183,13 @@ Returns undef or an empty list if the constraint has no fields set.
 =cut
 
 sub fields {
-    my $self = shift;
-    my $table = $self->table;
+    my $self   = shift;
+    my $table  = $self->table;
     my @fields = map { $table->get_field($_) || $_ } @{$self->field_names(@_) || []};
-    return wantarray ? @fields
-        : @fields ? \@fields
-        : undef;
+    return
+          wantarray ? @fields
+        : @fields   ? \@fields
+        :             undef;
 }
 
 =head2 field_names
@@ -210,7 +202,10 @@ avoid the overload magic of the Field objects returned by the fields method.
 
 =cut
 
-with ListAttr field_names => ( uniq => 1, undef_if_empty => 1 );
+with ListAttr field_names => (
+    uniq           => 1,
+    undef_if_empty => 1
+);
 
 =head2 match_type
 
@@ -222,12 +217,15 @@ Get or set the constraint's match_type.  Only valid values are "full"
 =cut
 
 has match_type => (
-    is => 'rw',
+    is      => 'rw',
     default => quote_sub(q{ '' }),
-    coerce => quote_sub(q{ lc $_[0] }),
-    isa => enum([qw(full partial simple)], {
-        msg => "Invalid match type: %s", allow_false => 1,
-    }),
+    coerce  => quote_sub(q{ lc $_[0] }),
+    isa     => enum(
+        [qw(full partial simple)], {
+            msg         => "Invalid match type: %s",
+            allow_false => 1,
+        }
+    ),
 );
 
 around match_type => \&ex2err;
@@ -240,7 +238,10 @@ Get or set the constraint's name.
 
 =cut
 
-has name => ( is => 'rw', default => quote_sub(q{ '' }) );
+has name => (
+    is      => 'rw',
+    default => quote_sub(q{ '' })
+);
 
 around name => sub {
     my ($orig, $self, $arg) = @_;
@@ -267,7 +268,10 @@ Get or set the constraint's "on delete" action.
 
 =cut
 
-has on_delete => ( is => 'rw', default => quote_sub(q{ '' }) );
+has on_delete => (
+    is      => 'rw',
+    default => quote_sub(q{ '' })
+);
 
 around on_delete => sub {
     my ($orig, $self, $arg) = @_;
@@ -282,7 +286,10 @@ Get or set the constraint's "on update" action.
 
 =cut
 
-has on_update => ( is => 'rw', default => quote_sub(q{ '' }) );
+has on_update => (
+    is      => 'rw',
+    default => quote_sub(q{ '' })
+);
 
 around on_update => sub {
     my ($orig, $self, $arg) = @_;
@@ -306,27 +313,24 @@ arrayref; returns an array or array reference.
 
 with ListAttr reference_fields => (
     may_throw => 1,
-    builder => 1,
-    lazy => 1,
+    builder   => 1,
+    lazy      => 1,
 );
 
 sub _build_reference_fields {
     my ($self) = @_;
 
-    my $table   = $self->table   or throw('No table');
-    my $schema  = $table->schema or throw('No schema');
-    if ( my $ref_table_name = $self->reference_table ) {
-        my $ref_table  = $schema->get_table( $ref_table_name ) or
-            throw("Can't find table '$ref_table_name'");
+    my $table  = $self->table   or throw('No table');
+    my $schema = $table->schema or throw('No schema');
+    if (my $ref_table_name = $self->reference_table) {
+        my $ref_table = $schema->get_table($ref_table_name)
+            or throw("Can't find table '$ref_table_name'");
 
-        if ( my $constraint = $ref_table->primary_key ) {
-            return [ $constraint->fields ];
+        if (my $constraint = $ref_table->primary_key) {
+            return [$constraint->fields];
         }
         else {
-            throw(
-                'No reference fields defined and cannot find primary key in ',
-                "reference table '$ref_table_name'"
-            );
+            throw('No reference fields defined and cannot find primary key in ', "reference table '$ref_table_name'");
         }
     }
 }
@@ -339,7 +343,10 @@ Get or set the table referred to by the constraint.
 
 =cut
 
-has reference_table => ( is => 'rw', default => quote_sub(q{ '' }) );
+has reference_table => (
+    is      => 'rw',
+    default => quote_sub(q{ '' })
+);
 
 =head2 table
 
@@ -349,7 +356,11 @@ Get or set the constraint's table object.
 
 =cut
 
-has table => ( is => 'rw', isa => schema_obj('Table'), weak_ref => 1 );
+has table => (
+    is       => 'rw',
+    isa      => schema_obj('Table'),
+    weak_ref => 1
+);
 
 around table => \&ex2err;
 
@@ -362,12 +373,15 @@ Get or set the constraint's type.
 =cut
 
 has type => (
-    is => 'rw',
+    is      => 'rw',
     default => quote_sub(q{ '' }),
-    coerce => quote_sub(q{ (my $t = $_[0]) =~ s/_/ /g; uc $t }),
-    isa => enum([keys %VALID_CONSTRAINT_TYPE], {
-        msg => "Invalid constraint type: %s", allow_false => 1,
-    }),
+    coerce  => quote_sub(q{ (my $t = $_[0]) =~ s/_/ /g; uc $t }),
+    isa     => enum(
+        [keys %VALID_CONSTRAINT_TYPE], {
+            msg         => "Invalid constraint type: %s",
+            allow_false => 1,
+        }
+    ),
 );
 
 around type => \&ex2err;
@@ -381,10 +395,10 @@ Determines if this constraint is the same as another
 =cut
 
 around equals => sub {
-    my $orig = shift;
-    my $self = shift;
-    my $other = shift;
-    my $case_insensitive = shift;
+    my $orig                    = shift;
+    my $self                    = shift;
+    my $other                   = shift;
+    my $case_insensitive        = shift;
     my $ignore_constraint_names = shift;
 
     return 0 unless $self->$orig($other);
@@ -393,36 +407,40 @@ around equals => sub {
         return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
     }
     return 0 unless $self->deferrable eq $other->deferrable;
+
     #return 0 unless $self->is_valid eq $other->is_valid;
-    return 0 unless $case_insensitive ? uc($self->table->name) eq uc($other->table->name)
-      : $self->table->name eq $other->table->name;
+    return 0 unless $case_insensitive
+        ? uc($self->table->name) eq uc($other->table->name)
+        : $self->table->name eq $other->table->name;
     return 0 unless $self->expression eq $other->expression;
 
     # Check fields, regardless of order
-    my %otherFields = ();  # create a hash of the other fields
+    my %otherFields = (); # create a hash of the other fields
     foreach my $otherField ($other->fields) {
-      $otherField = uc($otherField) if $case_insensitive;
-      $otherFields{$otherField} = 1;
+        $otherField = uc($otherField) if $case_insensitive;
+        $otherFields{$otherField} = 1;
     }
     foreach my $selfField ($self->fields) { # check for self fields in hash
-      $selfField = uc($selfField) if $case_insensitive;
-      return 0 unless $otherFields{$selfField};
-      delete $otherFields{$selfField};
+        $selfField = uc($selfField) if $case_insensitive;
+        return 0 unless $otherFields{$selfField};
+        delete $otherFields{$selfField};
     }
+
     # Check all other fields were accounted for
     return 0 unless keys %otherFields == 0;
 
     # Check reference fields, regardless of order
-    my %otherRefFields = ();  # create a hash of the other reference fields
+    my %otherRefFields = ();                # create a hash of the other reference fields
     foreach my $otherRefField ($other->reference_fields) {
-      $otherRefField = uc($otherRefField) if $case_insensitive;
-      $otherRefFields{$otherRefField} = 1;
+        $otherRefField = uc($otherRefField) if $case_insensitive;
+        $otherRefFields{$otherRefField} = 1;
     }
     foreach my $selfRefField ($self->reference_fields) { # check for self reference fields in hash
-      $selfRefField = uc($selfRefField) if $case_insensitive;
-      return 0 unless $otherRefFields{$selfRefField};
-      delete $otherRefFields{$selfRefField};
+        $selfRefField = uc($selfRefField) if $case_insensitive;
+        return 0 unless $otherRefFields{$selfRefField};
+        delete $otherRefFields{$selfRefField};
     }
+
     # Check all other reference fields were accounted for
     return 0 unless keys %otherRefFields == 0;
 

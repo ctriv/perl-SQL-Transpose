@@ -23,7 +23,7 @@ takes a long time.
 
 use strict;
 use warnings;
-our ( $DEBUG, @EXPORT_OK );
+our ($DEBUG, @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
 
 use Storable;
@@ -33,11 +33,11 @@ use base qw(Exporter);
 @EXPORT_OK = qw(produce);
 
 sub produce {
-    my $self        = shift;
-    my $t           = shift;
-    my $args        = $t->producer_args;
-    my $schema      = $t->schema;
-    my $serialized  = Storable::nfreeze($schema);
+    my $self       = shift;
+    my $t          = shift;
+    my $args       = $t->producer_args;
+    my $schema     = $t->schema;
+    my $serialized = Storable::nfreeze($schema);
 
     return $serialized;
 }

@@ -16,11 +16,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(6,
-        'SQL::Transpose::Parser::XML::SQLFairy',
-        'Template 2.20',
-        'Test::Differences'
-    );
+    maybe_plan(6, 'SQL::Transpose::Parser::XML::SQLFairy', 'Template 2.20', 'Test::Differences');
 }
 use Test::Differences;
 
@@ -31,11 +27,11 @@ use SQL::Transpose::Producer::TTSchema;
 {
     my $obj;
     $obj = SQL::Transpose->new(
-        show_warnings  => 0,
-        from           => "XML-SQLFairy",
-        filename       => "$Bin/data/xml/schema.xml",
-        to             => "TTSchema",
-        producer_args  => {
+        show_warnings => 0,
+        from          => "XML-SQLFairy",
+        filename      => "$Bin/data/xml/schema.xml",
+        to            => "TTSchema",
+        producer_args => {
             ttfile  => "$Bin/data/template/basic.tt",
             tt_vars => {
                 foo   => 'bar',
@@ -44,13 +40,10 @@ use SQL::Transpose::Producer::TTSchema;
         },
     );
     my $out;
-    lives_ok { $out = $obj->translate; }  "Translate ran";
-    ok $out ne ""                        ,"Produced something!";
-    eq_or_diff
-      $out,
-      do { local (@ARGV, $/) = "$Bin/data/template/testresult_basic.txt"; <> },
-      "Output looks right"
-    ;
+    lives_ok { $out = $obj->translate; } "Translate ran";
+    ok $out ne "", "Produced something!";
+    eq_or_diff $out, do { local (@ARGV, $/) = "$Bin/data/template/testresult_basic.txt"; <> },
+        "Output looks right";
 }
 
 # Test passing of Template config
@@ -61,11 +54,11 @@ use SQL::Transpose::Producer::TTSchema;
     [%- END %]};
     my $obj;
     $obj = SQL::Transpose->new(
-        show_warnings  => 0,
-        from           => "XML-SQLFairy",
-        filename       => "$Bin/data/xml/schema.xml",
-        to             => "TTSchema",
-        producer_args  => {
+        show_warnings => 0,
+        from          => "XML-SQLFairy",
+        filename      => "$Bin/data/xml/schema.xml",
+        to            => "TTSchema",
+        producer_args => {
             ttfile  => \$tmpl,
             tt_conf => {
                 INTERPOLATE => 1,
@@ -77,11 +70,11 @@ use SQL::Transpose::Producer::TTSchema;
         },
     );
     my $out;
-    lives_ok { $out = $obj->translate; }  "Translate ran";
-    ok $out ne ""                        ,"Produced something!";
+    lives_ok { $out = $obj->translate; } "Translate ran";
+    ok $out ne "", "Produced something!";
     local $/ = undef; # slurp
     eq_or_diff $out, q{
     Table: Basic
     Table: Another}
-    ,"Output looks right";
+        , "Output looks right";
 }

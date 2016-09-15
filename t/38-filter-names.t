@@ -12,7 +12,7 @@ use Test::SQL::Transpose qw(maybe_plan);
 use Data::Dumper;
 
 BEGIN {
-    maybe_plan(4, 'YAML', 'Test::Differences')
+    maybe_plan(4, 'YAML', 'Test::Differences');
 }
 use Test::Differences;
 use SQL::Transpose;
@@ -71,21 +71,25 @@ $obj = SQL::Transpose->new(
     from          => "YAML",
     to            => "YAML",
     data          => $in_yaml,
-    filters => [
+    filters       => [
+
         # Filter from SQL::Transpose::Filter::*
-        [ 'Names', {
-            tables => 'lc',
-            fields => 'ucfirst',
-        } ],
+        [
+            'Names', {
+                tables => 'lc',
+                fields => 'ucfirst',
+            }
+        ],
     ],
 
-) or die "Failed to create translator object: ".SQL::Transpose->error;
+) or die "Failed to create translator object: " . SQL::Transpose->error;
 
 my $out;
-lives_ok { $out = $obj->translate; }  "Translate ran";
-is $obj->error, ''                   ,"No errors";
-ok $out ne ""                        ,"Produced something!";
+lives_ok { $out = $obj->translate; } "Translate ran";
+is $obj->error, '', "No errors";
+ok $out ne "", "Produced something!";
+
 # Somewhat hackishly modify the yaml with a regex to avoid
 # failing randomly on every change of version.
 $out =~ s/version: .*/version: SUPPRESSED/;
-eq_or_diff $out, $ans_yaml           ,"Output looks right";
+eq_or_diff $out, $ans_yaml, "Output looks right";

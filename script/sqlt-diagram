@@ -83,10 +83,9 @@ $VERSION = '1.59';
 # Get arguments.
 #
 my (
-    $out_file, $output_type, $db_driver, $title, $num_columns,
-    $no_lines, $font_size, $add_color, $debug, $show_fk_only,
-    $gutter, $natural_join, $join_pk_only, $skip_fields,
-    $skip_tables, $skip_tables_like, $help
+    $out_file,     $output_type, $db_driver,   $title,            $num_columns, $no_lines,
+    $font_size,    $add_color,   $debug,       $show_fk_only,     $gutter,      $natural_join,
+    $join_pk_only, $skip_fields, $skip_tables, $skip_tables_like, $help
 );
 
 GetOptions(
@@ -111,14 +110,14 @@ GetOptions(
 my @files = @ARGV; # the create script(s) for the original db
 
 pod2usage(1) if $help;
-pod2usage( -message => "No db driver specified" ) unless $db_driver;
-pod2usage( -message => 'No input file'          ) unless @files;
+pod2usage(-message => "No db driver specified") unless $db_driver;
+pod2usage(-message => 'No input file')          unless @files;
 
-my $translator       =  SQL::Transpose->new(
-    from             => $db_driver,
-    to               => 'Diagram',
-    debug            => $debug || 0,
-    producer_args    => {
+my $translator = SQL::Transpose->new(
+    from          => $db_driver,
+    to            => 'Diagram',
+    debug         => $debug || 0,
+    producer_args => {
         out_file         => $out_file,
         output_type      => $output_type,
         gutter           => $gutter || 0,
@@ -138,10 +137,9 @@ my $translator       =  SQL::Transpose->new(
 
 binmode STDOUT unless $out_file;
 
-for my $file (@files) {
-    my $output = $translator->translate( $file ) or die
-                 "Error: " . $translator->error;
-    if ( $out_file ) {
+foreach my $file (@files) {
+    my $output = $translator->translate($file) or die "Error: " . $translator->error;
+    if ($out_file) {
         print "Image written to '$out_file'.  Done.\n";
     }
     else {

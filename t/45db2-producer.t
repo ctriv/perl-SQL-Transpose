@@ -14,41 +14,40 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(4,
-        'SQL::Transpose::Producer::DB2',
-        'Test::Differences',
-    )
+    maybe_plan(4, 'SQL::Transpose::Producer::DB2', 'Test::Differences',);
 }
 use Test::Differences;
 use SQL::Transpose;
 
+my $table = SQL::Transpose::Schema::Table->new(name => 'mytable');
 
-
-my $table = SQL::Transpose::Schema::Table->new( name => 'mytable');
-
-my $field1 = SQL::Transpose::Schema::Field->new( name => 'myfield',
-                                                  table => $table,
-                                                  data_type => 'VARCHAR',
-                                                  size => 10,
-                                                  default_value => undef,
-                                                  is_auto_increment => 0,
-                                                  is_nullable => 1,
-                                                  is_foreign_key => 0,
-                                                  is_unique => 0 );
+my $field1 = SQL::Transpose::Schema::Field->new(
+    name              => 'myfield',
+    table             => $table,
+    data_type         => 'VARCHAR',
+    size              => 10,
+    default_value     => undef,
+    is_auto_increment => 0,
+    is_nullable       => 1,
+    is_foreign_key    => 0,
+    is_unique         => 0
+);
 
 my $field1_sql = SQL::Transpose::Producer::DB2->create_field($field1);
 
 is($field1_sql, 'myfield VARCHAR(10)', 'Create field works');
 
-my $field2 = SQL::Transpose::Schema::Field->new( name      => 'myfield',
-                                                  table => $table,
-                                                  data_type => 'VARCHAR',
-                                                  size      => 25,
-                                                  default_value => undef,
-                                                  is_auto_increment => 0,
-                                                  is_nullable => 0,
-                                                  is_foreign_key => 0,
-                                                  is_unique => 0 );
+my $field2 = SQL::Transpose::Schema::Field->new(
+    name              => 'myfield',
+    table             => $table,
+    data_type         => 'VARCHAR',
+    size              => 25,
+    default_value     => undef,
+    is_auto_increment => 0,
+    is_nullable       => 0,
+    is_foreign_key    => 0,
+    is_unique         => 0
+);
 
 my $alter_field = SQL::Transpose::Producer::DB2->alter_field($field1, $field2);
 is($alter_field, 'ALTER TABLE mytable ALTER myfield SET DATATYPE VARCHAR(25)', 'Alter field works');

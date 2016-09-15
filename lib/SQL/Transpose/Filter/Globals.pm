@@ -40,24 +40,25 @@ use strict;
 use warnings;
 
 sub filter {
-    my $schema = shift;
-    my %args = @_;
+    my $schema       = shift;
+    my %args         = @_;
     my $global_table = $args{global_table} ||= '_GLOBAL_';
 
     my (@global_fields, @global_indices, @global_constraints);
-    push @global_fields,      @{ $args{fields} }      if $args{fields};
-    push @global_indices,     @{ $args{indices} }     if $args{indices};
-    push @global_constraints, @{ $args{constraints} } if $args{constraints};
+    push @global_fields,      @{$args{fields}}      if $args{fields};
+    push @global_indices,     @{$args{indices}}     if $args{indices};
+    push @global_constraints, @{$args{constraints}} if $args{constraints};
 
     # Pull fields and indices off global table and then remove it.
-    if ( my $gtbl = $schema->get_table( $global_table ) ) {
+    if (my $gtbl = $schema->get_table($global_table)) {
 
-        foreach ( $gtbl->get_fields ) {
+        foreach ($gtbl->get_fields) {
+
             # We don't copy the order attrib so the added fields should get
             # pushed on the end of each table.
             push @global_fields, {
                 name                  => $_->name,
-                comments              => "".$_->comments,
+                comments              => "" . $_->comments,
                 data_type             => $_->data_type,
                 default_value         => $_->default_value,
                 size                  => [$_->size],
@@ -69,20 +70,20 @@ sub filter {
                 is_primary_key        => $_->is_primary_key,
                 is_unique             => $_->is_unique,
                 is_valid              => $_->is_valid,
-            };
+                };
         }
 
-        foreach ( $gtbl->get_indices ) {
+        foreach ($gtbl->get_indices) {
             push @global_indices, {
                 name    => $_->name,
                 type    => $_->type,
                 fields  => [$_->fields],
                 options => [$_->options],
                 extra   => scalar($_->extra),
-            };
+                };
         }
 
-        foreach ( $gtbl->get_constraints ) {
+        foreach ($gtbl->get_constraints) {
             push @global_constraints, {
                 name             => $_->name,
                 fields           => [$_->fields],
@@ -97,27 +98,28 @@ sub filter {
                 table            => $_->table,
                 type             => $_->type,
                 extra            => scalar($_->extra),
-            };
+                };
         }
 
         $schema->drop_table($gtbl);
     }
 
     # Add globals to tables
-    foreach my $tbl ( $schema->get_tables ) {
+    foreach my $tbl ($schema->get_tables) {
 
-        foreach my $new_fld ( @global_fields ) {
+        foreach my $new_fld (@global_fields) {
+
             # Don't add if field already there
-            next if $tbl->get_field( $new_fld->{name} );
-            $tbl->add_field( %$new_fld );
+            next if $tbl->get_field($new_fld->{name});
+            $tbl->add_field(%$new_fld);
         }
 
-        foreach my $new_index ( @global_indices ) {
-            $tbl->add_index( %$new_index );
+        foreach my $new_index (@global_indices) {
+            $tbl->add_index(%$new_index);
         }
 
-        foreach my $new_constraint ( @global_constraints ) {
-            $tbl->add_constraint( %$new_constraint );
+        foreach my $new_constraint (@global_constraints) {
+            $tbl->add_constraint(%$new_constraint);
         }
     }
 }

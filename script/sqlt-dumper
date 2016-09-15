@@ -65,7 +65,7 @@ use File::Basename qw(basename);
 use vars '$VERSION';
 $VERSION = '1.59';
 
-my ( $help, $db, $skip, $skiplike, $db_user, $db_pass, $dsn );
+my ($help, $db, $skip, $skiplike, $db_user, $db_pass, $dsn);
 GetOptions(
     'h|help'        => \$help,
     'd|f|from|db=s' => \$db,
@@ -77,16 +77,16 @@ GetOptions(
 ) or pod2usage;
 
 pod2usage(0) if $help;
-pod2usage( 'No database driver specified' ) unless $db;
+pod2usage('No database driver specified') unless $db;
 $db_user ||= 'username';
 $db_pass ||= 'password';
 $dsn     ||= "dbi:$db:_";
 
-my $file            = shift @ARGV or pod2usage( -msg => 'No input file' );
-my $t               = SQL::Transpose->new(
-    from            => $db,
-    to              => 'Dumper',
-    producer_args   => {
+my $file = shift @ARGV or pod2usage(-msg => 'No input file');
+my $t = SQL::Transpose->new(
+    from          => $db,
+    to            => 'Dumper',
+    producer_args => {
         skip        => $skip,
         skiplike    => $skiplike,
         db_user     => $db_user,
@@ -95,7 +95,7 @@ my $t               = SQL::Transpose->new(
     }
 );
 
-print $t->translate( $file );
+print $t->translate($file);
 
 exit(0);
 

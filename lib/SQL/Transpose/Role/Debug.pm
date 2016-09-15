@@ -3,12 +3,12 @@ use Moo::Role;
 use Sub::Quote qw(quote_sub);
 
 has _DEBUG => (
-    is => 'rw',
+    is       => 'rw',
     accessor => 'debugging',
     init_arg => 'debugging',
-    coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
-    lazy => 1,
-    builder => 1,
+    coerce   => quote_sub(q{ $_[0] ? 1 : 0 }),
+    lazy     => 1,
+    builder  => 1,
 );
 
 sub _build__DEBUG {

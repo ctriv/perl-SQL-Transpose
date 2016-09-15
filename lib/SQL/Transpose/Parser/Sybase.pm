@@ -21,7 +21,7 @@ use strict;
 use warnings;
 
 our $DEBUG;
-$DEBUG   = 0 unless defined $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 use Data::Dumper;
 use SQL::Transpose::Utils qw/ddl_parser_instance/;
@@ -112,7 +112,7 @@ create_table : /create/i /table/i ident '(' create_def(s /,/) ')' lock(?) on_sys
         $tables{ $table_name }{'system'} = $item[7];
 
         my $i = 0;
-        for my $def ( @{ $item[5] } ) {
+        foreach my $def ( @{ $item[5] } ) {
             if ( $def->{'supertype'} eq 'field' ) {
                 my $field_name = $def->{'name'};
                 $tables{ $table_name }{'fields'}{ $field_name } =
@@ -286,42 +286,36 @@ QUOTE : /'/
 END_OF_GRAMMAR
 
 sub parse {
-    my ( $translator, $data ) = @_;
+    my ($translator, $data) = @_;
 
     # Enable warnings within the Parse::RecDescent module.
     local $::RD_ERRORS = 1 unless defined $::RD_ERRORS; # Make sure the parser dies when it encounters an error
-    local $::RD_WARN   = 1 unless defined $::RD_WARN; # Enable warnings. This will warn on unused rules &c.
-    local $::RD_HINT   = 1 unless defined $::RD_HINT; # Give out hints to help fix problems.
+    local $::RD_WARN   = 1 unless defined $::RD_WARN;   # Enable warnings. This will warn on unused rules &c.
+    local $::RD_HINT   = 1 unless defined $::RD_HINT;   # Give out hints to help fix problems.
 
-    local $::RD_TRACE  = $translator->trace ? 1 : undef;
-    local $DEBUG       = $translator->debug;
+    local $::RD_TRACE = $translator->trace ? 1 : undef;
+    local $DEBUG = $translator->debug;
 
     my $parser = ddl_parser_instance('Sybase');
 
     my $result = $parser->startrule($data);
-    return $translator->error( "Parse failed." ) unless defined $result;
-    warn Dumper( $result ) if $DEBUG;
+    return $translator->error("Parse failed.") unless defined $result;
+    warn Dumper($result) if $DEBUG;
 
     my $schema = $translator->schema;
-    my @tables = sort {
-        $result->{ $a }->{'order'} <=> $result->{ $b }->{'order'}
-    } keys %{ $result };
+    my @tables = sort { $result->{$a}->{'order'} <=> $result->{$b}->{'order'} } keys %{$result};
 
-    for my $table_name ( @tables ) {
-        my $tdata = $result->{ $table_name };
-        my $table = $schema->add_table( name => $tdata->{'name'} )
-                    or die "Can't create table '$table_name': ", $schema->error;
+    foreach my $table_name (@tables) {
+        my $tdata = $result->{$table_name};
+        my $table = $schema->add_table(name => $tdata->{'name'})
+            or die "Can't create table '$table_name': ", $schema->error;
 
-        $table->comments( $tdata->{'comments'} );
+        $table->comments($tdata->{'comments'});
 
-        my @fields = sort {
-            $tdata->{'fields'}->{$a}->{'order'}
-            <=>
-            $tdata->{'fields'}->{$b}->{'order'}
-        } keys %{ $tdata->{'fields'} };
+        my @fields = sort { $tdata->{'fields'}->{$a}->{'order'} <=> $tdata->{'fields'}->{$b}->{'order'} } keys %{$tdata->{'fields'}};
 
-        for my $fname ( @fields ) {
-            my $fdata = $tdata->{'fields'}{ $fname };
+        foreach my $fname (@fields) {
+            my $fdata = $tdata->{'fields'}{$fname};
             my $field = $table->add_field(
                 name              => $fdata->{'name'},
                 data_type         => $fdata->{'data_type'},
@@ -332,41 +326,41 @@ sub parse {
                 comments          => $fdata->{'comments'},
             ) or die $table->error;
 
-            $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
+            $table->primary_key($field->name) if $fdata->{'is_primary_key'};
 
-            for my $qual ( qw[ binary unsigned zerofill list ] ) {
-                if ( my $val = $fdata->{ $qual } || $fdata->{ uc $qual } ) {
+            foreach my $qual (qw[ binary unsigned zerofill list ]) {
+                if (my $val = $fdata->{$qual} || $fdata->{uc $qual}) {
                     next if ref $val eq 'ARRAY' && !@$val;
-                    $field->extra( $qual, $val );
+                    $field->extra($qual, $val);
                 }
             }
 
-            if ( $field->data_type =~ /(set|enum)/i && !$field->size ) {
-                my %extra = $field->extra;
+            if ($field->data_type =~ /(set|enum)/i && !$field->size) {
+                my %extra   = $field->extra;
                 my $longest = 0;
-                for my $len ( map { length } @{ $extra{'list'} || [] } ) {
+                foreach my $len (map { length } @{$extra{'list'} || []}) {
                     $longest = $len if $len > $longest;
                 }
-                $field->size( $longest ) if $longest;
+                $field->size($longest) if $longest;
             }
 
-            for my $cdata ( @{ $fdata->{'constraints'} } ) {
+            foreach my $cdata (@{$fdata->{'constraints'}}) {
                 next unless $cdata->{'type'} eq 'foreign_key';
-                $cdata->{'fields'} ||= [ $field->name ];
-                push @{ $tdata->{'constraints'} }, $cdata;
+                $cdata->{'fields'} ||= [$field->name];
+                push @{$tdata->{'constraints'}}, $cdata;
             }
         }
 
-        for my $idata ( @{ $tdata->{'indices'} || [] } ) {
-            my $index  =  $table->add_index(
+        foreach my $idata (@{$tdata->{'indices'} || []}) {
+            my $index = $table->add_index(
                 name   => $idata->{'name'},
                 type   => uc $idata->{'type'},
                 fields => $idata->{'fields'},
             ) or die $table->error;
         }
 
-        for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
-            my $constraint       =  $table->add_constraint(
+        foreach my $cdata (@{$tdata->{'constraints'} || []}) {
+            my $constraint = $table->add_constraint(
                 name             => $cdata->{'name'},
                 type             => $cdata->{'type'},
                 fields           => $cdata->{'fields'},

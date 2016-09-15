@@ -47,7 +47,7 @@ around BUILDARGS => sub {
     my ($orig, $self, @args) = @_;
     my $args = $self->$orig(@args);
     if (exists $args->{on_table}) {
-        my $arg = delete $args->{on_table};
+        my $arg   = delete $args->{on_table};
         my $table = $args->{schema}->get_table($arg)
             or die "Table named $arg doesn't exist";
         $args->{table} = $table;
@@ -68,12 +68,14 @@ C<database_event>.
 =cut
 
 has perform_action_when => (
-    is => 'rw',
+    is     => 'rw',
     coerce => quote_sub(q{ defined $_[0] ? lc $_[0] : $_[0] }),
-    isa => enum([qw(before after)], {
-        msg => "Invalid argument '%s' to perform_action_when",
-        allow_undef => 1,
-    }),
+    isa    => enum(
+        [qw(before after)], {
+            msg         => "Invalid argument '%s' to perform_action_when",
+            allow_undef => 1,
+        }
+    ),
 );
 
 around perform_action_when => \&ex2err;
@@ -90,7 +92,7 @@ Obsolete please use database_events!
 
     my $self = shift;
 
-    return $self->database_events( @_ );
+    return $self->database_events(@_);
 }
 
 =head2 database_events
@@ -102,25 +104,21 @@ Gets or sets the events that triggers the trigger.
 =cut
 
 has database_events => (
-    is => 'rw',
+    is     => 'rw',
     coerce => quote_sub(q{ [ map { lc } ref $_[0] eq 'ARRAY' ? @{$_[0]} : ($_[0]) ] }),
-    isa => sub {
+    isa    => sub {
         my @args    = @{$_[0]};
         my %valid   = map { $_, 1 } qw[ insert update update_on delete ];
-        my @invalid = grep { !defined $valid{ $_ } } @args;
+        my @invalid = grep { !defined $valid{$_} } @args;
 
-        if ( @invalid ) {
-            throw(
-                sprintf("Invalid events '%s' in database_events",
-                    join(', ', @invalid)
-                )
-            );
+        if (@invalid) {
+            throw(sprintf("Invalid events '%s' in database_events", join(', ', @invalid)));
         }
     },
 );
 
 around database_events => sub {
-    my ($orig,$self) = (shift, shift);
+    my ($orig, $self) = (shift, shift);
 
     if (@_) {
         ex2err($orig, $self, ref $_[0] eq 'ARRAY' ? $_[0] : \@_)
@@ -128,7 +126,7 @@ around database_events => sub {
     }
 
     return wantarray
-        ? @{ $self->$orig || [] }
+        ? @{$self->$orig || []}
         : $self->$orig;
 };
 
@@ -147,7 +145,7 @@ Gets and set which fields to monitor for C<database_event>.
 =cut
 
 has fields => (
-    is => 'rw',
+    is     => 'rw',
     coerce => sub {
         my @fields = uniq @{parse_list_arg($_[0])};
         @fields ? \@fields : undef;
@@ -157,10 +155,10 @@ has fields => (
 around fields => sub {
     my $orig   = shift;
     my $self   = shift;
-    my $fields = parse_list_arg( @_ );
+    my $fields = parse_list_arg(@_);
     $self->$orig($fields) if @$fields;
 
-    return wantarray ? @{ $self->$orig || [] } : $self->$orig;
+    return wantarray ? @{$self->$orig || []} : $self->$orig;
 };
 
 =head2 table
@@ -170,7 +168,11 @@ Gets or set the table on which the trigger works, as a L<SQL::Transpose::Schema:
 
 =cut
 
-has table => ( is => 'rw', isa => schema_obj('Table'), weak_ref => 1 );
+has table => (
+    is       => 'rw',
+    isa      => schema_obj('Table'),
+    weak_ref => 1
+);
 
 around table => \&ex2err;
 
@@ -186,7 +188,7 @@ Gets or set the table name on which the trigger works, as a string.
 =cut
 
     my ($self, $arg) = @_;
-    if ( @_ == 2 ) {
+    if (@_ == 2) {
         my $table = $self->schema->get_table($arg);
         die "Table named $arg doesn't exist"
             if !$table;
@@ -210,7 +212,10 @@ Gets or set the action of the trigger.
 
 =cut
 
-has action => ( is => 'rw', default => quote_sub(q{ '' }) );
+has action => (
+    is      => 'rw',
+    default => quote_sub(q{ '' })
+);
 
 sub is_valid {
 
@@ -226,14 +231,12 @@ Determine whether the trigger is valid or not.
 
     my $self = shift;
 
-    for my $attr (
-        qw[ name perform_action_when database_events on_table action ]
-    ) {
+    foreach my $attr (qw[ name perform_action_when database_events on_table action ]) {
         return $self->error("Invalid: missing '$attr'") unless $self->$attr();
     }
 
-    return $self->error("Missing fields for UPDATE ON") if
-        $self->database_event eq 'update_on' && !$self->fields;
+    return $self->error("Missing fields for UPDATE ON")
+        if $self->database_event eq 'update_on' && !$self->fields;
 
     return 1;
 }
@@ -246,7 +249,10 @@ Get or set the trigger's name.
 
 =cut
 
-has name => ( is => 'rw', default => quote_sub(q{ '' }) );
+has name => (
+    is      => 'rw',
+    default => quote_sub(q{ '' })
+);
 
 =head2 order
 
@@ -256,12 +262,15 @@ Get or set the trigger's order.
 
 =cut
 
-has order => ( is => 'rw', default => quote_sub(q{ 0 }) );
+has order => (
+    is      => 'rw',
+    default => quote_sub(q{ 0 })
+);
 
 around order => sub {
-    my ( $orig, $self, $arg ) = @_;
+    my ($orig, $self, $arg) = @_;
 
-    if ( defined $arg && $arg =~ /^\d+$/ ) {
+    if (defined $arg && $arg =~ /^\d+$/) {
         return $self->$orig($arg);
     }
 
@@ -277,14 +286,17 @@ Get or set the trigger's scope (row or statement).
 =cut
 
 has scope => (
-    is => 'rw',
-    isa => enum([qw(row statement)], {
-        msg => "Invalid scope '%s'", icase => 1, allow_undef => 1,
-    }),
+    is  => 'rw',
+    isa => enum(
+        [qw(row statement)], {
+            msg         => "Invalid scope '%s'",
+            icase       => 1,
+            allow_undef => 1,
+        }
+    ),
 );
 
 around scope => \&ex2err;
-
 
 =head2 schema
 
@@ -295,7 +307,11 @@ Get or set the trigger's schema object.
 
 =cut
 
-has schema => (is => 'rw', isa => schema_obj('Schema'), weak_ref => 1 );
+has schema => (
+    is       => 'rw',
+    isa      => schema_obj('Schema'),
+    weak_ref => 1
+);
 
 around schema => \&ex2err;
 
@@ -310,9 +326,9 @@ Compare two arrays.
 =cut
 
     my ($first, $second) = @_;
-    no warnings;  # silence spurious -w undef complaints
+    no warnings; # silence spurious -w undef complaints
 
-    return 0 unless (ref $first eq 'ARRAY' and ref $second eq 'ARRAY' ) ;
+    return 0 unless (ref $first eq 'ARRAY' and ref $second eq 'ARRAY');
 
     return 0 unless @$first == @$second;
 
@@ -344,36 +360,32 @@ around equals => sub {
     return 0 unless $self->$orig($other);
 
     my %names;
-    for my $name ( $self->name, $other->name ) {
+    foreach my $name ($self->name, $other->name) {
         $name = lc $name if $case_insensitive;
-        $names{ $name }++;
+        $names{$name}++;
     }
 
-    if ( keys %names > 1 ) {
+    if (keys %names > 1) {
         return $self->error('Names not equal');
     }
 
-    if ( !$self->perform_action_when eq $other->perform_action_when ) {
+    if (!$self->perform_action_when eq $other->perform_action_when) {
         return $self->error('perform_action_when differs');
     }
 
-    if (
-        !compare_arrays( [$self->database_events], [$other->database_events] )
-    ) {
+    if (!compare_arrays([$self->database_events], [$other->database_events])) {
         return $self->error('database_events differ');
     }
 
-    if ( $self->on_table ne $other->on_table ) {
+    if ($self->on_table ne $other->on_table) {
         return $self->error('on_table differs');
     }
 
-    if ( $self->action ne $other->action ) {
+    if ($self->action ne $other->action) {
         return $self->error('action differs');
     }
 
-    if (
-        !$self->_compare_objects( scalar $self->extra, scalar $other->extra )
-    ) {
+    if (!$self->_compare_objects(scalar $self->extra, scalar $other->extra)) {
         return $self->error('extras differ');
     }
 

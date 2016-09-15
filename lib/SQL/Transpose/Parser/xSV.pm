@@ -59,20 +59,20 @@ use base qw(Exporter);
 # Passed a SQL::Transpose instance and a string containing the data
 #
 sub parse {
-    my ( $tr, $data )    = @_;
-    my $args             = $tr->parser_args;
-    my $parser           = Text::RecordParser->new(
+    my ($tr, $data) = @_;
+    my $args   = $tr->parser_args;
+    my $parser = Text::RecordParser->new(
         field_separator  => $args->{'field_separator'}  || ',',
         record_separator => $args->{'record_separator'} || "\n",
         data             => $data,
         header_filter    => \&normalize_name,
     );
 
-    $parser->field_filter( sub { $_ = shift || ''; s/^\s+|\s+$//g; $_ } )
+    $parser->field_filter(sub { $_ = shift || ''; s/^\s+|\s+$//g; $_ })
         unless defined $args->{'trim_fields'} && $args->{'trim_fields'} == 0;
 
     my $schema = $tr->schema;
-    my $table = $schema->add_table( name => 'table1' );
+    my $table = $schema->add_table(name => 'table1');
 
     #
     # Get the field names from the first row.
@@ -80,7 +80,7 @@ sub parse {
     $parser->bind_header;
     my @field_names = $parser->field_list;
 
-    for ( my $i = 0; $i < @field_names; $i++ ) {
+    for (my $i = 0; $i < @field_names; $i++) {
         my $field = $table->add_field(
             name              => $field_names[$i],
             data_type         => 'char',
@@ -90,8 +90,8 @@ sub parse {
             is_auto_increment => undef,
         ) or die $table->error;
 
-        if ( $i == 0 ) {
-            $table->primary_key( $field->name );
+        if ($i == 0) {
+            $table->primary_key($field->name);
             $field->is_primary_key(1);
         }
     }
@@ -99,62 +99,57 @@ sub parse {
     #
     # If directed, look at every field's values to guess size and type.
     #
-    unless (
-        defined $args->{'scan_fields'} &&
-        $args->{'scan_fields'} == 0
-    ) {
+    unless (defined $args->{'scan_fields'}
+        && $args->{'scan_fields'} == 0) {
         my %field_info = map { $_, {} } @field_names;
-        while ( my $rec = $parser->fetchrow_hashref ) {
-            for my $field ( @field_names ) {
-                my $data = defined $rec->{ $field } ? $rec->{ $field } : '';
-                my $size = [ length $data ];
+        while (my $rec = $parser->fetchrow_hashref) {
+            foreach my $field (@field_names) {
+                my $data = defined $rec->{$field} ? $rec->{$field} : '';
+                my $size = [length $data];
                 my $type;
 
-                if ( $data =~ /^-?\d+$/ ) {
+                if ($data =~ /^-?\d+$/) {
                     $type = 'integer';
                 }
-                elsif (
-                    $data =~ /^-?[,\d]+\.[\d+]?$/
-                    ||
-                    $data =~ /^-?[,\d]+?\.\d+$/
-                    ||
-                    $data =~ /^-?\.\d+$/
-                ) {
+                elsif ($data =~ /^-?[,\d]+\.[\d+]?$/
+                    || $data =~ /^-?[,\d]+?\.\d+$/
+                    || $data =~ /^-?\.\d+$/) {
                     $type = 'float';
-                    my ( $w, $d ) =
-                        map { s/,//g; length $_ || 1 } split( /\./, $data );
-                    $size = [ $w + $d, $d ];
+                    my ($w, $d)
+                        = map { s/,//g; length $_ || 1 } split(/\./, $data);
+                    $size = [$w + $d, $d];
                 }
                 else {
                     $type = 'char';
                 }
 
-                for my $i ( 0, 1 ) {
-                    next unless defined $size->[ $i ];
-                    my $fsize = $field_info{ $field }{'size'}[ $i ] || 0;
-                    if ( $size->[ $i ] > $fsize ) {
-                        $field_info{ $field }{'size'}[ $i ] = $size->[ $i ];
+                foreach my $i (0, 1) {
+                    next unless defined $size->[$i];
+                    my $fsize = $field_info{$field}{'size'}[$i] || 0;
+                    if ($size->[$i] > $fsize) {
+                        $field_info{$field}{'size'}[$i] = $size->[$i];
                     }
                 }
 
-                $field_info{ $field }{ $type }++;
+                $field_info{$field}{$type}++;
             }
         }
 
-        for my $field ( keys %field_info ) {
-            my $size      = $field_info{ $field }{'size'} || [ 1 ];
-            my $data_type =
-                $field_info{ $field }{'char'}    ? 'char'  :
-                $field_info{ $field }{'float'}   ? 'float' :
-                $field_info{ $field }{'integer'} ? 'integer' : 'char';
+        foreach my $field (keys %field_info) {
+            my $size = $field_info{$field}{'size'} || [1];
+            my $data_type
+                = $field_info{$field}{'char'}    ? 'char'
+                : $field_info{$field}{'float'}   ? 'float'
+                : $field_info{$field}{'integer'} ? 'integer'
+                :                                  'char';
 
-            if ( $data_type eq 'char' && scalar @$size == 2 ) {
-                $size = [ $size->[0] + $size->[1] ];
+            if ($data_type eq 'char' && scalar @$size == 2) {
+                $size = [$size->[0] + $size->[1]];
             }
 
-            my $field = $table->get_field( $field );
-            $field->size( $size );
-            $field->data_type( $data_type );
+            my $field = $table->get_field($field);
+            $field->size($size);
+            $field->data_type($data_type);
         }
     }
 

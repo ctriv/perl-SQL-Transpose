@@ -17,7 +17,7 @@ BEGIN {
 
 my $file = "$Bin/data/sybase/create.sql";
 
-ok( -e $file, "File exists" );
+ok(-e $file, "File exists");
 
 my $data;
 {
@@ -27,85 +27,84 @@ my $data;
     close $fh;
 }
 
-ok( $data, 'Data' );
+ok($data, 'Data');
 
 my $t = SQL::Transpose->new;
 
 my $val = parse($t, $data);
 
-is( $val, 1, 'Parse' );
+is($val, 1, 'Parse');
 
 my $schema = $t->schema;
 
-isa_ok( $schema, 'SQL::Transpose::Schema', 'Schema' );
+isa_ok($schema, 'SQL::Transpose::Schema', 'Schema');
 
-is( $schema->is_valid, 1, 'Schema is valid' );
+is($schema->is_valid, 1, 'Schema is valid');
 
 my @tables = $schema->get_tables;
 
-is( scalar @tables, 9, 'Nine tables' );
+is(scalar @tables, 9, 'Nine tables');
 
 {
-    my $t = $schema->get_table( 'jdbc_function_escapes' );
-    isa_ok( $t, 'SQL::Transpose::Schema::Table', 'Table' );
-    is( $t->name, 'jdbc_function_escapes', "Name = 'jdbc_function_escapes'" );
+    my $t = $schema->get_table('jdbc_function_escapes');
+    isa_ok($t, 'SQL::Transpose::Schema::Table', 'Table');
+    is($t->name, 'jdbc_function_escapes', "Name = 'jdbc_function_escapes'");
 
     my @fields = $t->get_fields;
-    is( scalar @fields, 2, 'Two fields' );
+    is(scalar @fields, 2, 'Two fields');
 
-    is( $fields[0]->name, 'escape_name', "First field name is 'escape_name'" );
-    is( $fields[0]->data_type, 'varchar', "First field is 'varchar'" );
-    is( $fields[0]->size, 40, "First field size is '40'" );
-    is( $fields[0]->is_nullable, 0, "First field cannot be null" );
+    is($fields[0]->name,        'escape_name', "First field name is 'escape_name'");
+    is($fields[0]->data_type,   'varchar',     "First field is 'varchar'");
+    is($fields[0]->size,        40,            "First field size is '40'");
+    is($fields[0]->is_nullable, 0,             "First field cannot be null");
 
-    is( $fields[1]->name, 'map_string', "Second field name is 'map_string'" );
-    is( $fields[1]->data_type, 'varchar', "Second field is 'varchar'" );
-    is( $fields[1]->size, 40, "Second field size is '40'" );
-    is( $fields[1]->is_nullable, 0, "Second field cannot be null" );
+    is($fields[1]->name,        'map_string', "Second field name is 'map_string'");
+    is($fields[1]->data_type,   'varchar',    "Second field is 'varchar'");
+    is($fields[1]->size,        40,           "Second field size is '40'");
+    is($fields[1]->is_nullable, 0,            "Second field cannot be null");
 }
 
 {
-    my $t = $schema->get_table( 'spt_jtext' );
-    isa_ok( $t, 'SQL::Transpose::Schema::Table', 'Table' );
-    is( $t->name, 'spt_jtext', "Name = 'spt_jtext'" );
+    my $t = $schema->get_table('spt_jtext');
+    isa_ok($t, 'SQL::Transpose::Schema::Table', 'Table');
+    is($t->name, 'spt_jtext', "Name = 'spt_jtext'");
 
     my @fields = $t->get_fields;
-    is( scalar @fields, 2, 'Two fields' );
+    is(scalar @fields, 2, 'Two fields');
 
-    is( $fields[0]->name, 'mdinfo', "First field name is 'mdinfo'" );
-    is( $fields[0]->data_type, 'varchar', "First field is 'varchar'" );
-    is( $fields[0]->size, 30, "First field size is '30'" );
-    is( $fields[0]->is_nullable, 0, "First field cannot be null" );
+    is($fields[0]->name,        'mdinfo',  "First field name is 'mdinfo'");
+    is($fields[0]->data_type,   'varchar', "First field is 'varchar'");
+    is($fields[0]->size,        30,        "First field size is '30'");
+    is($fields[0]->is_nullable, 0,         "First field cannot be null");
 
-    is( $fields[1]->name, 'value', "Second field name is 'value'" );
-    is( $fields[1]->data_type, 'text', "Second field is 'text'" );
-    is( $fields[1]->size, 0, "Second field size is '0'" );
-    is( $fields[1]->is_nullable, 0, "Second field cannot be null" );
+    is($fields[1]->name,        'value', "Second field name is 'value'");
+    is($fields[1]->data_type,   'text',  "Second field is 'text'");
+    is($fields[1]->size,        0,       "Second field size is '0'");
+    is($fields[1]->is_nullable, 0,       "Second field cannot be null");
 
     my @constraints = $t->get_constraints;
-    is( scalar @constraints, 1, 'One constraint' );
+    is(scalar @constraints, 1, 'One constraint');
 
-    is( $constraints[0]->type, UNIQUE, 'Constraint is UNIQUE' );
-    is( join(',', $constraints[0]->fields), 'mdinfo', 'On "mdinfo"' );
+    is($constraints[0]->type, UNIQUE, 'Constraint is UNIQUE');
+    is(join(',', $constraints[0]->fields), 'mdinfo', 'On "mdinfo"');
 }
 
 {
-    my $t = $schema->get_table( 'spt_mda' );
-    isa_ok( $t, 'SQL::Transpose::Schema::Table', 'Table' );
-    is( $t->name, 'spt_mda', "Name = 'spt_mda'" );
+    my $t = $schema->get_table('spt_mda');
+    isa_ok($t, 'SQL::Transpose::Schema::Table', 'Table');
+    is($t->name, 'spt_mda', "Name = 'spt_mda'");
 
     my @fields = $t->get_fields;
-    is( scalar @fields, 7, 'Seven fields' );
+    is(scalar @fields, 7, 'Seven fields');
 
-    is( $fields[0]->name, 'mdinfo', "First field name is 'mdinfo'" );
-    is( $fields[0]->data_type, 'varchar', "First field is 'varchar'" );
-    is( $fields[0]->size, 30, "First field size is '30'" );
-    is( $fields[0]->is_nullable, 0, "First field cannot be null" );
+    is($fields[0]->name,        'mdinfo',  "First field name is 'mdinfo'");
+    is($fields[0]->data_type,   'varchar', "First field is 'varchar'");
+    is($fields[0]->size,        30,        "First field size is '30'");
+    is($fields[0]->is_nullable, 0,         "First field cannot be null");
 
     my @constraints = $t->get_constraints;
-    is( scalar @constraints, 1, 'One constraint' );
+    is(scalar @constraints, 1, 'One constraint');
 
-    is( $constraints[0]->type, UNIQUE, 'Constraint is UNIQUE' );
-    is( join(',', $constraints[0]->fields),
-        'mdinfo,mdaver_end,srvver_end', 'On "mdinfo,mdaver_end,srvver_end"' );
+    is($constraints[0]->type, UNIQUE, 'Constraint is UNIQUE');
+    is(join(',', $constraints[0]->fields), 'mdinfo,mdaver_end,srvver_end', 'On "mdinfo,mdaver_end,srvver_end"');
 }

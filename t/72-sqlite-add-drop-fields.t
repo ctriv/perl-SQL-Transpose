@@ -9,9 +9,7 @@ use SQL::Transpose;
 use SQL::Transpose::Parser::SQLite;
 use SQL::Transpose::Diff;
 
-
-ok my $version1 = SQL::Transpose->new(from=>'SQLite')
-  ->translate(\<<SQL);
+ok my $version1 = SQL::Transpose->new(from => 'SQLite')->translate(\<<SQL);
 CREATE TABLE "Foo" (
   "foo" INTEGER PRIMARY KEY NOT NULL,
   "bar" VARCHAR(10) NOT NULL,
@@ -19,8 +17,7 @@ CREATE TABLE "Foo" (
 );
 SQL
 
-ok my $version2 = SQL::Transpose->new(from=>'SQLite')
-  ->translate(\<<SQL);
+ok my $version2 = SQL::Transpose->new(from => 'SQLite')->translate(\<<SQL);
 CREATE TABLE "Foo" (
   "foo" INTEGER PRIMARY KEY NOT NULL,
   "bar" VARCHAR(10) NOT NULL,
@@ -29,11 +26,13 @@ CREATE TABLE "Foo" (
 );
 SQL
 
-ok my $upgrade_sql = SQL::Transpose::Diff->new({
-  output_db     => 'SQLite',
-  source_schema => $version1,
-  target_schema => $version2,
-})->compute_differences->produce_diff_sql;
+ok my $upgrade_sql = SQL::Transpose::Diff->new(
+    {
+        output_db     => 'SQLite',
+        source_schema => $version1,
+        target_schema => $version2,
+    }
+)->compute_differences->produce_diff_sql;
 
 eq_or_diff($upgrade_sql, <<'## END OF DIFF', "Diff as expected");
 -- Convert schema '' to '':;

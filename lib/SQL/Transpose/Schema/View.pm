@@ -53,7 +53,7 @@ names and keep them in order by the first occurrence of a field name.
 
 =cut
 
-with ListAttr fields => ( uniq => 1 );
+with ListAttr fields => (uniq => 1);
 
 =head2 tables
 
@@ -71,7 +71,7 @@ names and keep them in order by the first occurrence of a field name.
 
 =cut
 
-with ListAttr tables => ( uniq => 1 );
+with ListAttr tables => (uniq => 1);
 
 =head2 options
 
@@ -83,7 +83,10 @@ Gets or appends a list of options on the view.
 
 =cut
 
-with ListAttr options => ( uniq => 1, append => 1 );
+with ListAttr options => (
+    uniq   => 1,
+    append => 1
+);
 
 sub is_valid {
 
@@ -113,7 +116,10 @@ Get or set the view's name.
 
 =cut
 
-has name => ( is => 'rw', default => quote_sub(q{ '' }) );
+has name => (
+    is      => 'rw',
+    default => quote_sub(q{ '' })
+);
 
 =head2 order
 
@@ -123,12 +129,15 @@ Get or set the view's order.
 
 =cut
 
-has order => ( is => 'rw', default => quote_sub(q{ 0 }) );
+has order => (
+    is      => 'rw',
+    default => quote_sub(q{ 0 })
+);
 
 around order => sub {
-    my ( $orig, $self, $arg ) = @_;
+    my ($orig, $self, $arg) = @_;
 
-    if ( defined $arg && $arg =~ /^\d+$/ ) {
+    if (defined $arg && $arg =~ /^\d+$/) {
         return $self->$orig($arg);
     }
 
@@ -143,7 +152,10 @@ Get or set the view's SQL.
 
 =cut
 
-has sql => ( is => 'rw', default => quote_sub(q{ '' }) );
+has sql => (
+    is      => 'rw',
+    default => quote_sub(q{ '' })
+);
 
 =head2 schema
 
@@ -154,7 +166,11 @@ Get or set the view's schema object.
 
 =cut
 
-has schema => ( is => 'rw', isa => schema_obj('Schema'), weak_ref => 1 );
+has schema => (
+    is       => 'rw',
+    isa      => schema_obj('Schema'),
+    weak_ref => 1
+);
 
 around schema => \&ex2err;
 
@@ -167,29 +183,32 @@ Determines if this view is the same as another
 =cut
 
 around equals => sub {
-    my $orig = shift;
-    my $self = shift;
-    my $other = shift;
+    my $orig             = shift;
+    my $self             = shift;
+    my $other            = shift;
     my $case_insensitive = shift;
-    my $ignore_sql = shift;
+    my $ignore_sql       = shift;
 
     return 0 unless $self->$orig($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
+
     #return 0 unless $self->is_valid eq $other->is_valid;
 
     unless ($ignore_sql) {
-        my $selfSql = $self->sql;
+        my $selfSql  = $self->sql;
         my $otherSql = $other->sql;
+
         # Remove comments
         $selfSql =~ s/--.*$//mg;
         $otherSql =~ s/--.*$//mg;
+
         # Collapse whitespace to space to avoid whitespace comparison issues
         $selfSql =~ s/\s+/ /sg;
         $otherSql =~ s/\s+/ /sg;
         return 0 unless $selfSql eq $otherSql;
     }
 
-    my $selfFields = join(":", $self->fields);
+    my $selfFields  = join(":", $self->fields);
     my $otherFields = join(":", $other->fields);
     return 0 unless $case_insensitive ? uc($selfFields) eq uc($otherFields) : $selfFields eq $otherFields;
     return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);

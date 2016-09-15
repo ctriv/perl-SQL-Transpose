@@ -38,15 +38,14 @@ our @EXPORT_OK;
 use SQL::Transpose::Utils 'debug';
 
 sub produce {
-    my $self           = shift;
-    my $translator     = shift;
-    my $schema         = $translator->schema;
-    my $o = '';
-    for my $table ( $schema->get_tables ) {
-        my $table_name    = $table->name or next;
+    my $self       = shift;
+    my $translator = shift;
+    my $schema     = $translator->schema;
+    my $o          = '';
+    foreach my $table ($schema->get_tables) {
+        my $table_name = $table->name or next;
         my $n = latex($table_name);
-        $o .=
-          sprintf '
+        $o .= sprintf '
 \subsubsection{%s}
 %s
 \begin{table}[htb]
@@ -56,15 +55,14 @@ sub produce {
 { \small
   \begin{tabular}{l l p{8cm}}
   Column & Datatype & Description \\\\ \hline
-',
- $n, latex($table->comments), $n, $table_name;
+', $n, latex($table->comments), $n, $table_name;
 
         foreach my $f ($table->get_fields) {
-            $o .= sprintf '%s & %s & %s \\\\', map {latex($_)} ($f->name, $f->data_type, $f->comments || '');
+            $o .= sprintf '%s & %s & %s \\\\', map { latex($_) } ($f->name, $f->data_type, $f->comments || '');
             $o .= "\n";
 
         }
-$o .= sprintf '
+        $o .= sprintf '
 \end{tabular}
 }
 \end{table}
@@ -73,6 +71,7 @@ $o .= sprintf '
     }
     return $o;
 }
+
 sub latex {
     my $s = shift;
     return '' unless defined $s;

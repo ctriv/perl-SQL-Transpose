@@ -80,7 +80,7 @@ create : CREATE TABLE table_name '(' create_definition(s /,/) ')' ';'
         }
 
         my $i = 1;
-        for my $definition ( @{ $item[5] } ) {
+        foreach my $definition ( @{ $item[5] } ) {
             if ( $definition->{'supertype'} eq 'field' ) {
                 my $field_name = $definition->{'name'};
                 $tables{ $table_name }{'fields'}{ $field_name } =
@@ -376,43 +376,37 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
 END_OF_GRAMMAR
 
 sub parse {
-    my ( $translator, $data ) = @_;
+    my ($translator, $data) = @_;
 
     # Enable warnings within the Parse::RecDescent module.
     local $::RD_ERRORS = 1 unless defined $::RD_ERRORS; # Make sure the parser dies when it encounters an error
-    local $::RD_WARN   = 1 unless defined $::RD_WARN; # Enable warnings. This will warn on unused rules &c.
-    local $::RD_HINT   = 1 unless defined $::RD_HINT; # Give out hints to help fix problems.
+    local $::RD_WARN   = 1 unless defined $::RD_WARN;   # Enable warnings. This will warn on unused rules &c.
+    local $::RD_HINT   = 1 unless defined $::RD_HINT;   # Give out hints to help fix problems.
 
-    local $::RD_TRACE  = $translator->trace ? 1 : undef;
-    local $DEBUG       = $translator->debug;
+    local $::RD_TRACE = $translator->trace ? 1 : undef;
+    local $DEBUG = $translator->debug;
 
     my $parser = ddl_parser_instance('Access');
 
     my $result = $parser->startrule($data);
-    return $translator->error( "Parse failed." ) unless defined $result;
-    warn Dumper( $result ) if $DEBUG;
+    return $translator->error("Parse failed.") unless defined $result;
+    warn Dumper($result) if $DEBUG;
 
     my $schema = $translator->schema;
-    my @tables = sort {
-        $result->{ $a }->{'order'} <=> $result->{ $b }->{'order'}
-    } keys %{ $result };
+    my @tables = sort { $result->{$a}->{'order'} <=> $result->{$b}->{'order'} } keys %{$result};
 
-    for my $table_name ( @tables ) {
-        my $tdata =  $result->{ $table_name };
-        my $table =  $schema->add_table(
-            name  => $tdata->{'table_name'},
+    foreach my $table_name (@tables) {
+        my $tdata = $result->{$table_name};
+        my $table = $schema->add_table(
+            name => $tdata->{'table_name'},
         ) or die $schema->error;
 
-        $table->comments( $tdata->{'comments'} );
+        $table->comments($tdata->{'comments'});
 
-        my @fields = sort {
-            $tdata->{'fields'}->{$a}->{'order'}
-            <=>
-            $tdata->{'fields'}->{$b}->{'order'}
-        } keys %{ $tdata->{'fields'} };
+        my @fields = sort { $tdata->{'fields'}->{$a}->{'order'} <=> $tdata->{'fields'}->{$b}->{'order'} } keys %{$tdata->{'fields'}};
 
-        for my $fname ( @fields ) {
-            my $fdata = $tdata->{'fields'}{ $fname };
+        foreach my $fname (@fields) {
+            my $fdata = $tdata->{'fields'}{$fname};
             my $field = $table->add_field(
                 name              => $fdata->{'name'},
                 data_type         => $fdata->{'data_type'},
@@ -423,11 +417,11 @@ sub parse {
                 comments          => $fdata->{'comments'},
             ) or die $table->error;
 
-            $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
+            $table->primary_key($field->name) if $fdata->{'is_primary_key'};
         }
 
-        for my $idata ( @{ $tdata->{'indices'} || [] } ) {
-            my $index  =  $table->add_index(
+        foreach my $idata (@{$tdata->{'indices'} || []}) {
+            my $index = $table->add_index(
                 name   => $idata->{'name'},
                 type   => uc $idata->{'type'},
                 fields => $idata->{'fields'},

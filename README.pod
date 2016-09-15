@@ -348,7 +348,7 @@ setting a parser, producer, or datasource (this key is named
 "filename" or "file" if it's a file, or "data" for a SCALAR reference.
 
   # As above, parse /path/to/datafile, but with different producers
-  for my $prod ("MySQL", "XML", "Sybase") {
+  foreach my $prod ("MySQL", "XML", "Sybase") {
       print $tr->translate(
                 producer => $prod,
                 filename => "/path/to/datafile",

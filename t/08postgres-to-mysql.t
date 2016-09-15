@@ -8,10 +8,7 @@ use Data::Dumper;
 use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(1,
-        'SQL::Transpose::Parser::PostgreSQL',
-        'SQL::Transpose::Producer::MySQL',
-    );
+    maybe_plan(1, 'SQL::Transpose::Parser::PostgreSQL', 'SQL::Transpose::Producer::MySQL',);
 }
 
 my $create = q|
@@ -171,4 +168,4 @@ my $tr = SQL::Transpose->new(
     producer => "MySQL"
 );
 
-ok( $tr->translate(\$create), 'Translate PG2My' ) or diag($tr->error);
+ok($tr->translate(\$create), 'Translate PG2My') or diag($tr->error);

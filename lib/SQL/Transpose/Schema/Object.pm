@@ -43,10 +43,10 @@ use Moo 1.000003;
 # screw you PAUSE
 
 with qw(
-  SQL::Transpose::Role::Error
-  SQL::Transpose::Role::BuildArgs
-  SQL::Transpose::Schema::Role::Extra
-  SQL::Transpose::Schema::Role::Compare
+    SQL::Transpose::Role::Error
+    SQL::Transpose::Role::BuildArgs
+    SQL::Transpose::Schema::Role::Extra
+    SQL::Transpose::Schema::Role::Compare
 );
 
 1;

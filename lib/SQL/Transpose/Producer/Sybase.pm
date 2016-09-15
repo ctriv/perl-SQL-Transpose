@@ -19,14 +19,14 @@ This module will produce text output of the schema suitable for Sybase.
 
 use strict;
 use warnings;
-our ( $DEBUG, $WARN );
+our ($DEBUG, $WARN);
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
 use SQL::Transpose::Schema::Constants;
 use SQL::Transpose::Utils qw(debug header_comment);
 
-my %translate  = (
+my %translate = (
     #
     # Sybase types
     #
@@ -115,10 +115,10 @@ and table_constraint is:
 =cut
 
 sub produce {
-    my $self           = shift;
-    my $translator     = shift;
-    $DEBUG             = $translator->debug;
-    $WARN              = $translator->show_warnings;
+    my $self       = shift;
+    my $translator = shift;
+    $DEBUG = $translator->debug;
+    $WARN  = $translator->show_warnings;
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
@@ -126,12 +126,12 @@ sub produce {
     my $output;
     $output .= header_comment unless ($no_comments);
 
-    for my $table ( $schema->get_tables ) {
-        my $table_name    = $table->name or next;
-        $table_name       = $self->mk_name( $table_name, '', undef, 1 );
+    foreach my $table ($schema->get_tables) {
+        my $table_name = $table->name or next;
+        $table_name = $self->mk_name($table_name, '', undef, 1);
         my $table_name_ur = $self->unreserve($table_name) || '';
 
-        my ( @comments, @field_defs, @index_defs, @constraint_defs );
+        my (@comments, @field_defs, @index_defs, @constraint_defs);
 
         push @comments, "--\n-- Table: $table_name_ur\n--" unless $no_comments;
 
@@ -141,14 +141,12 @@ sub produce {
         # Fields
         #
         my %field_name_scope;
-        for my $field ( $table->get_fields ) {
-            my $field_name    = $self->mk_name(
-                $field->name, '', \%field_name_scope, undef,1
-            );
-            my $field_name_ur = $self->unreserve( $field_name, $table_name );
-            my $field_def     = qq["$field_name_ur"];
-            $field_def        =~ s/\"//g;
-            if ( $field_def =~ /identity/ ){
+        foreach my $field ($table->get_fields) {
+            my $field_name = $self->mk_name($field->name, '', \%field_name_scope, undef, 1);
+            my $field_name_ur = $self->unreserve($field_name, $table_name);
+            my $field_def = qq["$field_name_ur"];
+            $field_def =~ s/\"//g;
+            if ($field_def =~ /identity/) {
                 $field_def =~ s/identity/pidentity/;
             }
 
@@ -159,50 +157,46 @@ sub produce {
             my $orig_data_type = $data_type;
             my %extra          = $field->extra;
             my $list           = $extra{'list'} || [];
+
             # \todo deal with embedded quotes
-            my $commalist      = join( ', ', map { qq['$_'] } @$list );
+            my $commalist = join(', ', map { qq['$_'] } @$list);
             my $seq_name;
 
-            if ( $data_type eq 'enum' ) {
-                my $check_name = $self->mk_name(
-                    $table_name.'_'.$field_name, 'chk' ,undef, 1
-                );
-                push @constraint_defs,
-                "CONSTRAINT $check_name CHECK ($field_name IN ($commalist))";
+            if ($data_type eq 'enum') {
+                my $check_name = $self->mk_name($table_name . '_' . $field_name, 'chk', undef, 1);
+                push @constraint_defs, "CONSTRAINT $check_name CHECK ($field_name IN ($commalist))";
                 $data_type .= 'character varying';
             }
-            elsif ( $data_type eq 'set' ) {
+            elsif ($data_type eq 'set') {
                 $data_type .= 'character varying';
             }
-            elsif ( $field->is_auto_increment ) {
+            elsif ($field->is_auto_increment) {
                 $field_def .= ' IDENTITY';
             }
             else {
-                if ( defined $translate{ $data_type } ) {
-                    $data_type = $translate{ $data_type };
+                if (defined $translate{$data_type}) {
+                    $data_type = $translate{$data_type};
                 }
                 else {
-                    warn "Unknown datatype: $data_type ",
-                        "($table_name.$field_name)\n" if $WARN;
+                    warn "Unknown datatype: $data_type ", "($table_name.$field_name)\n" if $WARN;
                 }
             }
 
             my $size = $field->size;
-            unless ( $size ) {
-                if ( $data_type =~ /numeric/ ) {
+            unless ($size) {
+                if ($data_type =~ /numeric/) {
                     $size = '9,0';
                 }
-                elsif ( $orig_data_type eq 'text' ) {
+                elsif ($orig_data_type eq 'text') {
+
                     #interpret text fields as long varchars
                     $size = '255';
                 }
-                elsif (
-                    $data_type eq 'varchar' &&
-                    $orig_data_type eq 'boolean'
-                ) {
+                elsif ($data_type eq 'varchar'
+                    && $orig_data_type eq 'boolean') {
                     $size = '6';
                 }
-                elsif ( $data_type eq 'varchar' ) {
+                elsif ($data_type eq 'varchar') {
                     $size = '255';
                 }
             }
@@ -214,18 +208,17 @@ sub produce {
             # Default value
             #
             my $default = $field->default_value;
-            if ( defined $default ) {
-                $field_def .= sprintf( ' DEFAULT %s',
-                    ( $field->is_auto_increment && $seq_name )
-                    ? qq[nextval('"$seq_name"'::text)] :
-                    ( $default =~ m/null/i ) ? 'NULL' : "'$default'"
-                );
+            if (defined $default) {
+                $field_def .= sprintf(' DEFAULT %s',
+                      ($field->is_auto_increment && $seq_name) ? qq[nextval('"$seq_name"'::text)]
+                    : ($default =~ m/null/i) ? 'NULL'
+                    :                          "'$default'");
             }
 
             #
             # Not null constraint
             #
-            unless ( $field->is_nullable ) {
+            unless ($field->is_nullable) {
                 $field_def .= ' NOT NULL';
             }
             else {
@@ -240,69 +233,48 @@ sub produce {
         #
         my @constraint_decs = ();
         my $c_name_default;
-        for my $constraint ( $table->get_constraints ) {
-            my $name    = $constraint->name || '';
-            my $type    = $constraint->type || NORMAL;
-            my @fields  = map { $self->unreserve( $_, $table_name ) }
-                $constraint->fields;
-            my @rfields = map { $self->unreserve( $_, $table_name ) }
-                $constraint->reference_fields;
+        foreach my $constraint ($table->get_constraints) {
+            my $name = $constraint->name || '';
+            my $type = $constraint->type || NORMAL;
+            my @fields  = map { $self->unreserve($_, $table_name) } $constraint->fields;
+            my @rfields = map { $self->unreserve($_, $table_name) } $constraint->reference_fields;
             next unless @fields;
 
-            if ( $type eq PRIMARY_KEY ) {
-                $name ||= $self->mk_name( $table_name, 'pk', undef,1 );
-                push @constraint_defs,
-                    "CONSTRAINT $name PRIMARY KEY ".
-                    '(' . join( ', ', @fields ) . ')';
+            if ($type eq PRIMARY_KEY) {
+                $name ||= $self->mk_name($table_name, 'pk', undef, 1);
+                push @constraint_defs, "CONSTRAINT $name PRIMARY KEY " . '(' . join(', ', @fields) . ')';
             }
-            elsif ( $type eq FOREIGN_KEY ) {
-                $name ||= $self->mk_name( $table_name, 'fk', undef,1 );
+            elsif ($type eq FOREIGN_KEY) {
+                $name ||= $self->mk_name($table_name, 'fk', undef, 1);
                 push @constraint_defs,
-                    "CONSTRAINT $name FOREIGN KEY".
-                    ' (' . join( ', ', @fields ) . ') REFERENCES '.
-                    $constraint->reference_table.
-                    ' (' . join( ', ', @rfields ) . ')';
+                      "CONSTRAINT $name FOREIGN KEY" . ' ('
+                    . join(', ', @fields)
+                    . ') REFERENCES '
+                    . $constraint->reference_table . ' ('
+                    . join(', ', @rfields) . ')';
             }
-            elsif ( $type eq UNIQUE ) {
-                $name ||= $self->mk_name(
-                    $table_name,
-                    $name || ++$c_name_default,undef, 1
-                );
-                push @constraint_defs,
-                    "CONSTRAINT $name UNIQUE " .
-                    '(' . join( ', ', @fields ) . ')';
+            elsif ($type eq UNIQUE) {
+                $name ||= $self->mk_name($table_name, $name || ++$c_name_default, undef, 1);
+                push @constraint_defs, "CONSTRAINT $name UNIQUE " . '(' . join(', ', @fields) . ')';
             }
         }
 
         #
         # Indices
         #
-        for my $index ( $table->get_indices ) {
-            push @index_defs,
-                'CREATE INDEX ' . $index->name .
-                " ON $table_name (".
-                join( ', ', $index->fields ) . ");";
+        foreach my $index ($table->get_indices) {
+            push @index_defs, 'CREATE INDEX ' . $index->name . " ON $table_name (" . join(', ', $index->fields) . ");";
         }
 
         my $create_statement;
-        $create_statement  = qq[DROP TABLE $table_name_ur;\n]
+        $create_statement = qq[DROP TABLE $table_name_ur;\n]
             if $add_drop_table;
-        $create_statement .= qq[CREATE TABLE $table_name_ur (\n].
-            join( ",\n",
-                map { "  $_" } @field_defs, @constraint_defs
-            ).
-            "\n);"
-        ;
+        $create_statement .= qq[CREATE TABLE $table_name_ur (\n] . join(",\n", map { "  $_" } @field_defs, @constraint_defs) . "\n);";
 
-        $output .= join( "\n\n",
-            @comments,
-            $create_statement,
-            @index_defs,
-            ''
-        );
+        $output .= join("\n\n", @comments, $create_statement, @index_defs, '');
     }
 
-    foreach my $view ( $schema->get_views ) {
+    foreach my $view ($schema->get_views) {
         my (@comments, $view_name);
 
         $view_name = $view->name();
@@ -311,41 +283,32 @@ sub produce {
         # text of view is already a 'create view' statement so no need
         # to do anything fancy.
 
-        $output .= join("\n\n",
-                       @comments,
-                       $view->sql(),
-                       );
+        $output .= join("\n\n", @comments, $view->sql(),);
     }
 
-
-    foreach my $procedure ( $schema->get_procedures ) {
+    foreach my $procedure ($schema->get_procedures) {
         my (@comments, $procedure_name);
 
         $procedure_name = $procedure->name();
-        push @comments,
-            "--\n-- Procedure: $procedure_name\n--" unless $no_comments;
+        push @comments, "--\n-- Procedure: $procedure_name\n--" unless $no_comments;
 
         # text of procedure  already has the 'create procedure' stuff
         # so there is no need to do anything fancy. However, we should
         # think about doing fancy stuff with granting permissions and
         # so on.
 
-        $output .= join("\n\n",
-                       @comments,
-                       $procedure->sql(),
-                       );
+        $output .= join("\n\n", @comments, $procedure->sql(),);
     }
 
-    if ( $WARN ) {
-        if ( %truncated ) {
-            warn "Truncated " . keys( %truncated ) . " names:\n";
-            warn "\t" . join( "\n\t", sort keys %truncated ) . "\n";
+    if ($WARN) {
+        if (%truncated) {
+            warn "Truncated " . keys(%truncated) . " names:\n";
+            warn "\t" . join("\n\t", sort keys %truncated) . "\n";
         }
 
-        if ( %unreserve ) {
-            warn "Encounted " . keys( %unreserve ) .
-                " unsafe names in schema (reserved or invalid):\n";
-            warn "\t" . join( "\n\t", sort keys %unreserve ) . "\n";
+        if (%unreserve) {
+            warn "Encounted " . keys(%unreserve) . " unsafe names in schema (reserved or invalid):\n";
+            warn "\t" . join("\n\t", sort keys %unreserve) . "\n";
         }
     }
 
@@ -359,35 +322,34 @@ sub mk_name {
     my $scope         = shift || '';
     my $critical      = shift || '';
     my $basename_orig = $basename;
-    my $max_name      = $type
-                        ? $max_id_length - (length($type) + 1)
-                        : $max_id_length;
-    $basename         = substr( $basename, 0, $max_name )
-                        if length( $basename ) > $max_name;
-    my $name          = $type ? "${type}_$basename" : $basename;
+    my $max_name
+        = $type
+        ? $max_id_length - (length($type) + 1)
+        : $max_id_length;
+    $basename = substr($basename, 0, $max_name)
+        if length($basename) > $max_name;
+    my $name = $type ? "${type}_$basename" : $basename;
 
-    if ( $basename ne $basename_orig and $critical ) {
+    if ($basename ne $basename_orig and $critical) {
         my $show_type = $type ? "+'$type'" : "";
-        warn "Truncating '$basename_orig'$show_type to $max_id_length ",
-            "character limit to make '$name'\n" if $WARN;
-        $truncated{ $basename_orig } = $name;
+        warn "Truncating '$basename_orig'$show_type to $max_id_length ", "character limit to make '$name'\n" if $WARN;
+        $truncated{$basename_orig} = $name;
     }
 
     $scope ||= \%global_names;
-    if ( my $prev = $scope->{ $name } ) {
+    if (my $prev = $scope->{$name}) {
         my $name_orig = $name;
-        $name        .= sprintf( "%02d", ++$prev );
+        $name .= sprintf("%02d", ++$prev);
         substr($name, $max_id_length - 3) = "00"
-            if length( $name ) > $max_id_length;
+            if length($name) > $max_id_length;
 
-        warn "The name '$name_orig' has been changed to ",
-             "'$name' to make it unique.\n" if $WARN;
+        warn "The name '$name_orig' has been changed to ", "'$name' to make it unique.\n" if $WARN;
 
-        $scope->{ $name_orig }++;
+        $scope->{$name_orig}++;
     }
-    $name = substr( $name, 0, $max_id_length )
-                        if ((length( $name ) > $max_id_length) && $critical);
-    $scope->{ $name }++;
+    $name = substr($name, 0, $max_id_length)
+        if ((length($name) > $max_id_length) && $critical);
+    $scope->{$name}++;
     return $name;
 }
 
@@ -395,12 +357,12 @@ sub unreserve {
     my $self            = shift;
     my $name            = shift || '';
     my $schema_obj_name = shift || '';
-    my ( $suffix ) = ( $name =~ s/(\W.*)$// ) ? $1 : '';
+    my ($suffix) = ($name =~ s/(\W.*)$//) ? $1 : '';
 
     # also trap fields that don't begin with a letter
-    return $name if !$reserved{ uc $name } && $name =~ /^[a-z]/i;
+    return $name if !$reserved{uc $name} && $name =~ /^[a-z]/i;
 
-    if ( $schema_obj_name ) {
+    if ($schema_obj_name) {
         ++$unreserve{"$schema_obj_name.$name"};
     }
     else {
@@ -408,7 +370,7 @@ sub unreserve {
     }
 
     my $unreserve = sprintf '%s_', $name;
-    return $unreserve.$suffix;
+    return $unreserve . $suffix;
 }
 
 1;

@@ -10,20 +10,18 @@ use Data::Dumper;
 use SQL::Transpose;
 use SQL::Transpose::Schema::Constants;
 
-
 BEGIN {
-    maybe_plan(2, 'SQL::Transpose::Parser::XML::SQLFairy',
-              'SQL::Transpose::Producer::MySQL');
+    maybe_plan(2, 'SQL::Transpose::Parser::XML::SQLFairy', 'SQL::Transpose::Producer::MySQL');
 }
 
 my $xmlfile = "$Bin/data/xml/schema.xml";
 
 my $sqlt;
 $sqlt = SQL::Transpose->new(
-    no_comments => 1,
+    no_comments    => 1,
     show_warnings  => 0,
     add_drop_table => 1,
-    producer_args => {
+    producer_args  => {
         mysql_version => 5.005,
     },
 );

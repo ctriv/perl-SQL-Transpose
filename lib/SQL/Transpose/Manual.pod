@@ -381,7 +381,7 @@ learn the methods you can call.  Here is a very simple example:
       my $tr     = shift;
       my $schema = $tr->schema;
       my $output = '';
-      for my $t ( $schema->get_tables ) {
+      foreach my $t ( $schema->get_tables ) {
           $output .= join('', "Table = ", $t->name, "\n");
       }
       return $output;
@@ -423,7 +423,7 @@ map the concepts in the data to the Schema object.
       my ( $tr, $data ) = @_;
       my $schema = $tr->schema;
 
-      for my $line ( split( /\n/, $data ) ) {
+      foreach my $line ( split( /\n/, $data ) ) {
           my ( $table_name, @fields ) = split( /:/, $line );
           my $table = $schema->add_table( name => $table_name )
               or die $schema->error;

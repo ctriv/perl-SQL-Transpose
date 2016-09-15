@@ -35,6 +35,7 @@ sub debug {
         $x =~ s/\bPKG\b/$pkg/g;
         $x =~ s/\bLINE\b/$line/g;
         $x =~ s/\bSUB\b/$sub/g;
+
         #warn '[' . $x . "]\n";
         print STDERR '[' . $x . "]\n";
     }
@@ -65,50 +66,50 @@ sub normalize_quote_options {
 
     my $quote;
     if (defined $config->{quote_identifiers}) {
-      $quote = $config->{quote_identifiers};
+        $quote = $config->{quote_identifiers};
 
-      for (qw/quote_table_names quote_field_names/) {
-        carp "Ignoring deprecated parameter '$_', since 'quote_identifiers' is supplied"
-          if defined $config->{$_}
-      }
+        for (qw/quote_table_names quote_field_names/) {
+            carp "Ignoring deprecated parameter '$_', since 'quote_identifiers' is supplied"
+                if defined $config->{$_};
+        }
     }
+
     # Legacy one set the other is not
-    elsif (
-      defined $config->{'quote_table_names'}
-        xor
-      defined $config->{'quote_field_names'}
-    ) {
-      if (defined $config->{'quote_table_names'}) {
-        carp "Explicitly disabling the deprecated 'quote_table_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_field_names'"
-          unless $config->{'quote_table_names'};
-        $quote = $config->{'quote_table_names'} ? 1 : 0;
-      }
-      else {
-        carp "Explicitly disabling the deprecated 'quote_field_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_table_names'"
-          unless $config->{'quote_field_names'};
-        $quote = $config->{'quote_field_names'} ? 1 : 0;
-      }
+    elsif (defined $config->{'quote_table_names'} xor defined $config->{'quote_field_names'}) {
+        if (defined $config->{'quote_table_names'}) {
+            carp
+"Explicitly disabling the deprecated 'quote_table_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_field_names'"
+                unless $config->{'quote_table_names'};
+            $quote = $config->{'quote_table_names'} ? 1 : 0;
+        }
+        else {
+            carp
+"Explicitly disabling the deprecated 'quote_field_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_table_names'"
+                unless $config->{'quote_field_names'};
+            $quote = $config->{'quote_field_names'} ? 1 : 0;
+        }
     }
-    # Legacy both are set
-    elsif(defined $config->{'quote_table_names'}) {
-      croak 'Setting quote_table_names and quote_field_names to conflicting values is no longer supported'
-        if ($config->{'quote_table_names'} xor $config->{'quote_field_names'});
 
-      $quote = $config->{'quote_table_names'} ? 1 : 0;
+    # Legacy both are set
+    elsif (defined $config->{'quote_table_names'}) {
+        croak 'Setting quote_table_names and quote_field_names to conflicting values is no longer supported'
+            if ($config->{'quote_table_names'} xor $config->{'quote_field_names'});
+
+        $quote = $config->{'quote_table_names'} ? 1 : 0;
     }
 
     return $quote;
 }
 
 sub header_comment {
-    my $producer = shift || caller;
+    my $producer     = shift || caller;
     my $comment_char = shift;
-    my $now = scalar localtime;
+    my $now          = scalar localtime;
 
     $comment_char = $DEFAULT_COMMENT
         unless defined $comment_char;
 
-    my $header_comment =<<"HEADER_COMMENT";
+    my $header_comment = <<"HEADER_COMMENT";
 ${comment_char}
 ${comment_char}Created by $producer
 ${comment_char}Created on $now
@@ -116,7 +117,7 @@ ${comment_char}
 HEADER_COMMENT
 
     # Any additional stuff passed in
-    for my $additional_comment (@_) {
+    foreach my $additional_comment (@_) {
         $header_comment .= "${comment_char}${additional_comment}\n";
     }
 
@@ -124,12 +125,12 @@ HEADER_COMMENT
 }
 
 sub parse_list_arg {
-    my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];
+    my $list = UNIVERSAL::isa($_[0], 'ARRAY') ? shift : [@_];
 
     #
     # This protects stringification of references.
     #
-    if ( @$list && ref $list->[0] ) {
+    if (@$list && ref $list->[0]) {
         return $list;
     }
     #
@@ -145,24 +146,20 @@ sub parse_list_arg {
 }
 
 sub truncate_id_uniquely {
-    my ( $desired_name, $max_symbol_length ) = @_;
+    my ($desired_name, $max_symbol_length) = @_;
 
     return $desired_name
-      unless defined $desired_name && length $desired_name > $max_symbol_length;
+        unless defined $desired_name && length $desired_name > $max_symbol_length;
 
-    my $truncated_name = substr $desired_name, 0,
-      $max_symbol_length - COLLISION_TAG_LENGTH - 1;
+    my $truncated_name = substr $desired_name, 0, $max_symbol_length - COLLISION_TAG_LENGTH - 1;
 
     # Hex isn't the most space-efficient, but it skirts around allowed
     # charset issues
     my $digest = sha1_hex($desired_name);
     my $collision_tag = substr $digest, 0, COLLISION_TAG_LENGTH;
 
-    return $truncated_name
-         . '_'
-         . $collision_tag;
+    return $truncated_name . '_' . $collision_tag;
 }
-
 
 sub parse_mysql_version {
     my ($v, $target) = @_;
@@ -174,17 +171,17 @@ sub parse_mysql_version {
     my @vers;
 
     # X.Y.Z style
-    if ( $v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x ) {
+    if ($v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x) {
         push @vers, $1, $2, $3;
     }
 
     # XYYZZ (mysql) style
-    elsif ( $v =~ / ^ (\d) (\d{2}) (\d{2}) $ /x ) {
+    elsif ($v =~ / ^ (\d) (\d{2}) (\d{2}) $ /x) {
         push @vers, $1, $2, $3;
     }
 
     # XX.YYYZZZ (perl) style or simply X
-    elsif ( $v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x ) {
+    elsif ($v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x) {
         push @vers, $1, $2, $3;
     }
     else {
@@ -193,10 +190,10 @@ sub parse_mysql_version {
     }
 
     if ($target eq 'perl') {
-        return sprintf ('%d.%03d%03d', map { $_ || 0 } (@vers) );
+        return sprintf('%d.%03d%03d', map { $_ || 0 } (@vers));
     }
     elsif ($target eq 'mysql') {
-        return sprintf ('%d%02d%02d', map { $_ || 0 } (@vers) );
+        return sprintf('%d%02d%02d', map { $_ || 0 } (@vers));
     }
     else {
         #how do I croak sanely here?
@@ -212,12 +209,12 @@ sub parse_dbms_version {
     my @vers;
 
     # X.Y.Z style
-    if ( $v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x ) {
+    if ($v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x) {
         push @vers, $1, $2, $3;
     }
 
     # XX.YYYZZZ (perl) style or simply X
-    elsif ( $v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x ) {
+    elsif ($v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x) {
         push @vers, $1, $2, $3;
     }
     else {
@@ -226,10 +223,11 @@ sub parse_dbms_version {
     }
 
     if ($target eq 'perl') {
-        return sprintf ('%d.%03d%03d', map { $_ || 0 } (@vers) );
+        return sprintf('%d.%03d%03d', map { $_ || 0 } (@vers));
     }
     elsif ($target eq 'native') {
-        return join '.' => grep defined, @vers;
+        return join '.' => grep defined,
+            @vers;
     }
     else {
         #how do I croak sanely here?
@@ -248,18 +246,20 @@ sub ddl_parser_instance {
 
     # handle DB2 in a special way, since the grammar source was lost :(
     if ($type eq 'DB2') {
-      require SQL::Transpose::Parser::DB2::Grammar;
-      return SQL::Transpose::Parser::DB2::Grammar->new;
+        require SQL::Transpose::Parser::DB2::Grammar;
+        return SQL::Transpose::Parser::DB2::Grammar->new;
     }
 
     require Parse::RecDescent;
-    return Parse::RecDescent->new(do {
-      no strict 'refs';
-      ${"SQL::Transpose::Parser::${type}::GRAMMAR"}
-        || die "No \$SQL::Transpose::Parser::${type}::GRAMMAR defined, unable to instantiate PRD parser\n"
-    });
+    return Parse::RecDescent->new(
+        do {
+            no strict 'refs';
+            ${"SQL::Transpose::Parser::${type}::GRAMMAR"}
+                || die "No \$SQL::Transpose::Parser::${type}::GRAMMAR defined, unable to instantiate PRD parser\n";
+            }
+    );
 
-# this is disabled until RT#74593 is resolved
+    # this is disabled until RT#74593 is resolved
 
 =begin sadness
 
@@ -333,7 +333,7 @@ sub ddl_parser_instance {
 sub _find_co_root {
 
     my @mod_parts = split /::/, (__PACKAGE__ . '.pm');
-    my $rel_path = join ('/', @mod_parts);  # %INC stores paths with / regardless of OS
+    my $rel_path = join('/', @mod_parts); # %INC stores paths with / regardless of OS
 
     return undef unless ($INC{$rel_path});
 
@@ -346,17 +346,17 @@ sub _find_co_root {
         $root = File::Spec->catdir($root, File::Spec->updir);
     }
 
-    return ( -f File::Spec->catfile($root, 'Makefile.PL') )
+    return (-f File::Spec->catfile($root, 'Makefile.PL'))
         ? $root
-        : undef
-    ;
+        : undef;
 }
 
 {
+
     package SQL::Transpose::Utils::Error;
 
     use overload
-        '""' => sub { ${$_[0]} },
+        '""'     => sub { ${$_[0]} },
         fallback => 1;
 
     sub new {
@@ -366,12 +366,8 @@ sub _find_co_root {
 }
 
 sub uniq {
-  my( %seen, $seen_undef, $numeric_preserving_copy );
-  grep { not (
-    defined $_
-      ? $seen{ $numeric_preserving_copy = $_ }++
-      : $seen_undef++
-  ) } @_;
+    my (%seen, $seen_undef, $numeric_preserving_copy);
+    grep { not(defined $_ ? $seen{$numeric_preserving_copy = $_}++ : $seen_undef++) } @_;
 }
 
 sub throw {
@@ -382,7 +378,8 @@ sub ex2err {
     my ($orig, $self, @args) = @_;
     return try {
         $self->$orig(@args);
-    } catch {
+    }
+    catch {
         die $_ unless blessed($_) && $_->isa("SQL::Transpose::Utils::Error");
         $self->error("$_");
     };
@@ -411,13 +408,12 @@ sub batch_alter_table_statements {
         alter_create_index
         alter_create_constraint
         alter_table
-    ) unless @meths;
+        ) unless @meths;
 
     return map {
         my $meth = $package->can($_) or die "$package cant $_";
-        map { $package->$meth(ref $_ eq 'ARRAY' ? @$_ : $_, $options) } @{ $diff_hash->{$_} }
-    } grep { @{$diff_hash->{$_} || []} }
-        @meths;
+        map { $package->$meth(ref $_ eq 'ARRAY' ? @$_ : $_, $options) } @{$diff_hash->{$_}}
+    } grep { @{$diff_hash->{$_} || []} } @meths;
 }
 
 1;

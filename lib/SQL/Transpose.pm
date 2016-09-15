@@ -1,10 +1,10 @@
 package SQL::Transpose;
 
 use Moo;
-our ( $DEFAULT_SUB, $DEBUG, $ERROR );
+our ($DEFAULT_SUB, $DEBUG, $ERROR);
 
-$DEBUG    = 0 unless defined $DEBUG;
-$ERROR    = "";
+$DEBUG = 0 unless defined $DEBUG;
+$ERROR = "";
 
 use Carp qw(carp croak);
 
@@ -19,7 +19,8 @@ use SQL::Transpose::Schema;
 use SQL::Transpose::Utils qw(throw ex2err carp_ro normalize_quote_options);
 use Module::Runtime qw(use_module);
 
-$DEFAULT_SUB = sub { $_[0]->schema } unless defined $DEFAULT_SUB;
+$DEFAULT_SUB = sub { $_[0]->schema }
+    unless defined $DEFAULT_SUB;
 
 with qw(
     SQL::Transpose::Role::Debug
@@ -28,15 +29,15 @@ with qw(
 );
 
 around BUILDARGS => sub {
-    my $orig = shift;
-    my $self = shift;
+    my $orig   = shift;
+    my $self   = shift;
     my $config = $self->$orig(@_);
 
     # If a 'parser' or 'from' parameter is passed in, use that as the
     # parser; if a 'producer' or 'to' parameter is passed in, use that
     # as the producer; both default to $DEFAULT_SUB.
-    $config->{parser} ||= $config->{from} if defined $config->{from};
-    $config->{producer} ||= $config->{to} if defined $config->{to};
+    $config->{parser}   ||= $config->{from} if defined $config->{from};
+    $config->{producer} ||= $config->{to}   if defined $config->{to};
 
     $config->{filename} ||= $config->{file} if defined $config->{file};
 
@@ -47,7 +48,6 @@ around BUILDARGS => sub {
 
     return $config;
 };
-
 
 sub normalize_tool_class {
     my ($tool, $flavor) = @_;
@@ -63,6 +63,7 @@ sub normalize_tool_class {
 
 sub BUILD {
     my ($self) = @_;
+
     # Make sure all the tool-related stuff is set up
     foreach my $tool (qw(parser)) {
         $self->$tool($self->$tool);
@@ -72,71 +73,84 @@ sub BUILD {
 }
 
 has $_ => (
-    is => 'rw',
+    is      => 'rw',
     default => quote_sub(q{ 0 }),
-    coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
+    coerce  => quote_sub(q{ $_[0] ? 1 : 0 }),
 ) foreach qw(add_drop_table no_comments show_warnings trace validate);
 
 # quote_identifiers is on by default, use a 0-but-true as indicator
 # so we can allow individual producers to change the default
 has quote_identifiers => (
-    is => 'rw',
+    is      => 'rw',
     default => quote_sub(q{ '0E0' }),
-    coerce => quote_sub(q{ $_[0] || 0 }),
+    coerce  => quote_sub(q{ $_[0] || 0 }),
 );
 
 sub quote_table_names {
-    (@_ > 1 and ($_[1] xor $_[0]->quote_identifiers) )
+    (@_ > 1 and ($_[1] xor $_[0]->quote_identifiers))
         ? croak 'Using quote_table_names as a setter is no longer supported'
         : $_[0]->quote_identifiers;
 }
 
 sub quote_field_names {
-    (@_ > 1 and ($_[1] xor $_[0]->quote_identifiers) )
+    (@_ > 1 and ($_[1] xor $_[0]->quote_identifiers))
         ? croak 'Using quote_field_names as a setter is no longer supported'
         : $_[0]->quote_identifiers;
 }
 
 after quote_identifiers => sub {
     if (@_ > 1) {
+
         # synchronize for old code reaching directly into guts
-        $_[0]->{quote_table_names}
-            = $_[0]->{quote_field_names}
-                = $_[1] ? 1 : 0;
+        $_[0]->{quote_table_names} = $_[0]->{quote_field_names} = $_[1] ? 1 : 0;
     }
 };
 
-has producer => ( is => 'rw' );
-
+has producer => (is => 'rw');
 
 sub producer_type {
     return shift->producer;
 }
 
-has producer_args => ( is => 'rw', default => quote_sub(q{ +{} }) );
+has producer_args => (
+    is      => 'rw',
+    default => quote_sub(q{ +{} })
+);
 
 around producer_args => sub {
     my $orig = shift;
     shift->_args($orig, @_);
 };
 
-has parser => ( is => 'rw', default => sub { $DEFAULT_SUB }  );
+has parser => (
+    is      => 'rw',
+    default => sub { $DEFAULT_SUB }
+);
 
 around parser => sub {
     my $orig = shift;
-    shift->_tool({
-        orig => $orig,
-        name => 'parser',
-        path => "SQL::Transpose::Parser",
-        default_sub => "parse",
-    }, @_);
+    shift->_tool(
+        {
+            orig        => $orig,
+            name        => 'parser',
+            path        => "SQL::Transpose::Parser",
+            default_sub => "parse",
+        },
+        @_
+    );
 };
 
-has parser_type => ( is => 'rwp', init_arg => undef );
+has parser_type => (
+    is       => 'rwp',
+    init_arg => undef
+);
 
 around parser_type => carp_ro('parser_type');
 
-has parser_args => ( is => 'rw', default => quote_sub(q{ +{} }) );
+has parser_args => (
+    is      => 'rw',
+    default => quote_sub(q{ +{} })
+);
 
 around parser_args => sub {
     my $orig = shift;
@@ -144,22 +158,23 @@ around parser_args => sub {
 };
 
 has filters => (
-    is => 'rw',
+    is      => 'rw',
     default => quote_sub(q{ [] }),
-    coerce => sub {
+    coerce  => sub {
         my @filters;
+
         # Set. Convert args to list of [\&code,@args]
-        foreach (@{$_[0]||[]}) {
-            my ($filt,@args) = ref($_) eq "ARRAY" ? @$_ : $_;
-            if ( isa($filt,"CODE") ) {
-                push @filters, [$filt,@args];
+        foreach (@{$_[0] || []}) {
+            my ($filt, @args) = ref($_) eq "ARRAY" ? @$_ : $_;
+            if (isa($filt, "CODE")) {
+                push @filters, [$filt, @args];
                 next;
             }
             else {
-                __PACKAGE__->debug("Adding $filt filter. Args:".Dumper(\@args)."\n") if __PACKAGE__->debugging;
+                __PACKAGE__->debug("Adding $filt filter. Args:" . Dumper(\@args) . "\n") if __PACKAGE__->debugging;
                 $filt = _load_sub("$filt\::filter", "SQL::Transpose::Filter")
                     || throw(__PACKAGE__->error);
-                push @filters, [$filt,@args];
+                push @filters, [$filt, @args];
             }
         }
         return \@filters;
@@ -174,15 +189,14 @@ around filters => sub {
 };
 
 has filename => (
-    is => 'rw',
+    is  => 'rw',
     isa => sub {
         foreach my $filename (ref($_[0]) eq 'ARRAY' ? @{$_[0]} : $_[0]) {
             if (-d $filename) {
                 throw("Cannot use directory '$filename' as input source");
             }
             elsif (not -f _ && -r _) {
-                throw("Cannot use '$filename' as input source: ".
-                      "file does not exist or is not readable.");
+                throw("Cannot use '$filename' as input source: " . "file does not exist or is not readable.");
             }
         }
     },
@@ -191,10 +205,11 @@ has filename => (
 around filename => \&ex2err;
 
 has data => (
-    is => 'rw',
+    is      => 'rw',
     builder => 1,
-    lazy => 1,
-    coerce => sub {
+    lazy    => 1,
+    coerce  => sub {
+
         # Set $self->data based on what was passed in.  We will
         # accept a number of things; do our best to get it right.
         my $data = shift;
@@ -202,7 +217,7 @@ has data => (
             $data = join '', @$data;
         }
         elsif (isa($data, 'GLOB')) {
-            seek ($data, 0, 0) if eof ($data);
+            seek($data, 0, 0) if eof($data);
             local $/;
             $data = <$data>;
         }
@@ -225,6 +240,7 @@ around data => sub {
 
 sub _build_data {
     my $self = shift;
+
     # If we have a filename but no data yet, populate.
     if (my $filename = $self->filename) {
         $self->debug("Opening '$filename' to get contents.\n");
@@ -235,7 +251,7 @@ sub _build_data {
 
         foreach my $file (@files) {
             open my $fh, '<', $file
-               or throw("Can't read file '$file': $!");
+                or throw("Can't read file '$file': $!");
 
             $data .= <$fh>;
 
@@ -247,9 +263,9 @@ sub _build_data {
 }
 
 has schema => (
-    is => 'lazy',
-    init_arg => undef,
-    clearer => 'reset',
+    is        => 'lazy',
+    init_arg  => undef,
+    clearer   => 'reset',
     predicate => '_has_schema',
 );
 
@@ -259,20 +275,22 @@ around reset => sub {
     my $orig = shift;
     my $self = shift;
     $self->$orig(@_);
-    return 1
+    return 1;
 };
 
 sub _build_schema { SQL::Transpose::Schema->new(translator => shift) }
 
 sub translate {
     my $self = shift;
-    my ($args, $parser, $parser_type);
+    my ($args,          $parser,          $parser_type);
     my ($parser_output, $producer_output, @producer_output);
 
     # Parse arguments
     if (@_ == 1) {
+
         # Passed a reference to a hash?
         if (isa($_[0], 'HASH')) {
+
             # yep, a hashref
             $self->debug("translate: Got a hashref\n");
             $args = $_[0];
@@ -286,13 +304,15 @@ sub translate {
 
         # Passed a reference to a string containing the data
         elsif (isa($_[0], 'SCALAR')) {
+
             # passed a ref to a string
             $self->debug("translate: Got a SCALAR reference (string)\n");
             $self->data($_[0]);
         }
 
         # Not a reference; treat it as a filename
-        elsif (! ref $_[0]) {
+        elsif (!ref $_[0]) {
+
             # Not a ref, it's a filename
             $self->debug("translate: Got a filename\n");
             $self->filename($_[0]);
@@ -306,15 +326,15 @@ sub translate {
             # Actually, if data, parser, and producer are set, then we
             # can continue.  Too bad, because I like my comment
             # (above)...
-            return "" unless ($self->data     &&
-                              $self->producer &&
-                              $self->parser);
+            return "" unless ($self->data
+                && $self->producer
+                && $self->parser);
         }
     }
     else {
         # You must pass in a hash, or you get nothing.
         return "" if @_ % 2;
-        $args = { @_ };
+        $args = {@_};
     }
 
     # ----------------------------------------------------------------------
@@ -358,15 +378,14 @@ sub translate {
     # ----------------------------------------------------------------
 
     # Run parser
-    unless ( $self->_has_schema ) {
+    unless ($self->_has_schema) {
         eval { $parser_output = $parser->($self, $$data) };
-        if ($@ || ! $parser_output) {
-            my $msg = sprintf "translate: Error with parser '%s': %s",
-                $parser_type, ($@) ? $@ : " no results";
+        if ($@ || !$parser_output) {
+            my $msg = sprintf "translate: Error with parser '%s': %s", $parser_type, ($@) ? $@ : " no results";
             return $self->error($msg);
         }
     }
-    $self->debug("Schema =\n", Dumper($self->schema), "\n") if $self->debugging;;
+    $self->debug("Schema =\n", Dumper($self->schema), "\n") if $self->debugging;
 
     # Validate the schema if asked to.
     if ($self->validate) {
@@ -378,7 +397,7 @@ sub translate {
     my $filt_num = 0;
     foreach ($self->filters) {
         $filt_num++;
-        my ($code,@args) = @$_;
+        my ($code, @args) = @$_;
         eval { $code->($self->schema, @args) };
         my $err = $@ || $self->error || 0;
         return $self->error("Error with filter $filt_num : $err") if $err;
@@ -390,11 +409,12 @@ sub translate {
     eval {
         if ($wantarray) {
             @producer_output = $producer->produce($self);
-        } else {
+        }
+        else {
             $producer_output = $producer->produce($self);
         }
     };
-    if ($@ || !( $producer_output || @producer_output)) {
+    if ($@ || !($producer_output || @producer_output)) {
         my $err = $@ || $self->error || "no results";
         my $msg = sprintf("translate: Error with producer '%s': %s", $self->producer, $err);
         return $self->error($msg);
@@ -411,7 +431,6 @@ sub list_producers {
     return shift->_list("producer");
 }
 
-
 # ======================================================================
 # Private Methods
 # ======================================================================
@@ -426,16 +445,17 @@ sub _args {
     my $orig = shift;
 
     if (@_) {
+
         # If the first argument is an explicit undef (remember, we
         # don't get here unless there is stuff in @_), then we clear
         # out the producer_args hash.
-        if (! defined $_[0]) {
+        if (!defined $_[0]) {
             shift @_;
             $self->$orig({});
         }
 
-        my $args = isa($_[0], 'HASH') ? shift : { @_ };
-        return $self->$orig({ %{$self->$orig}, %$args });
+        my $args = isa($_[0], 'HASH') ? shift : {@_};
+        return $self->$orig({%{$self->$orig}, %$args});
     }
 
     return $self->$orig;
@@ -450,14 +470,14 @@ sub _args {
 # }, @_);
 # ----------------------------------------------------------------------
 sub _tool {
-    my ($self,$args) = (shift, shift);
+    my ($self, $args) = (shift, shift);
     my $name = $args->{name};
     my $orig = $args->{orig};
     return $self->{$name} unless @_; # get accessor
 
-    my $path = $args->{path};
+    my $path        = $args->{path};
     my $default_sub = $args->{default_sub};
-    my $tool = shift;
+    my $tool        = shift;
 
     # passed an anonymous subroutine reference
     if (isa($tool, 'CODE')) {
@@ -472,22 +492,23 @@ sub _tool {
     # so we give it a go.
     else {
         $tool =~ s/-/::/g if $tool !~ /::/;
-        my ($code,$sub);
-        ($code,$sub) = _load_sub("$tool\::$default_sub", $path);
+        my ($code, $sub);
+        ($code, $sub) = _load_sub("$tool\::$default_sub", $path);
         unless ($code) {
-            if ( __PACKAGE__->error =~ m/Can't find module/ ) {
+            if (__PACKAGE__->error =~ m/Can't find module/) {
+
                 # Mod not found so try sub
-                ($code,$sub) = _load_sub("$tool", $path) unless $code;
-                die "Can't load $name subroutine '$tool' : ".__PACKAGE__->error
-                unless $code;
+                ($code, $sub) = _load_sub("$tool", $path) unless $code;
+                die "Can't load $name subroutine '$tool' : " . __PACKAGE__->error
+                    unless $code;
             }
             else {
-                die "Can't load $name '$tool' : ".__PACKAGE__->error;
+                die "Can't load $name '$tool' : " . __PACKAGE__->error;
             }
         }
 
         # get code reference and assign
-        my (undef,$module,undef) = $sub =~ m/((.*)::)?(\w+)$/;
+        my (undef, $module, undef) = $sub =~ m/((.*)::)?(\w+)$/;
         $self->$orig($code);
         $self->${\"_set_$name\_type"}($sub eq "CODE" ? "CODE" : $module);
         $self->debug("Got $name: $sub\n");
@@ -533,16 +554,16 @@ sub _list {
     my %found;
     find(
         sub {
-            if ( -f && m/\.pm$/ ) {
-                my $mod      =  $_;
-                   $mod      =~ s/\.pm$//;
-                my $cur_dir  = $File::Find::dir;
+            if (-f && m/\.pm$/) {
+                my $mod = $_;
+                $mod =~ s/\.pm$//;
+                my $cur_dir = $File::Find::dir;
                 my $base_dir = quotemeta catfile 'SQL', 'Translator', $uctype;
 
                 #
                 # See if the current directory is below the base directory.
                 #
-                if ( $cur_dir =~ m/$base_dir(.*)/ ) {
+                if ($cur_dir =~ m/$base_dir(.*)/) {
                     $cur_dir = $1;
                     $cur_dir =~ s!^/!!;  # kill leading slash
                     $cur_dir =~ s!/!-!g; # turn other slashes into dashes
@@ -551,7 +572,7 @@ sub _list {
                     $cur_dir = '';
                 }
 
-                $found{ join '-', map { $_ || () } $cur_dir, $mod } = 1;
+                $found{join '-', map { $_ || () } $cur_dir, $mod} = 1;
             }
         },
         @dirs
@@ -584,7 +605,9 @@ sub load {
 
     foreach (@path) {
         my $module = $_ ? "$_\::$name" : $name;
-        my $file = $module; $file =~ s[::][/]g; $file .= ".pm";
+        my $file = $module;
+        $file =~ s[::][/]g;
+        $file .= ".pm";
         __PACKAGE__->debug("Loading $name as $file\n");
         return $module if $INC{$file}; # Already loaded
 
@@ -592,12 +615,12 @@ sub load {
         next if $@ =~ /Can't locate $file in \@INC/;
         eval { $module->import() } unless $@;
         return __PACKAGE__->error("Error loading $name as $module : $@")
-        if $@ && $@ !~ /"SQL::Transpose::Producer" is not exported/;
+            if $@ && $@ !~ /"SQL::Transpose::Producer" is not exported/;
 
-        return $module; # Module loaded ok
+        return $module;                # Module loaded ok
     }
 
-    return __PACKAGE__->error("Can't find module $name. Path:".join(",",@path));
+    return __PACKAGE__->error("Can't find module $name. Path:" . join(",", @path));
 }
 
 # ----------------------------------------------------------------------
@@ -609,10 +632,10 @@ sub load {
 sub _load_sub {
     my ($tool, @path) = @_;
 
-    my (undef,$module,$func_name) = $tool =~ m/((.*)::)?(\w+)$/;
-    if ( my $module = load($module => @path) ) {
+    my (undef, $module, $func_name) = $tool =~ m/((.*)::)?(\w+)$/;
+    if (my $module = load($module => @path)) {
         my $sub = "$module\::$func_name";
-        return wantarray ? ( \&{ $sub }, $sub ) : \&$sub;
+        return wantarray ? (\&{$sub}, $sub) : \&$sub;
     }
     return undef;
 }
@@ -640,14 +663,14 @@ sub format_pk_name {
 # it to the rest of the arguments (if any).
 # ----------------------------------------------------------------------
 sub _format_name {
-    my $self = shift;
+    my $self  = shift;
     my $field = shift;
-    my @args = @_;
+    my @args  = @_;
 
     if (ref($args[0]) eq 'CODE') {
         $self->{$field} = shift @args;
     }
-    elsif (! exists $self->{$field}) {
+    elsif (!exists $self->{$field}) {
         $self->{$field} = sub { return shift };
     }
 
@@ -658,7 +681,6 @@ sub isa($$) {
     my ($ref, $type) = @_;
     return UNIVERSAL::isa($ref, $type);
 }
-
 
 # Must come after all 'has' declarations
 around new => \&ex2err;
@@ -1018,7 +1040,7 @@ setting a parser, producer, or datasource (this key is named
 "filename" or "file" if it's a file, or "data" for a SCALAR reference.
 
   # As above, parse /path/to/datafile, but with different producers
-  for my $prod ("MySQL", "XML", "Sybase") {
+  foreach my $prod ("MySQL", "XML", "Sybase") {
       print $tr->translate(
                 producer => $prod,
                 filename => "/path/to/datafile",

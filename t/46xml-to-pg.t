@@ -10,17 +10,15 @@ use Data::Dumper;
 use SQL::Transpose;
 use SQL::Transpose::Schema::Constants;
 
-
 BEGIN {
-    maybe_plan(1, 'SQL::Transpose::Parser::XML::SQLFairy',
-              'SQL::Transpose::Producer::PostgreSQL');
+    maybe_plan(1, 'SQL::Transpose::Parser::XML::SQLFairy', 'SQL::Transpose::Producer::PostgreSQL');
 }
 
 my $xmlfile = "$Bin/data/xml/schema.xml";
 
 my $sqlt;
 $sqlt = SQL::Transpose->new(
-    no_comments => 1,
+    no_comments    => 1,
     show_warnings  => 0,
     add_drop_table => 1,
 );

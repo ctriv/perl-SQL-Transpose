@@ -108,7 +108,7 @@ use strict;
 use warnings;
 
 our $DEBUG;
-$DEBUG   = 0 unless defined $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 use Data::Dumper;
 use SQL::Transpose::Utils qw/ddl_parser_instance/;
@@ -225,13 +225,13 @@ create : CREATE temporary(?) TABLE table_id '(' create_definition(s? /,/) ')' ta
         }
 
         my @constraints;
-        for my $definition ( @{ $item[6] } ) {
+        foreach my $definition ( @{ $item[6] } ) {
             if ( $definition->{'supertype'} eq 'field' ) {
                 my $field_name = $definition->{'name'};
                 $tables{ $table_name }{'fields'}{ $field_name } =
                     { %$definition, order => $field_order++ };
 
-                for my $constraint ( @{ $definition->{'constraints'} || [] } ) {
+                foreach my $constraint ( @{ $definition->{'constraints'} || [] } ) {
                     $constraint->{'fields'} = [ $field_name ];
                     push @{ $tables{ $table_name }{'constraints'} },
                         $constraint;
@@ -245,7 +245,7 @@ create : CREATE temporary(?) TABLE table_id '(' create_definition(s? /,/) ')' ta
             }
         }
 
-        for my $option ( @{ $item[8] } ) {
+        foreach my $option ( @{ $item[8] } ) {
             $tables{ $table_name }{'table_options(s?)'}{ $option->{'type'} } =
                 $option;
         }
@@ -484,7 +484,7 @@ field : field_comment(s?) field_name data_type field_meta(s?) field_comment(s?)
     {
         my ( $default, @constraints, $is_pk );
         my $is_nullable = 1;
-        for my $meta ( @{ $item[4] } ) {
+        foreach my $meta ( @{ $item[4] } ) {
             if ( $meta->{'type'} eq 'default' ) {
                 $default = $meta;
                 next;
@@ -574,7 +574,7 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
         my $schema_name = $table_info->{'schema_name'};
         my $table_name  = $table_info->{'table_name'};
         my ( $on_delete, $on_update );
-        for my $action ( @{ $item[5] || [] } ) {
+        foreach my $action ( @{ $item[5] || [] } ) {
             $on_delete = $action->{'action'} if $action->{'type'} eq 'delete';
             $on_update = $action->{'action'} if $action->{'type'} eq 'update';
         }
@@ -816,7 +816,7 @@ table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
     /foreign key/i '(' NAME(s /,/) ')' /references/i table_id parens_word_list(?) match_type(?) key_action(s?)
     {
         my ( $on_delete, $on_update );
-        for my $action ( @{ $item[9] || [] } ) {
+        foreach my $action ( @{ $item[9] || [] } ) {
             $on_delete = $action->{'action'} if $action->{'type'} eq 'delete';
             $on_update = $action->{'action'} if $action->{'type'} eq 'update';
         }
@@ -968,7 +968,7 @@ alter : alter_table table_id alter_column NAME alter_nullable ';'
 #            };
 #        }
 #        else {
-#            for my $i (
+#            foreach my $i (
 #                0 .. $#{ $tables{ $table_name }{'constraints'} || [] }
 #            ) {
 #                my $c = $tables{ $table_name }{'constraints'}[ $i ] or next;
@@ -1142,15 +1142,15 @@ VALUE : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
 END_OF_GRAMMAR
 
 sub parse {
-    my ( $translator, $data ) = @_;
+    my ($translator, $data) = @_;
 
     # Enable warnings within the Parse::RecDescent module.
     local $::RD_ERRORS = 1 unless defined $::RD_ERRORS; # Make sure the parser dies when it encounters an error
-    local $::RD_WARN   = 1 unless defined $::RD_WARN; # Enable warnings. This will warn on unused rules &c.
-    local $::RD_HINT   = 1 unless defined $::RD_HINT; # Give out hints to help fix problems.
+    local $::RD_WARN   = 1 unless defined $::RD_WARN;   # Enable warnings. This will warn on unused rules &c.
+    local $::RD_HINT   = 1 unless defined $::RD_HINT;   # Give out hints to help fix problems.
 
-    local $::RD_TRACE  = $translator->trace ? 1 : undef;
-    local $DEBUG       = $translator->debug;
+    local $::RD_TRACE = $translator->trace ? 1 : undef;
+    local $DEBUG = $translator->debug;
 
     my $parser = ddl_parser_instance('PostgreSQL');
 
@@ -1159,29 +1159,24 @@ sub parse {
     warn Dumper($result) if $DEBUG;
 
     my $schema = $translator->schema;
-    my @tables = sort {
-        ( $result->{tables}{ $a }{'order'} || 0 ) <=> ( $result->{tables}{ $b }{'order'} || 0 )
-    } keys %{ $result->{tables} };
+    my @tables = sort { ($result->{tables}{$a}{'order'} || 0) <=> ($result->{tables}{$b}{'order'} || 0) } keys %{$result->{tables}};
 
-    for my $table_name ( @tables ) {
-        my $tdata =  $result->{tables}{ $table_name };
-        my $table =  $schema->add_table(
+    foreach my $table_name (@tables) {
+        my $tdata = $result->{tables}{$table_name};
+        my $table = $schema->add_table(
+
             #schema => $tdata->{'schema_name'},
-            name   => $tdata->{'table_name'},
+            name => $tdata->{'table_name'},
         ) or die "Couldn't create table '$table_name': " . $schema->error;
 
         $table->extra(temporary => 1) if $tdata->{'temporary'};
 
-        $table->comments( $tdata->{'comments'} );
+        $table->comments($tdata->{'comments'});
 
-        my @fields = sort {
-            $tdata->{'fields'}{ $a }{'order'}
-            <=>
-            $tdata->{'fields'}{ $b }{'order'}
-        } keys %{ $tdata->{'fields'} };
+        my @fields = sort { $tdata->{'fields'}{$a}{'order'} <=> $tdata->{'fields'}{$b}{'order'} } keys %{$tdata->{'fields'}};
 
-        for my $fname ( @fields ) {
-            my $fdata = $tdata->{'fields'}{ $fname };
+        foreach my $fname (@fields) {
+            my $fdata = $tdata->{'fields'}{$fname};
             next if $fdata->{'drop'};
             my $field = $table->add_field(
                 name              => $fdata->{'name'},
@@ -1193,20 +1188,20 @@ sub parse {
                 comments          => $fdata->{'comments'},
             ) or die $table->error;
 
-            $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
+            $table->primary_key($field->name) if $fdata->{'is_primary_key'};
 
-            for my $cdata ( @{ $fdata->{'constraints'} } ) {
+            foreach my $cdata (@{$fdata->{'constraints'}}) {
                 next unless $cdata->{'type'} eq 'foreign_key';
-                $cdata->{'fields'} ||= [ $field->name ];
-                push @{ $tdata->{'constraints'} }, $cdata;
+                $cdata->{'fields'} ||= [$field->name];
+                push @{$tdata->{'constraints'}}, $cdata;
             }
         }
 
-        for my $idata ( @{ $tdata->{'indices'} || [] } ) {
+        foreach my $idata (@{$tdata->{'indices'} || []}) {
             my @options = ();
-            push @options, { using => $idata->{'method'} } if $idata->{method};
-            push @options, { where => $idata->{'where'} }  if $idata->{where};
-            my $index  =  $table->add_index(
+            push @options, {using => $idata->{'method'}} if $idata->{method};
+            push @options, {where => $idata->{'where'}}  if $idata->{where};
+            my $index = $table->add_index(
                 name    => $idata->{'name'},
                 type    => uc $idata->{'type'},
                 fields  => $idata->{'fields'},
@@ -1214,8 +1209,8 @@ sub parse {
             ) or die $table->error . ' ' . $table->name;
         }
 
-        for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
-            my $constraint       =  $table->add_constraint(
+        foreach my $cdata (@{$tdata->{'constraints'} || []}) {
+            my $constraint = $table->add_constraint(
                 name             => $cdata->{'name'},
                 type             => $cdata->{'type'},
                 fields           => $cdata->{'fields'},
@@ -1225,29 +1220,27 @@ sub parse {
                 on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
                 on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
                 expression       => $cdata->{'expression'},
-            ) or die "Can't add constraint of type '" .
-                $cdata->{'type'} .  "' to table '" . $table->name .
-                "': " . $table->error;
+            ) or die "Can't add constraint of type '" . $cdata->{'type'} . "' to table '" . $table->name . "': " . $table->error;
         }
     }
 
-    for my $vinfo (@{$result->{views}}) {
-      my $sql = $vinfo->{sql};
-      $sql =~ s/\A\s+|\s+\z//g;
-      my $view = $schema->add_view (
-        name => $vinfo->{view_name},
-        sql => $sql,
-        fields => $vinfo->{fields},
-      );
+    foreach my $vinfo (@{$result->{views}}) {
+        my $sql = $vinfo->{sql};
+        $sql =~ s/\A\s+|\s+\z//g;
+        my $view = $schema->add_view(
+            name   => $vinfo->{view_name},
+            sql    => $sql,
+            fields => $vinfo->{fields},
+        );
 
-      $view->extra ( temporary => 1 ) if $vinfo->{is_temporary};
+        $view->extra(temporary => 1) if $vinfo->{is_temporary};
     }
 
-    for my $trigger (@{ $result->{triggers} }) {
-        $schema->add_trigger( %$trigger );
+    foreach my $trigger (@{$result->{triggers}}) {
+        $schema->add_trigger(%$trigger);
     }
 
-    for my $function (@{ $result->{functions} }) {
+    foreach my $function (@{$result->{functions}}) {
         $schema->add_procedure($function);
     }
 

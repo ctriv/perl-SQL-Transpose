@@ -14,9 +14,9 @@ I<documentation volunteers needed>
 use Moo;
 
 has quote_chars => (
-  is => 'rw',
-  default => sub { +[qw(" ")] },
-  trigger => sub { $_[0]->clear_escape_char },
+    is      => 'rw',
+    default => sub { +[qw(" ")] },
+    trigger => sub { $_[0]->clear_escape_char },
 );
 
 with 'SQL::Transpose::Generator::Role::Quote';

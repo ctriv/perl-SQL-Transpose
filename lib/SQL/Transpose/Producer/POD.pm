@@ -36,20 +36,20 @@ sub produce {
 
     my $pod = "=pod\n\n=head1 DESCRIPTION\n\n$title\n\n=head1 TABLES\n\n";
 
-    for my $table ( $schema->get_tables ) {
-        my $table_name = $table->name or next;
+    foreach my $table ($schema->get_tables) {
+        my $table_name = $table->name       or next;
         my @fields     = $table->get_fields or next;
         $pod .= "=head2 $table_name\n\n=head3 FIELDS\n\n";
 
         #
         # Fields
         #
-        for my $field ( @fields ) {
+        foreach my $field (@fields) {
             $pod .= "=head4 " . $field->name . "\n\n=over 4\n\n";
 
             my $data_type = $field->data_type;
             my $size      = $field->size;
-            $data_type   .= "($size)" if $size;
+            $data_type .= "($size)" if $size;
 
             $pod .= "=item * $data_type\n\n";
             $pod .= "=item * PRIMARY KEY\n\n" if $field->is_primary_key;
@@ -57,8 +57,7 @@ sub produce {
             my $default = $field->default_value;
             $pod .= "=item * Default '$default' \n\n" if defined $default;
 
-            $pod .= sprintf( "=item * Nullable '%s' \n\n",
-                $field->is_nullable ? 'Yes' : 'No' );
+            $pod .= sprintf("=item * Nullable '%s' \n\n", $field->is_nullable ? 'Yes' : 'No');
 
             $pod .= "=back\n\n";
         }
@@ -66,12 +65,11 @@ sub produce {
         #
         # Indices
         #
-        if ( my @indices = $table->get_indices ) {
+        if (my @indices = $table->get_indices) {
             $pod .= "=head3 INDICES\n\n";
-            for my $index ( @indices ) {
+            foreach my $index (@indices) {
                 $pod .= "=head4 " . $index->type . "\n\n=over 4\n\n";
-                $pod .= "=item * Fields = " .
-                    join(', ', $index->fields ) . "\n\n";
+                $pod .= "=item * Fields = " . join(', ', $index->fields) . "\n\n";
                 $pod .= "=back\n\n";
             }
         }
@@ -79,29 +77,26 @@ sub produce {
         #
         # Constraints
         #
-        if ( my @constraints = $table->get_constraints ) {
+        if (my @constraints = $table->get_constraints) {
             $pod .= "=head3 CONSTRAINTS\n\n";
-            for my $c ( @constraints ) {
+            foreach my $c (@constraints) {
                 $pod .= "=head4 " . $c->type . "\n\n=over 4\n\n";
-                if($c->type eq CHECK_C) {
+                if ($c->type eq CHECK_C) {
                     $pod .= "=item * Expression = " . $c->expression . "\n\n";
-                } else {
-                    $pod .= "=item * Fields = " .
-                        join(', ', $c->fields ) . "\n\n";
+                }
+                else {
+                    $pod .= "=item * Fields = " . join(', ', $c->fields) . "\n\n";
 
-                    if ( $c->type eq FOREIGN_KEY ) {
-                        $pod .= "=item * Reference Table = L</" .
-                            $c->reference_table . ">\n\n";
-                        $pod .= "=item * Reference Fields = " .
-                            join(', ', map {"L</$_>"} $c->reference_fields ) .
-                            "\n\n";
+                    if ($c->type eq FOREIGN_KEY) {
+                        $pod .= "=item * Reference Table = L</" . $c->reference_table . ">\n\n";
+                        $pod .= "=item * Reference Fields = " . join(', ', map { "L</$_>" } $c->reference_fields) . "\n\n";
                     }
 
-                    if ( my $update = $c->on_update ) {
+                    if (my $update = $c->on_update) {
                         $pod .= "=item * On update = $update\n\n";
                     }
 
-                    if ( my $delete = $c->on_delete ) {
+                    if (my $delete = $c->on_delete) {
                         $pod .= "=item * On delete = $delete\n\n";
                     }
                 }
@@ -111,8 +106,8 @@ sub produce {
         }
     }
 
-    my $header = ( map { $_ || () } split( /\n/, header_comment('', '') ) )[0];
-       $header =~ s/^Created by //;
+    my $header = (map { $_ || () } split(/\n/, header_comment('', '')))[0];
+    $header =~ s/^Created by //;
     $pod .= "=head1 PRODUCED BY\n\n$header\n\n=cut";
 
     return $pod;

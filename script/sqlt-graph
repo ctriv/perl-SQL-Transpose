@@ -114,16 +114,15 @@ $VERSION = '1.59';
 # Get arguments.
 #
 my (
-    $layout, $node_shape, $out_file, $output_type, $db_driver, $add_color,
-    $natural_join, $join_pk_only, $skip_fields, $show_datatypes,
-    $show_sizes, $show_constraints, $debug, $help, $height, $width,
-    $no_fields, $fontsize, $fontname, $skip_tables, $skip_tables_like,
-    $cluster, $trace
+    $layout,       $node_shape,   $out_file,         $output_type,    $db_driver,  $add_color,
+    $natural_join, $join_pk_only, $skip_fields,      $show_datatypes, $show_sizes, $show_constraints,
+    $debug,        $help,         $height,           $width,          $no_fields,  $fontsize,
+    $fontname,     $skip_tables,  $skip_tables_like, $cluster,        $trace
 );
 
 # multi-valued options:
-my %edgeattrs = ();
-my %nodeattrs = ();
+my %edgeattrs  = ();
+my %nodeattrs  = ();
 my %graphattrs = ();
 
 GetOptions(
@@ -157,15 +156,15 @@ GetOptions(
 my @files = @ARGV; # the create script(s) for the original db
 
 pod2usage(1) if $help;
-pod2usage( -message => "No db driver specified" ) unless $db_driver;
-pod2usage( -message => 'No input file'          ) unless @files;
+pod2usage(-message => "No db driver specified") unless $db_driver;
+pod2usage(-message => 'No input file')          unless @files;
 
-my $translator           =  SQL::Transpose->new(
-    from                 => $db_driver,
-    to                   => 'GraphViz',
-    debug                => $debug || 0,
-    trace                => $trace || 0,
-    producer_args        => {
+my $translator = SQL::Transpose->new(
+    from          => $db_driver,
+    to            => 'GraphViz',
+    debug         => $debug || 0,
+    trace         => $trace || 0,
+    producer_args => {
         out_file         => $out_file,
         layout           => $layout,
         node_shape       => $node_shape,
@@ -181,7 +180,7 @@ my $translator           =  SQL::Transpose->new(
         show_constraints => $show_constraints,
         cluster          => $cluster,
         height           => $height || 0,
-        width            => $width  || 0,
+        width            => $width || 0,
         fontsize         => $fontsize,
         fontname         => $fontname,
         nodeattrs        => \%nodeattrs,
@@ -191,10 +190,9 @@ my $translator           =  SQL::Transpose->new(
     },
 ) or die SQL::Transpose->error;
 
-for my $file (@files) {
-    my $output = $translator->translate( $file ) or die
-                 "Error: " . $translator->error;
-    if ( $out_file ) {
+foreach my $file (@files) {
+    my $output = $translator->translate($file) or die "Error: " . $translator->error;
+    if ($out_file) {
         print "Image written to '$out_file'.  Done.\n";
     }
     else {

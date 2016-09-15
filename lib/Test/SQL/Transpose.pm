@@ -41,8 +41,10 @@ my %ATTRIBUTES = (
         is_auto_increment => 0,
         comments          => '',
         extra             => {},
+
         # foreign_key_reference,
         is_valid => 1,
+
         # order
     },
     constraint => {
@@ -93,10 +95,12 @@ my %ATTRIBUTES = (
         extra      => {},
     },
     table => {
-        comments    => undef,
-        name        => '',
+        comments => undef,
+        name     => '',
+
         #primary_key => undef, # pkey constraint
-        options     => [],
+        options => [],
+
         #order      => 0,
         fields      => undef,
         constraints => undef,
@@ -107,10 +111,10 @@ my %ATTRIBUTES = (
     schema => {
         name       => '',
         database   => '',
-        procedures => undef,    # [] when set
-        tables     => undef,    # [] when set
-        triggers   => undef,    # [] when set
-        views      => undef,    # [] when set
+        procedures => undef, # [] when set
+        tables     => undef, # [] when set
+        triggers   => undef, # [] when set
+        views      => undef, # [] when set
         is_valid   => 1,
         extra      => {},
     }
@@ -122,16 +126,15 @@ my %ATTRIBUTES = (
 sub default_attribs {
     my ($hashref, $object_type) = @_;
 
-    if ( !exists $ATTRIBUTES{ $object_type } ) {
-        die "Can't add default attribs for unknown Schema "
-        .   "object type '$object_type'.";
+    if (!exists $ATTRIBUTES{$object_type}) {
+        die "Can't add default attribs for unknown Schema " . "object type '$object_type'.";
     }
 
-    for my $attr (
-        grep { !exists $hashref->{ $_ } }
-        keys %{ $ATTRIBUTES{ $object_type } }
-    ) {
-        $hashref->{ $attr } = $ATTRIBUTES{ $object_type }{ $attr }
+    foreach my $attr (
+        grep { !exists $hashref->{$_} }
+        keys %{$ATTRIBUTES{$object_type}}
+        ) {
+        $hashref->{$attr} = $ATTRIBUTES{$object_type}{$attr};
     }
 
     return $hashref;
@@ -146,253 +149,223 @@ sub t_name {
 }
 
 sub field_ok {
-    my ($f1,$test,$name) = @_;
+    my ($f1, $test, $name) = @_;
     my $t_name = t_name($name);
-    default_attribs($test,"field");
+    default_attribs($test, "field");
 
     unless ($f1) {
         fail " Field '$test->{name}' doesn't exist!";
+
         # TODO Do a skip on the following tests. Currently the test counts wont
         # match at the end. So at least it fails.
         return;
     }
 
-    my $full_name = $f1->table->name.".".$test->{name};
+    my $full_name = $f1->table->name . "." . $test->{name};
 
-    is( $f1->name, $test->{name}, "${t_name}Field '$full_name'" );
+    is($f1->name, $test->{name}, "${t_name}Field '$full_name'");
 
-    is( $f1->is_valid, $test->{is_valid},
-    "$t_name    is ".($test->{is_valid} ? '' : 'not ').'valid' );
+    is($f1->is_valid, $test->{is_valid}, "$t_name    is " . ($test->{is_valid} ? '' : 'not ') . 'valid');
 
-    is( $f1->data_type, $test->{data_type},
-        "$t_name    type is '$test->{data_type}'" );
+    is($f1->data_type, $test->{data_type}, "$t_name    type is '$test->{data_type}'");
 
-    is( $f1->size, $test->{size}, "$t_name    size is '$test->{size}'" );
+    is($f1->size, $test->{size}, "$t_name    size is '$test->{size}'");
 
-    is( $f1->default_value, $test->{default_value},
-    "$t_name    default value is "
-    .(defined($test->{default_value}) ? "'$test->{default_value}'" : "UNDEF" )
+    is(
+        $f1->default_value,
+        $test->{default_value},
+        "$t_name    default value is " . (defined($test->{default_value}) ? "'$test->{default_value}'" : "UNDEF")
     );
 
-    is( $f1->is_nullable, $test->{is_nullable},
-    "$t_name    ".($test->{is_nullable} ? 'can' : 'cannot').' be null' );
+    is($f1->is_nullable, $test->{is_nullable}, "$t_name    " . ($test->{is_nullable} ? 'can' : 'cannot') . ' be null');
 
-    is( $f1->is_unique, $test->{is_unique},
-    "$t_name    ".($test->{is_unique} ? 'can' : 'cannot').' be unique' );
+    is($f1->is_unique, $test->{is_unique}, "$t_name    " . ($test->{is_unique} ? 'can' : 'cannot') . ' be unique');
 
-    is( $f1->is_primary_key, $test->{is_primary_key},
-    "$t_name    is ".($test->{is_primary_key} ? '' : 'not ').'a primary_key' );
+    is($f1->is_primary_key, $test->{is_primary_key}, "$t_name    is " . ($test->{is_primary_key} ? '' : 'not ') . 'a primary_key');
 
-    is( $f1->is_foreign_key, $test->{is_foreign_key},
-    "$t_name    is ".($test->{is_foreign_key} ? '' : 'not').' a foreign_key' );
+    is($f1->is_foreign_key, $test->{is_foreign_key}, "$t_name    is " . ($test->{is_foreign_key} ? '' : 'not') . ' a foreign_key');
 
-    is( $f1->is_auto_increment, $test->{is_auto_increment},
-    "$t_name    is "
-    .($test->{is_auto_increment} ?  '' : 'not ').'an auto_increment' );
+    is($f1->is_auto_increment, $test->{is_auto_increment}, "$t_name    is " . ($test->{is_auto_increment} ? '' : 'not ') . 'an auto_increment');
 
-    is( $f1->comments, $test->{comments}, "$t_name    comments" );
+    is($f1->comments, $test->{comments}, "$t_name    comments");
 
-    is_deeply( { $f1->extra }, $test->{extra}, "$t_name    extra" );
+    is_deeply({$f1->extra}, $test->{extra}, "$t_name    extra");
 }
 
 sub constraint_ok {
-    my ($obj,$test,$name) = @_;
+    my ($obj, $test, $name) = @_;
     my $t_name = t_name($name);
-    default_attribs($test,"constraint");
+    default_attribs($test, "constraint");
 
-    is( $obj->name, $test->{name}, "${t_name}Constraint '$test->{name}'" );
+    is($obj->name, $test->{name}, "${t_name}Constraint '$test->{name}'");
 
-    is( $obj->type, $test->{type}, "$t_name    type is '$test->{type}'" );
+    is($obj->type, $test->{type}, "$t_name    type is '$test->{type}'");
 
-    is( $obj->deferrable, $test->{deferrable},
-    "$t_name    ".($test->{deferrable} ? 'can' : 'cannot').' be deferred' );
+    is($obj->deferrable, $test->{deferrable}, "$t_name    " . ($test->{deferrable} ? 'can' : 'cannot') . ' be deferred');
 
-    is( $obj->is_valid, $test->{is_valid},
-    "$t_name    is ".($test->{is_valid} ? '' : 'not ').'valid' );
+    is($obj->is_valid, $test->{is_valid}, "$t_name    is " . ($test->{is_valid} ? '' : 'not ') . 'valid');
 
-    is($obj->table->name,$test->{table},"$t_name    table is '$test->{table}'" );
+    is($obj->table->name, $test->{table}, "$t_name    table is '$test->{table}'");
 
-    is( $obj->expression, $test->{expression},
-    "$t_name    expression is '$test->{expression}'" );
+    is($obj->expression, $test->{expression}, "$t_name    expression is '$test->{expression}'");
 
-    is_deeply( [$obj->fields], $test->{fields},
-    "$t_name    fields are '".join(",",@{$test->{fields}})."'" );
+    is_deeply([$obj->fields], $test->{fields}, "$t_name    fields are '" . join(",", @{$test->{fields}}) . "'");
 
-    is( $obj->reference_table, $test->{reference_table},
-    "$t_name    reference_table is '$test->{reference_table}'" );
+    is($obj->reference_table, $test->{reference_table}, "$t_name    reference_table is '$test->{reference_table}'");
 
-    is_deeply( [$obj->reference_fields], $test->{reference_fields},
-    "$t_name    reference_fields are '".join(",",@{$test->{reference_fields}})."'" );
+    is_deeply(
+        [$obj->reference_fields],
+        $test->{reference_fields},
+        "$t_name    reference_fields are '" . join(",", @{$test->{reference_fields}}) . "'"
+    );
 
-    is( $obj->match_type, $test->{match_type},
-    "$t_name    match_type is '$test->{match_type}'" );
+    is($obj->match_type, $test->{match_type}, "$t_name    match_type is '$test->{match_type}'");
 
-    is( $obj->on_delete, $test->{on_delete},
-    "$t_name    on_delete is '$test->{on_delete}'" );
+    is($obj->on_delete, $test->{on_delete}, "$t_name    on_delete is '$test->{on_delete}'");
 
-    is( $obj->on_update, $test->{on_update},
-    "$t_name    on_update is '$test->{on_update}'" );
+    is($obj->on_update, $test->{on_update}, "$t_name    on_update is '$test->{on_update}'");
 
-    is_deeply( [$obj->options], $test->{options},
-    "$t_name    options are '".join(",",@{$test->{options}})."'" );
+    is_deeply([$obj->options], $test->{options}, "$t_name    options are '" . join(",", @{$test->{options}}) . "'");
 
-    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
+    is_deeply({$obj->extra}, $test->{extra}, "$t_name    extra");
 }
 
 sub index_ok {
-    my ($obj,$test,$name) = @_;
+    my ($obj, $test, $name) = @_;
     my $t_name = t_name($name);
-    default_attribs($test,"index");
+    default_attribs($test, "index");
 
-    is( $obj->name, $test->{name}, "${t_name}Index '$test->{name}'" );
+    is($obj->name, $test->{name}, "${t_name}Index '$test->{name}'");
 
-    is( $obj->is_valid, $test->{is_valid},
-    "$t_name    is ".($test->{is_valid} ? '' : 'not ').'valid' );
+    is($obj->is_valid, $test->{is_valid}, "$t_name    is " . ($test->{is_valid} ? '' : 'not ') . 'valid');
 
-    is( $obj->type, $test->{type}, "$t_name    type is '$test->{type}'" );
+    is($obj->type, $test->{type}, "$t_name    type is '$test->{type}'");
 
-    is_deeply( [$obj->fields], $test->{fields},
-    "$t_name    fields are '".join(",",@{$test->{fields}})."'" );
+    is_deeply([$obj->fields], $test->{fields}, "$t_name    fields are '" . join(",", @{$test->{fields}}) . "'");
 
-    is_deeply( [$obj->options], $test->{options},
-    "$t_name    options are '".join(",",@{$test->{options}})."'" );
+    is_deeply([$obj->options], $test->{options}, "$t_name    options are '" . join(",", @{$test->{options}}) . "'");
 
-    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
+    is_deeply({$obj->extra}, $test->{extra}, "$t_name    extra");
 }
 
 sub trigger_ok {
-    my ($obj,$test,$name) = @_;
+    my ($obj, $test, $name) = @_;
     my $t_name = t_name($name);
-    default_attribs($test,"index");
+    default_attribs($test, "index");
 
-    is( $obj->name, $test->{name}, "${t_name}Trigger '$test->{name}'" );
+    is($obj->name, $test->{name}, "${t_name}Trigger '$test->{name}'");
 
-    is( $obj->is_valid, $test->{is_valid},
-        "$t_name    is ".($test->{is_valid} ? '' : 'not ').'valid' );
+    is($obj->is_valid, $test->{is_valid}, "$t_name    is " . ($test->{is_valid} ? '' : 'not ') . 'valid');
 
-    is( $obj->perform_action_when, $test->{perform_action_when},
-        "$t_name    perform_action_when is '$test->{perform_action_when}'" );
+    is($obj->perform_action_when, $test->{perform_action_when}, "$t_name    perform_action_when is '$test->{perform_action_when}'");
 
-    is( join(',', $obj->database_events), $test->{database_events},
-        sprintf("%s    database_events is '%s'",
-            $t_name,
-            $test->{'database_events'},
-        )
-    );
+    is(join(',', $obj->database_events), $test->{database_events}, sprintf("%s    database_events is '%s'", $t_name, $test->{'database_events'},));
 
-    is( $obj->on_table, $test->{on_table},
-        "$t_name    on_table is '$test->{on_table}'" );
+    is($obj->on_table, $test->{on_table}, "$t_name    on_table is '$test->{on_table}'");
 
-    is( $obj->action, $test->{action}, "$t_name    action is '$test->{action}'" );
+    is($obj->action, $test->{action}, "$t_name    action is '$test->{action}'");
 
-    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
+    is_deeply({$obj->extra}, $test->{extra}, "$t_name    extra");
 }
 
 sub view_ok {
-    my ($obj,$test,$name) = @_;
+    my ($obj, $test, $name) = @_;
     my $t_name = t_name($name);
-    default_attribs($test,"index");
+    default_attribs($test, "index");
 
     #isa_ok( $v, 'SQL::Transpose::Schema::View', 'View' );
 
-    is( $obj->name, $test->{name}, "${t_name}View '$test->{name}'" );
+    is($obj->name, $test->{name}, "${t_name}View '$test->{name}'");
 
-    is( $obj->is_valid, $test->{is_valid},
-    "$t_name    is ".($test->{is_valid} ? '' : 'not ').'valid' );
+    is($obj->is_valid, $test->{is_valid}, "$t_name    is " . ($test->{is_valid} ? '' : 'not ') . 'valid');
 
-    is( $obj->sql, $test->{sql}, "$t_name    sql is '$test->{sql}'" );
+    is($obj->sql, $test->{sql}, "$t_name    sql is '$test->{sql}'");
 
-    is_deeply( [$obj->fields], $test->{fields},
-    "$t_name    fields are '".join(",",@{$test->{fields}})."'" );
+    is_deeply([$obj->fields], $test->{fields}, "$t_name    fields are '" . join(",", @{$test->{fields}}) . "'");
 
-    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
+    is_deeply({$obj->extra}, $test->{extra}, "$t_name    extra");
 }
 
 sub procedure_ok {
-    my ($obj,$test,$name) = @_;
+    my ($obj, $test, $name) = @_;
     my $t_name = t_name($name);
-    default_attribs($test,"index");
+    default_attribs($test, "index");
 
     #isa_ok( $v, 'SQL::Transpose::Schema::View', 'View' );
 
-    is( $obj->name, $test->{name}, "${t_name}Procedure '$test->{name}'" );
+    is($obj->name, $test->{name}, "${t_name}Procedure '$test->{name}'");
 
-    is( $obj->sql, $test->{sql}, "$t_name    sql is '$test->{sql}'" );
+    is($obj->sql, $test->{sql}, "$t_name    sql is '$test->{sql}'");
 
-    is_deeply( [$obj->parameters], $test->{parameters},
-    "$t_name    parameters are '".join(",",@{$test->{parameters}})."'" );
+    is_deeply([$obj->parameters], $test->{parameters}, "$t_name    parameters are '" . join(",", @{$test->{parameters}}) . "'");
 
-    is( $obj->comments, $test->{comments},
-        "$t_name    comments is '$test->{comments}'" );
+    is($obj->comments, $test->{comments}, "$t_name    comments is '$test->{comments}'");
 
-    is( $obj->owner, $test->{owner}, "$t_name    owner is '$test->{owner}'" );
+    is($obj->owner, $test->{owner}, "$t_name    owner is '$test->{owner}'");
 
-    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
+    is_deeply({$obj->extra}, $test->{extra}, "$t_name    extra");
 }
 
 sub table_ok {
-    my ($obj,$test,$name) = @_;
+    my ($obj, $test, $name) = @_;
     my $t_name = t_name($name);
-    default_attribs($test,"table");
+    default_attribs($test, "table");
     my %arg = %$test;
 
     my $tbl_name = $arg{name} || die "Need a table name to test.";
-    is( $obj->{name}, $arg{name}, "${t_name}Table '$arg{name}'" );
+    is($obj->{name}, $arg{name}, "${t_name}Table '$arg{name}'");
 
-    is_deeply( [$obj->options], $test->{options},
-    "$t_name    options are '".join(",",@{$test->{options}})."'" );
+    is_deeply([$obj->options], $test->{options}, "$t_name    options are '" . join(",", @{$test->{options}}) . "'");
 
-    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
+    is_deeply({$obj->extra}, $test->{extra}, "$t_name    extra");
 
     # Fields
-    if ( $arg{fields} ) {
-        my @fldnames = map {$_->{name}} @{$arg{fields}};
-        is_deeply(
-            [ map {$_->name}   $obj->get_fields ],
-            [ @fldnames ],
-            "${t_name}    field names are ".join(", ",@fldnames)
-        );
-        foreach ( @{$arg{fields}} ) {
+    if ($arg{fields}) {
+        my @fldnames = map { $_->{name} } @{$arg{fields}};
+        is_deeply([map { $_->name } $obj->get_fields], [@fldnames], "${t_name}    field names are " . join(", ", @fldnames));
+        foreach (@{$arg{fields}}) {
             my $f_name = $_->{name} || die "Need a field name to test.";
             next unless my $fld = $obj->get_field($f_name);
-            field_ok( $fld, $_, $name );
+            field_ok($fld, $_, $name);
         }
     }
     else {
-        is(scalar($obj->get_fields), undef,
-            "${t_name}    has no fields.");
+        is(scalar($obj->get_fields), undef, "${t_name}    has no fields.");
     }
 
     # Constraints and Indices
-    _test_kids($obj, $test, $name, {
-        constraint => 'constraints',
-        index      => 'indices',
-    });
+    _test_kids(
+        $obj, $test, $name, {
+            constraint => 'constraints',
+            index      => 'indices',
+        }
+    );
 }
 
 sub _test_kids {
-    my ( $obj, $test, $name, $kids ) = @_;
+    my ($obj, $test, $name, $kids) = @_;
     my $t_name   = t_name($name);
     my $obj_name = ref $obj;
     ($obj_name) = $obj_name =~ m/^.*::(.*)$/;
 
-    while ( my ( $object_type, $plural ) = each %$kids ) {
-        next unless defined $test->{ $plural };
+    while (my ($object_type, $plural) = each %$kids) {
+        next unless defined $test->{$plural};
 
-        if ( my @tests = @{ $test->{ $plural } } ) {
-            my $meth = "get_$plural";
-            my @objects  = $obj->$meth;
-            is( scalar(@objects), scalar(@tests),
-                "${t_name}$obj_name has " . scalar(@tests) . " $plural"
-            );
+        if (my @tests = @{$test->{$plural}}) {
+            my $meth    = "get_$plural";
+            my @objects = $obj->$meth;
+            is(scalar(@objects), scalar(@tests), "${t_name}$obj_name has " . scalar(@tests) . " $plural");
 
-            for my $object (@objects) {
-                my $ans = { lc($obj_name) => $obj->name, %{ shift @tests } };
+            foreach my $object (@objects) {
+                my $ans = {
+                    lc($obj_name) => $obj->name,
+                    %{shift @tests}
+                };
 
                 my $meth = "${object_type}_ok";
                 {
                     no strict 'refs';
-                    $meth->( $object, $ans, $name );
+                    $meth->($object, $ans, $name);
                 }
             }
         }
@@ -400,41 +373,38 @@ sub _test_kids {
 }
 
 sub schema_ok {
-    my ($obj,$test,$name) = @_;
+    my ($obj, $test, $name) = @_;
     my $t_name = t_name($name);
-    default_attribs($test,"schema");
+    default_attribs($test, "schema");
 
-    is( $obj->name, $test->{name}, "${t_name}Schema name is '$test->{name}'" );
+    is($obj->name, $test->{name}, "${t_name}Schema name is '$test->{name}'");
 
-    is( $obj->database, $test->{database},
-        "$t_name    database is '$test->{database}'" );
+    is($obj->database, $test->{database}, "$t_name    database is '$test->{database}'");
 
-    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
+    is_deeply({$obj->extra}, $test->{extra}, "$t_name    extra");
 
-    is( $obj->is_valid, $test->{is_valid},
-    "$t_name    is ".($test->{is_valid} ? '' : 'not ').'valid' );
+    is($obj->is_valid, $test->{is_valid}, "$t_name    is " . ($test->{is_valid} ? '' : 'not ') . 'valid');
 
     # Tables
-    if ( $test->{tables} ) {
-        is_deeply( [ map {$_->name}   $obj->get_tables ],
-                   [ map {$_->{name}} @{$test->{tables}} ],
-                   "${t_name}    table names match" );
-        foreach ( @{$test->{tables}} ) {
+    if ($test->{tables}) {
+        is_deeply([map { $_->name } $obj->get_tables], [map { $_->{name} } @{$test->{tables}}], "${t_name}    table names match");
+        foreach (@{$test->{tables}}) {
             my $t_name = $_->{name} || die "Need a table name to test.";
-            table_ok( $obj->get_table($t_name), $_, $name );
+            table_ok($obj->get_table($t_name), $_, $name);
         }
     }
     else {
-        is(scalar($obj->get_tables), undef,
-            "${t_name}    has no tables.");
+        is(scalar($obj->get_tables), undef, "${t_name}    has no tables.");
     }
 
     # Procedures, Triggers, Views
-    _test_kids($obj, $test, $name, {
-        procedure  => 'procedures',
-        trigger    => 'triggers',
-        view       => 'views',
-    });
+    _test_kids(
+        $obj, $test, $name, {
+            procedure => 'procedures',
+            trigger   => 'triggers',
+            view      => 'views',
+        }
+    );
 }
 
 # maybe_plan($ntests, @modules)
@@ -445,7 +415,7 @@ sub maybe_plan {
     my ($ntests, @modules) = @_;
     my @errors;
 
-    for my $module (@modules) {
+    foreach my $module (@modules) {
         eval "use $module;";
         next if !$@;
 
@@ -458,15 +428,13 @@ sub maybe_plan {
         elsif ($@ =~ /([\w\:]+ version [\d\.]+) required.+?this is only version/) {
             push @errors, $1;
         }
-        elsif ($@ =~ /Can't load .+? for module .+?DynaLoader\.pm/i ) {
-          push @errors, $module;
+        elsif ($@ =~ /Can't load .+? for module .+?DynaLoader\.pm/i) {
+            push @errors, $module;
         }
     }
 
     if (@errors) {
-        my $msg = sprintf "Missing dependenc%s: %s",
-            @errors == 1 ? 'y' : 'ies',
-            join ", ", @errors;
+        my $msg = sprintf "Missing dependenc%s: %s", @errors == 1 ? 'y' : 'ies', join ", ", @errors;
         plan skip_all => $msg;
     }
     return unless defined $ntests;

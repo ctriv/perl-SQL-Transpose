@@ -7,9 +7,7 @@ use SQL::Transpose;
 use FindBin '$Bin';
 
 BEGIN {
-    maybe_plan(2,
-        'SQL::Transpose::Parser::SQLite',
-        'SQL::Transpose::Producer::YAML');
+    maybe_plan(2, 'SQL::Transpose::Parser::SQLite', 'SQL::Transpose::Producer::YAML');
 }
 
 use YAML qw(Dump Load);
@@ -244,5 +242,5 @@ my $tr   = SQL::Transpose->new(
 );
 
 my $out;
-ok( $out = $tr->translate, 'Translate SQLite to YAML' ) || diag($tr->error);
-eq_or_diff( $out, $yaml, 'YAML matches expected' );
+ok($out = $tr->translate, 'Translate SQLite to YAML') || diag($tr->error);
+eq_or_diff($out, $yaml, 'YAML matches expected');

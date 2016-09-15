@@ -11,19 +11,18 @@ use SQL::Transpose;
 use SQL::Transpose::Schema::Constants;
 
 BEGIN {
-    maybe_plan(2, 'SQL::Transpose::Parser::XML::SQLFairy',
-                  'SQL::Transpose::Producer::Oracle');
+    maybe_plan(2, 'SQL::Transpose::Parser::XML::SQLFairy', 'SQL::Transpose::Producer::Oracle');
 }
 
 my $xmlfile = "$Bin/data/xml/schema.xml";
 
 my $sqlt;
 $sqlt = SQL::Transpose->new(
-    no_comments => 1,
+    no_comments       => 1,
     quote_table_names => 0,
     quote_field_names => 0,
-    show_warnings  => 0,
-    add_drop_table => 1,
+    show_warnings     => 0,
+    add_drop_table    => 1,
 );
 
 die "Can't find test schema $xmlfile" unless -e $xmlfile;
@@ -41,10 +40,10 @@ my $sql_string = $sqlt->translate(
 ) or die $sqlt->error;
 
 my $want = [
-'DROP TABLE Basic CASCADE CONSTRAINTS',
-          'DROP SEQUENCE sq_Basic_id',
-          'CREATE SEQUENCE sq_Basic_id',
-          'CREATE TABLE Basic (
+    'DROP TABLE Basic CASCADE CONSTRAINTS',
+    'DROP SEQUENCE sq_Basic_id',
+    'CREATE SEQUENCE sq_Basic_id',
+    'CREATE TABLE Basic (
   id number(10) NOT NULL,
   title varchar2(100) DEFAULT \'hello\' NOT NULL,
   description clob DEFAULT \'\',
@@ -58,19 +57,19 @@ my $want = [
   CONSTRAINT u_Basic_emailuniqueindex UNIQUE (email),
   CONSTRAINT u_Basic_very_long_index_name_o UNIQUE (title)
 )',
-          'DROP TABLE Another CASCADE CONSTRAINTS',
-          'DROP SEQUENCE sq_Another_id',
-          'CREATE SEQUENCE sq_Another_id',
-          'CREATE TABLE Another (
+    'DROP TABLE Another CASCADE CONSTRAINTS',
+    'DROP SEQUENCE sq_Another_id',
+    'CREATE SEQUENCE sq_Another_id',
+    'CREATE TABLE Another (
   id number(10) NOT NULL,
   num number(10,2),
   PRIMARY KEY (id)
 )',
-'DROP VIEW email_list',
-          'CREATE VIEW email_list AS
+    'DROP VIEW email_list',
+    'CREATE VIEW email_list AS
 SELECT email FROM Basic WHERE (email IS NOT NULL)',
-          'ALTER TABLE Basic ADD CONSTRAINT Basic_another_id_fk FOREIGN KEY (another_id) REFERENCES Another (id)',
-          'CREATE OR REPLACE TRIGGER ai_Basic_id
+    'ALTER TABLE Basic ADD CONSTRAINT Basic_another_id_fk FOREIGN KEY (another_id) REFERENCES Another (id)',
+    'CREATE OR REPLACE TRIGGER ai_Basic_id
 BEFORE INSERT ON Basic
 FOR EACH ROW WHEN (
  new.id IS NULL OR new.id = 0
@@ -81,14 +80,14 @@ BEGIN
  FROM dual;
 END;
 ',
-          'CREATE OR REPLACE TRIGGER ts_Basic_timest
+    'CREATE OR REPLACE TRIGGER ts_Basic_timest
 BEFORE INSERT OR UPDATE ON Basic
 FOR EACH ROW WHEN (new.timest IS NULL)
 BEGIN
  SELECT sysdate INTO :new.timest FROM dual;
 END;
 ',
-          'CREATE OR REPLACE TRIGGER ai_Another_id
+    'CREATE OR REPLACE TRIGGER ai_Another_id
 BEFORE INSERT ON Another
 FOR EACH ROW WHEN (
  new.id IS NULL OR new.id = 0
@@ -99,11 +98,13 @@ BEGIN
  FROM dual;
 END;
 ',
-'CREATE INDEX titleindex on Basic (title)'];
+    'CREATE INDEX titleindex on Basic (title)'
+];
 
 is_deeply(\@sql, $want, 'Got correct Oracle statements in list context');
 
-eq_or_diff($sql_string, q|DROP TABLE Basic CASCADE CONSTRAINTS;
+eq_or_diff(
+    $sql_string, q|DROP TABLE Basic CASCADE CONSTRAINTS;
 
 DROP SEQUENCE sq_Basic_id01;
 
@@ -177,4 +178,5 @@ BEGIN
 END;
 /
 
-|);
+|
+);

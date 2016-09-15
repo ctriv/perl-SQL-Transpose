@@ -21,7 +21,7 @@ SQL::Transpose::Producer::Dumper - SQL Dumper producer for SQL::Transpose
 
 This producer creates a Perl script that can connect to a database and
 dump the data as INSERT statements (a la mysqldump) or as a file
-suitable for MySQL's LOAD DATA command.  If you enable "add-truncate"
+suitable foreach mySQL's LOAD DATA command.  If you enable "add-truncate"
 or specify tables to "skip" (also using the "skiplike" regular
 expression) then the generated dumper script will leave out those
 tables.  However, these will also be options in the generated dumper,
@@ -42,41 +42,40 @@ use Template;
 use Data::Dumper;
 
 sub produce {
-    my $self           = shift;
-    my $t              = shift;
-    my $args           = $t->producer_args;
-    my $schema         = $t->schema;
-    my $add_truncate   = $args->{'add_truncate'}   || 0;
-    my $skip           = $args->{'skip'}           || '';
-    my $skiplike       = $args->{'skiplike'}       || '';
-    my $db_user        = $args->{'db_user'}        || 'db_user';
-    my $db_pass        = $args->{'db_password'}    || 'db_pass';
-    my $parser_name    = $t->parser_type;
-    my %skip           = map { $_, 1 } map { s/^\s+|\s+$//; $_ }
-                         split (/,/, $skip);
+    my $self         = shift;
+    my $t            = shift;
+    my $args         = $t->producer_args;
+    my $schema       = $t->schema;
+    my $add_truncate = $args->{'add_truncate'} || 0;
+    my $skip         = $args->{'skip'} || '';
+    my $skiplike     = $args->{'skiplike'} || '';
+    my $db_user      = $args->{'db_user'} || 'db_user';
+    my $db_pass      = $args->{'db_password'} || 'db_pass';
+    my $parser_name  = $t->parser_type;
+    my %skip         = map { $_, 1 } map { s/^\s+|\s+$//; $_ }
+        split(/,/, $skip);
 
-    if ( $parser_name  =~ /Parser::(\w+)$/ ) {
-        $parser_name = $1
+    if ($parser_name =~ /Parser::(\w+)$/) {
+        $parser_name = $1;
     }
 
-    my %type_to_dbd    = (
-        MySQL          => 'mysql',
-        Oracle         => 'Oracle',
-        PostgreSQL     => 'Pg',
-        SQLite         => 'SQLite',
-        Sybase         => 'Sybase',
+    my %type_to_dbd = (
+        MySQL      => 'mysql',
+        Oracle     => 'Oracle',
+        PostgreSQL => 'Pg',
+        SQLite     => 'SQLite',
+        Sybase     => 'Sybase',
     );
-    my $dbd            = $type_to_dbd{ $parser_name } || 'DBD';
-    my $dsn            = $args->{'dsn'} || "dbi:$dbd:";
-    if ( $dbd eq 'Pg' && ! $args->{'dsn'} ) {
+    my $dbd = $type_to_dbd{$parser_name} || 'DBD';
+    my $dsn = $args->{'dsn'}             || "dbi:$dbd:";
+    if ($dbd eq 'Pg' && !$args->{'dsn'}) {
         $dsn .= 'dbname=dbname;host=hostname';
     }
-    elsif ( $dbd eq 'Oracle' && ! $args->{'dsn'} ) {
-        $db_user = "$db_user/$db_pass@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)" .
-            "(HOST=hostname)(PORT=1521))(CONNECT_DATA=(SID=sid)))";
+    elsif ($dbd eq 'Oracle' && !$args->{'dsn'}) {
+        $db_user = "$db_user/$db_pass@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)" . "(HOST=hostname)(PORT=1521))(CONNECT_DATA=(SID=sid)))";
         $db_pass = '';
     }
-    elsif ( $dbd eq 'mysql' && ! $args->{'dsn'} ) {
+    elsif ($dbd eq 'mysql' && !$args->{'dsn'}) {
         $dsn .= 'dbname';
     }
 
@@ -84,16 +83,15 @@ sub produce {
     my $template_text = template();
     my $out;
     $template->process(
-        \$template_text,
-        {
-            translator     => $t,
-            schema         => $schema,
-            db_user        => $db_user,
-            db_pass        => $db_pass,
-            dsn            => $dsn,
-            perl           => $Config{'startperl'},
-            skip           => \%skip,
-            skiplike       => $skiplike,
+        \$template_text, {
+            translator => $t,
+            schema     => $schema,
+            db_user    => $db_user,
+            db_pass    => $db_pass,
+            dsn        => $dsn,
+            perl       => $Config{'startperl'},
+            skip       => \%skip,
+            skiplike   => $skiplike,
         },
         \$out
     ) or die $template->error;
@@ -102,9 +100,9 @@ sub produce {
 }
 
 sub template {
-#
-# Returns the template to be processed by Template Toolkit
-#
+    #
+    # Returns the template to be processed by Template Toolkit
+    #
     return <<'EOF';
 [% perl || '#!/usr/bin/perl' %]
 [% USE date %]
@@ -201,7 +199,7 @@ my @tables = (
 [%- END %]
 );
 
-for my $table ( @tables ) {
+foreach my $table ( @tables ) {
     my $table_name = $table->{'table_name'};
     next if $skip{ $table_name };
     next if $skiplike && $table_name =~ qr/$skiplike/;
@@ -228,7 +226,7 @@ for my $table ( @tables ) {
 
     while ( my $rec = $sth->fetchrow_hashref ) {
         my @vals;
-        for my $fld ( @{ $table->{'fields'} } ) {
+        foreach my $fld ( @{ $table->{'fields'} } ) {
             my $val = $rec->{ $fld };
             if ( $table->{'types'}{ $fld } eq 'string' ) {
                 if ( defined $val ) {

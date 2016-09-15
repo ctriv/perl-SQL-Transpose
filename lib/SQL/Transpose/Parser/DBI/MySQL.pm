@@ -23,21 +23,19 @@ use Data::Dumper;
 use SQL::Transpose::Schema::Constants;
 use SQL::Transpose::Parser::MySQL;
 
-our ( $DEBUG, @EXPORT_OK );
-$DEBUG   = 0 unless defined $DEBUG;
+our ($DEBUG, @EXPORT_OK);
+$DEBUG = 0 unless defined $DEBUG;
 
 sub parse {
-    my ( $tr, $dbh ) = @_;
-    my $schema       = $tr->schema;
-    my @table_names  = @{ $dbh->selectcol_arrayref('show tables') };
-    my @skip_tables  = defined $tr->parser_args->{skip}
-                       ? split(/,/, $tr->parser_args->{skip})
-                       : ();
+    my ($tr, $dbh) = @_;
+    my $schema      = $tr->schema;
+    my @table_names = @{$dbh->selectcol_arrayref('show tables')};
+    my @skip_tables = defined $tr->parser_args->{skip} ? split(/,/, $tr->parser_args->{skip}) : ();
 
     $dbh->{'FetchHashKeyName'} = 'NAME_lc';
 
     my $create = q{};
-    for my $table_name ( @table_names ) {
+    foreach my $table_name (@table_names) {
         next if (grep /^$table_name$/, @skip_tables);
         my $sth = $dbh->prepare("show create table " . $dbh->quote_identifier($table_name));
         $sth->execute;
@@ -45,7 +43,7 @@ sub parse {
         $create .= ($table->{'create table'} || $table->{'create view'}) . ";\n\n";
     }
 
-    SQL::Transpose::Parser::MySQL::parse( $tr, $create );
+    SQL::Transpose::Parser::MySQL::parse($tr, $create);
 
     return 1;
 }

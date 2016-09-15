@@ -10,7 +10,7 @@ use Test::Exception;
 use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(3, 'YAML', 'Test::Differences')
+    maybe_plan(3, 'YAML', 'Test::Differences');
 }
 use Test::Differences;
 use SQL::Transpose;
@@ -46,8 +46,6 @@ schema:
           name: first_name
 };
 
-
-
 # Parse the test XML schema
 my $obj;
 $obj = SQL::Transpose->new(
@@ -56,14 +54,17 @@ $obj = SQL::Transpose->new(
     from          => "YAML",
     to            => "YAML",
     data          => $in_yaml,
-    filters => [
+    filters       => [
+
         # Filter from SQL::Transpose::Filter::*
-        [ 'Globals',
+        [
+            'Globals',
+
             # A global field to add given in the args
             fields => [
                 {
-                    name => 'created',
-                    data_type => 'timestamp',
+                    name        => 'created',
+                    data_type   => 'timestamp',
                     is_nullable => 0,
                 }
             ],
@@ -75,109 +76,99 @@ $obj = SQL::Transpose->new(
         ],
     ],
 
-) or die "Failed to create translator object: ".SQL::Transpose->error;
+) or die "Failed to create translator object: " . SQL::Transpose->error;
 
 my $struct;
-lives_ok { $struct = YAML::Load($obj->translate) }  "Translate/yaml reload ran";
+lives_ok { $struct = YAML::Load($obj->translate) } "Translate/yaml reload ran";
 is $obj->error, '', "No errors";
 
 # Should include the the items added from the Global table defined above in the
 # schema as well as those defined in the filter args below.
-is_deeply ($struct, {
-  schema => {
-    procedures => {},
-    tables => {
-      Person => {
-        constraints => [
-          {
-            deferrable => 1,
-            expression => "",
-            fields => [
-              "modified"
-            ],
-            match_type => "",
-            name => "",
-            on_delete => "",
-            on_update => "",
-            options => [],
-            reference_fields => [],
-            reference_table => "",
-            type => "UNIQUE"
-          }
-        ],
-        fields => {
-          first_name => {
-            data_type => "foovar",
-            default_value => undef,
-            is_nullable => 1,
-            is_primary_key => 0,
-            is_unique => 0,
-            name => "first_name",
-            order => 1,
-            size => [
-              0
-            ]
-          },
-          created => {
-            data_type => "timestamp",
-            default_value => undef,
-            is_nullable => 0,
-            is_primary_key => 0,
-            is_unique => 0,
-            name => "created",
-            order => 2,
-            size => [
-              0
-            ]
-          },
-          modified => {
-            data_type => "timestamp",
-            default_value => undef,
-            is_nullable => 1,
-            is_primary_key => 0,
-            is_unique => 1,
-            name => "modified",
-            order => 3,
-            size => [
-              0
-            ]
-          }
+is_deeply(
+    $struct, {
+        schema => {
+            procedures => {},
+            tables     => {
+                Person => {
+                    constraints => [
+                        {
+                            deferrable       => 1,
+                            expression       => "",
+                            fields           => ["modified"],
+                            match_type       => "",
+                            name             => "",
+                            on_delete        => "",
+                            on_update        => "",
+                            options          => [],
+                            reference_fields => [],
+                            reference_table  => "",
+                            type             => "UNIQUE"
+                        }
+                    ],
+                    fields => {
+                        first_name => {
+                            data_type      => "foovar",
+                            default_value  => undef,
+                            is_nullable    => 1,
+                            is_primary_key => 0,
+                            is_unique      => 0,
+                            name           => "first_name",
+                            order          => 1,
+                            size           => [0]
+                        },
+                        created => {
+                            data_type      => "timestamp",
+                            default_value  => undef,
+                            is_nullable    => 0,
+                            is_primary_key => 0,
+                            is_unique      => 0,
+                            name           => "created",
+                            order          => 2,
+                            size           => [0]
+                        },
+                        modified => {
+                            data_type      => "timestamp",
+                            default_value  => undef,
+                            is_nullable    => 1,
+                            is_primary_key => 0,
+                            is_unique      => 1,
+                            name           => "modified",
+                            order          => 3,
+                            size           => [0]
+                        }
+                    },
+                    indices => [
+                        {
+                            fields  => ["created"],
+                            name    => "",
+                            options => [],
+                            type    => "NORMAL"
+                        }, {
+                            fields  => ["modified"],
+                            name    => "",
+                            options => [],
+                            type    => "NORMAL"
+                        }
+                    ],
+                    name    => "Person",
+                    options => [],
+                    order   => 1
+                }
+            },
+            triggers => {},
+            views    => {}
         },
-        indices => [
-          {
-            fields => [
-              "created"
-            ],
-            name => "",
-            options => [],
-            type => "NORMAL"
-          },
-          {
-            fields => [
-              "modified"
-            ],
-            name => "",
-            options => [],
-            type => "NORMAL"
-          }
-        ],
-        name => "Person",
-        options => [],
-        order => 1
-      }
+        translator => {
+            add_drop_table => 0,
+            filename       => undef,
+            no_comments    => 0,
+            parser_args    => {},
+            parser_type    => "SQL::Transpose::Parser::YAML",
+            producer_args  => {},
+            producer_type  => "SQL::Transpose::Producer::YAML",
+            show_warnings  => 1,
+            trace          => 0,
+        }
     },
-    triggers => {},
-    views => {}
-  },
-  translator => {
-    add_drop_table => 0,
-    filename => undef,
-    no_comments => 0,
-    parser_args => {},
-    parser_type => "SQL::Transpose::Parser::YAML",
-    producer_args => {},
-    producer_type => "SQL::Transpose::Producer::YAML",
-    show_warnings => 1,
-    trace => 0,
-  }
-}, 'Expected final yaml-schema');
+    'Expected final yaml-schema'
+);
