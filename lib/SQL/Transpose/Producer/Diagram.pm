@@ -62,6 +62,7 @@ use constant VALID_IMAGE_TYPE => {
 };
 
 sub produce {
+    my $self       = shift;
     my $t          = shift;
     my $schema     = $t->schema;
     my $args       = $t->producer_args;

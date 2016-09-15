@@ -121,6 +121,7 @@ use base qw(Exporter);
 use SQL::Transpose::Utils 'debug';
 
 sub produce {
+    my $self       = shift;
     my $translator = shift;
     local $DEBUG   = $translator->debug;
     my $scma       = $translator->schema;

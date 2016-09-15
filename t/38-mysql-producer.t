@@ -309,7 +309,7 @@ my $field1 = SQL::Transpose::Schema::Field->new( name => 'myfield',
                                                   is_foreign_key => 0,
                                                   is_unique => 0 );
 
-my $field1_sql = SQL::Transpose::Producer::MySQL::create_field($field1);
+my $field1_sql = SQL::Transpose::Producer::MySQL->create_field($field1);
 
 is($field1_sql, 'myfield VARCHAR(10) NULL', 'Create field works');
 
@@ -323,15 +323,15 @@ my $field2 = SQL::Transpose::Schema::Field->new( name      => 'myfield',
                                                   is_foreign_key => 0,
                                                   is_unique => 0 );
 
-my $alter_field = SQL::Transpose::Producer::MySQL::alter_field($field1,
+my $alter_field = SQL::Transpose::Producer::MySQL->alter_field($field1,
                                                                 $field2);
 is($alter_field, 'ALTER TABLE mytable CHANGE COLUMN myfield myfield VARCHAR(25) NOT NULL', 'Alter field works');
 
-my $add_field = SQL::Transpose::Producer::MySQL::add_field($field1);
+my $add_field = SQL::Transpose::Producer::MySQL->add_field($field1);
 
 is($add_field, 'ALTER TABLE mytable ADD COLUMN myfield VARCHAR(10) NULL', 'Add field works');
 
-my $drop_field = SQL::Transpose::Producer::MySQL::drop_field($field2);
+my $drop_field = SQL::Transpose::Producer::MySQL->drop_field($field2);
 is($drop_field, 'ALTER TABLE mytable DROP COLUMN myfield', 'Drop field works');
 
 my $field3 = SQL::Transpose::Schema::Field->new( name      => 'myfield',
@@ -341,11 +341,11 @@ my $field3 = SQL::Transpose::Schema::Field->new( name      => 'myfield',
                                                   is_foreign_key => 0,
                                                   is_unique => 0 );
 
-my $field3_sql = SQL::Transpose::Producer::MySQL::create_field($field3, { mysql_version => 4.1 });
+my $field3_sql = SQL::Transpose::Producer::MySQL->create_field($field3, { mysql_version => 4.1 });
 is($field3_sql, 'myfield boolean NOT NULL', 'For Mysql >= 4, use boolean type');
-$field3_sql = SQL::Transpose::Producer::MySQL::create_field($field3, { mysql_version => 3.22 });
+$field3_sql = SQL::Transpose::Producer::MySQL->create_field($field3, { mysql_version => 3.22 });
 is($field3_sql, "myfield enum('0','1') NOT NULL", 'For Mysql < 4, use enum for boolean type');
-$field3_sql = SQL::Transpose::Producer::MySQL::create_field($field3,);
+$field3_sql = SQL::Transpose::Producer::MySQL->create_field($field3,);
 is($field3_sql, "myfield enum('0','1') NOT NULL", 'When no version specified, use enum for boolean type');
 
 my $number_sizes = {
@@ -367,7 +367,7 @@ for my $size (keys %$number_sizes) {
     );
 
     is(
-        SQL::Transpose::Producer::MySQL::create_field($number_field),
+        SQL::Transpose::Producer::MySQL->create_field($number_field),
         "numberfield_$expected $expected($size) NULL",
         "Use $expected for NUMBER types of size $size"
     );
@@ -386,68 +386,68 @@ for my $size (qw/255 256 65535 65536/) {
 
 
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.000003 }),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{255}, { mysql_version => 5.000003 }),
     'vch_255 varchar(255) NULL',
     'VARCHAR(255) is not substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.0 }),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{255}, { mysql_version => 5.0 }),
     'vch_255 varchar(255) NULL',
     'VARCHAR(255) is not substituted with TEXT for Mysql < 5.0.3'
 );
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{255}),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{255}),
     'vch_255 varchar(255) NULL',
     'VARCHAR(255) is not substituted with TEXT when no version specified',
 );
 
 
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.000003 }),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{256}, { mysql_version => 5.000003 }),
     'vch_256 varchar(256) NULL',
     'VARCHAR(256) is not substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.0 }),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{256}, { mysql_version => 5.0 }),
     'vch_256 text NULL',
     'VARCHAR(256) is substituted with TEXT for Mysql < 5.0.3'
 );
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{256}),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{256}),
     'vch_256 text NULL',
     'VARCHAR(256) is substituted with TEXT when no version specified',
 );
 
 
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.000003 }),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{65535}, { mysql_version => 5.000003 }),
     'vch_65535 varchar(65535) NULL',
     'VARCHAR(65535) is not substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.0 }),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{65535}, { mysql_version => 5.0 }),
     'vch_65535 text NULL',
     'VARCHAR(65535) is substituted with TEXT for Mysql < 5.0.3'
 );
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{65535}),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{65535}),
     'vch_65535 text NULL',
     'VARCHAR(65535) is substituted with TEXT when no version specified',
 );
 
 
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.000003 }),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{65536}, { mysql_version => 5.000003 }),
     'vch_65536 text NULL',
     'VARCHAR(65536) is substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.0 }),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{65536}, { mysql_version => 5.0 }),
     'vch_65536 text NULL',
     'VARCHAR(65536) is substituted with TEXT for Mysql < 5.0.3'
 );
 is (
-    SQL::Transpose::Producer::MySQL::create_field($varchars->{65536}),
+    SQL::Transpose::Producer::MySQL->create_field($varchars->{65536}),
     'vch_65536 text NULL',
     'VARCHAR(65536) is substituted with TEXT when no version specified',
 );
@@ -463,7 +463,7 @@ is (
                                                     mysql_security => 'DEFINER',
                                                   });
   my $create_opts = { add_replace_view => 1, no_comments => 1 };
-  my $view1_sql1 = SQL::Transpose::Producer::MySQL::create_view($view1, $create_opts);
+  my $view1_sql1 = SQL::Transpose::Producer::MySQL->create_view($view1, $create_opts);
 
   my $view_sql_replace = <<'EOV';
 CREATE OR REPLACE
@@ -481,7 +481,7 @@ EOV
                                                   fields => [qw/id name/],
                                                   sql => 'SELECT id, name FROM thing',);
   my $create2_opts = { add_replace_view => 0, no_comments => 1 };
-  my $view1_sql2 = SQL::Transpose::Producer::MySQL::create_view($view2, $create2_opts);
+  my $view1_sql2 = SQL::Transpose::Producer::MySQL->create_view($view2, $create2_opts);
   my $view_sql_noreplace = <<'EOV';
 CREATE
   VIEW view_foo ( id, name ) AS
@@ -530,7 +530,7 @@ EOV
             is_foreign_key    => 0,
             is_unique         => 0
         );
-        my $sql = SQL::Transpose::Producer::MySQL::create_field($field);
+        my $sql = SQL::Transpose::Producer::MySQL->create_field($field);
         is($sql, "my$type $type NULL", "Skip length param for type $type");
     }
 }
@@ -578,21 +578,21 @@ EOV
     };
 
 
-    my $alter_field = SQL::Transpose::Producer::MySQL::alter_field($field1, $field2, $options);
+    my $alter_field = SQL::Transpose::Producer::MySQL->alter_field($field1, $field2, $options);
     is($alter_field, 'ALTER TABLE `mydb`.`mytable` CHANGE COLUMN `myfield` `myfield` VARCHAR(25) NOT NULL', 'Alter field works');
 
-    my $add_field = SQL::Transpose::Producer::MySQL::add_field($field1, $options);
+    my $add_field = SQL::Transpose::Producer::MySQL->add_field($field1, $options);
 
     is($add_field, 'ALTER TABLE `mydb`.`mytable` ADD COLUMN `myfield` VARCHAR(10) NULL', 'Add field works');
 
-    my $drop_field = SQL::Transpose::Producer::MySQL::drop_field($field2, $options);
+    my $drop_field = SQL::Transpose::Producer::MySQL->drop_field($field2, $options);
     is($drop_field, 'ALTER TABLE `mydb`.`mytable` DROP COLUMN `myfield`', 'Drop field works');
 
-    my $field3_sql = SQL::Transpose::Producer::MySQL::create_field($field3, { mysql_version => 4.1, %$options });
+    my $field3_sql = SQL::Transpose::Producer::MySQL->create_field($field3, { mysql_version => 4.1, %$options });
 is($field3_sql, '`myfield` boolean NOT NULL', 'For Mysql >= 4, use boolean type');
-$field3_sql = SQL::Transpose::Producer::MySQL::create_field($field3, { mysql_version => 3.22, %$options });
+$field3_sql = SQL::Transpose::Producer::MySQL->create_field($field3, { mysql_version => 3.22, %$options });
 is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'For Mysql < 4, use enum for boolean type');
-$field3_sql = SQL::Transpose::Producer::MySQL::create_field($field3,$options);
+$field3_sql = SQL::Transpose::Producer::MySQL->create_field($field3,$options);
 is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, use enum for boolean type');
 
     my $number_sizes = {
@@ -614,7 +614,7 @@ is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, 
         );
 
         is(
-            SQL::Transpose::Producer::MySQL::create_field($number_field, $options),
+            SQL::Transpose::Producer::MySQL->create_field($number_field, $options),
             "`numberfield_$expected` $expected($size) NULL",
             "Use $expected for NUMBER types of size $size"
         );
@@ -633,68 +633,68 @@ is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, 
 
 
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.000003, %$options }),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{255}, { mysql_version => 5.000003, %$options }),
         '`vch_255` varchar(255) NULL',
         'VARCHAR(255) is not substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.0, %$options }),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{255}, { mysql_version => 5.0, %$options }),
         '`vch_255` varchar(255) NULL',
         'VARCHAR(255) is not substituted with TEXT for Mysql < 5.0.3'
     );
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{255}, $options),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{255}, $options),
         '`vch_255` varchar(255) NULL',
         'VARCHAR(255) is not substituted with TEXT when no version specified',
     );
 
 
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.000003, %$options }),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{256}, { mysql_version => 5.000003, %$options }),
         '`vch_256` varchar(256) NULL',
         'VARCHAR(256) is not substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.0, %$options }),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{256}, { mysql_version => 5.0, %$options }),
         '`vch_256` text NULL',
         'VARCHAR(256) is substituted with TEXT for Mysql < 5.0.3'
     );
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{256}, $options),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{256}, $options),
         '`vch_256` text NULL',
         'VARCHAR(256) is substituted with TEXT when no version specified',
     );
 
 
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.000003, %$options }),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{65535}, { mysql_version => 5.000003, %$options }),
         '`vch_65535` varchar(65535) NULL',
         'VARCHAR(65535) is not substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.0, %$options }),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{65535}, { mysql_version => 5.0, %$options }),
         '`vch_65535` text NULL',
         'VARCHAR(65535) is substituted with TEXT for Mysql < 5.0.3'
     );
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{65535}, $options),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{65535}, $options),
         '`vch_65535` text NULL',
         'VARCHAR(65535) is substituted with TEXT when no version specified',
     );
 
 
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.000003, %$options }),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{65536}, { mysql_version => 5.000003, %$options }),
         '`vch_65536` text NULL',
         'VARCHAR(65536) is substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.0, %$options }),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{65536}, { mysql_version => 5.0, %$options }),
         '`vch_65536` text NULL',
         'VARCHAR(65536) is substituted with TEXT for Mysql < 5.0.3'
     );
     is (
-        SQL::Transpose::Producer::MySQL::create_field($varchars->{65536}, $options),
+        SQL::Transpose::Producer::MySQL->create_field($varchars->{65536}, $options),
         '`vch_65536` text NULL',
         'VARCHAR(65536) is substituted with TEXT when no version specified',
     );
@@ -709,7 +709,7 @@ is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, 
                                                         mysql_security => 'DEFINER',
                                                       });
       my $create_opts = { add_replace_view => 1, no_comments => 1, %$options };
-      my $view1_sql1 = SQL::Transpose::Producer::MySQL::create_view($view1, $create_opts);
+      my $view1_sql1 = SQL::Transpose::Producer::MySQL->create_view($view1, $create_opts);
 
       my $view_sql_replace = <<'EOV';
 CREATE OR REPLACE
@@ -727,7 +727,7 @@ EOV
                                                       fields => [qw/id name/],
                                                       sql => 'SELECT `id`, `name` FROM `my`.`thing`',);
       my $create2_opts = { add_replace_view => 0, no_comments => 1, %$options };
-      my $view1_sql2 = SQL::Transpose::Producer::MySQL::create_view($view2, $create2_opts);
+      my $view1_sql2 = SQL::Transpose::Producer::MySQL->create_view($view2, $create2_opts);
       my $view_sql_noreplace = <<'EOV';
 CREATE
   VIEW `view_foo` ( `id`, `name` ) AS
@@ -776,7 +776,7 @@ EOV
                 is_foreign_key    => 0,
                 is_unique         => 0
             );
-            my $sql = SQL::Transpose::Producer::MySQL::create_field($field, $options);
+            my $sql = SQL::Transpose::Producer::MySQL->create_field($field, $options);
             is($sql, "`my$type` $type NULL", "Skip length param for type $type");
         }
     }
@@ -797,7 +797,7 @@ EOV
 
     my $constraint = $table->add_constraint(fields => ['mypk'], type => 'PRIMARY_KEY');
     my $options = {quote_table_names => '`'};
-    is(SQL::Transpose::Producer::MySQL::alter_drop_constraint($constraint,$options),
+    is(SQL::Transpose::Producer::MySQL->alter_drop_constraint($constraint,$options),
        'ALTER TABLE `table` DROP PRIMARY KEY','valid drop primary key');
 }
 
@@ -814,7 +814,7 @@ EOV
             fields              => ['bar'],
             action              => 'BEGIN baz(); END'
         );
-        my ($def) = SQL::Transpose::Producer::MySQL::create_trigger($trigger);
+        my ($def) = SQL::Transpose::Producer::MySQL->create_trigger($trigger);
         my $expected
           = "--\n"
           . "-- Trigger mytrigger\n"
@@ -833,7 +833,7 @@ EOV
             fields              => ['bar'],
             action              => 'baz()'
         );
-        my ($def) = SQL::Transpose::Producer::MySQL::create_trigger($trigger);
+        my ($def) = SQL::Transpose::Producer::MySQL->create_trigger($trigger);
         my $expected
           = "--\n"
           . "-- Trigger mytrigger2\n"

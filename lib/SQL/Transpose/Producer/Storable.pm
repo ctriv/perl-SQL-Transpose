@@ -33,6 +33,7 @@ use base qw(Exporter);
 @EXPORT_OK = qw(produce);
 
 sub produce {
+    my $self        = shift;
     my $t           = shift;
     my $args        = $t->producer_args;
     my $schema      = $t->schema;

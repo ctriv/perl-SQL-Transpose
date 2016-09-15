@@ -42,15 +42,15 @@ my $field1 = SQL::Transpose::Schema::Field->new( name      => 'myfield',
                                                   is_foreign_key    => 0,
                                                   is_unique         => 0 );
 
-my $field1_sql = SQL::Transpose::Producer::PostgreSQL::create_field($field1, $options);
+my $field1_sql = SQL::Transpose::Producer::PostgreSQL->create_field($field1, $options);
 
 is($field1_sql, '"myfield" geometry', 'Create geometry field works');
 
-my $field1_geocol = SQL::Transpose::Producer::PostgreSQL::add_geometry_column($field1, $options);
+my $field1_geocol = SQL::Transpose::Producer::PostgreSQL->add_geometry_column($field1, $options);
 
 is($field1_geocol, "INSERT INTO geometry_columns VALUES ('','myschema','my''table','myfield','2','-1','POINT')", 'Add geometry column works');
 
-my $field1_geocon = SQL::Transpose::Producer::PostgreSQL::add_geometry_constraints($field1, $options);
+my $field1_geocon = SQL::Transpose::Producer::PostgreSQL->add_geometry_constraints($field1, $options);
 
 is($field1_geocon, qq[ALTER TABLE "my'table" ADD CONSTRAINT "enforce_dims_myfield" CHECK ((ST_NDims("myfield") = 2));
 ALTER TABLE "my'table" ADD CONSTRAINT "enforce_srid_myfield" CHECK ((ST_SRID("myfield") = -1));
@@ -67,7 +67,7 @@ my $field2 = SQL::Transpose::Schema::Field->new( name      => 'myfield',
                                                   is_foreign_key => 0,
                                                   is_unique => 0 );
 
-my $alter_field = SQL::Transpose::Producer::PostgreSQL::alter_field($field1,
+my $alter_field = SQL::Transpose::Producer::PostgreSQL->alter_field($field1,
                                                                 $field2, $options);
 is($alter_field, qq[DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'my''table' AND f_geometry_column = 'myfield';
 ALTER TABLE "my'table" DROP CONSTRAINT "enforce_dims_myfield";
@@ -77,7 +77,7 @@ ALTER TABLE "my'table" ALTER COLUMN "myfield" SET NOT NULL;
 ALTER TABLE "my'table" ALTER COLUMN "myfield" TYPE character varying(25)],
  'Alter field geometry to non geometry works');
 
-my $alter_field2 = SQL::Transpose::Producer::PostgreSQL::alter_field($field2,
+my $alter_field2 = SQL::Transpose::Producer::PostgreSQL->alter_field($field2,
                                                                 $field1, $options);
 is($alter_field2, qq[ALTER TABLE "my'table" ALTER COLUMN "myfield" DROP NOT NULL;
 ALTER TABLE "my'table" ALTER COLUMN "myfield" TYPE geometry;
@@ -88,7 +88,7 @@ ALTER TABLE "my'table" ADD CONSTRAINT "enforce_geotype_myfield" CHECK ((Geometry
  'Alter field non geometry to geometry works');
 
 $field1->name('field3');
-my $add_field = SQL::Transpose::Producer::PostgreSQL::add_field($field1, $options);
+my $add_field = SQL::Transpose::Producer::PostgreSQL->add_field($field1, $options);
 
 is($add_field, qq[ALTER TABLE "my'table" ADD COLUMN "field3" geometry;
 INSERT INTO geometry_columns VALUES ('','myschema','my''table','field3','2','-1','POINT');
@@ -97,7 +97,7 @@ ALTER TABLE "my'table" ADD CONSTRAINT "enforce_srid_field3" CHECK ((ST_SRID("fie
 ALTER TABLE "my'table" ADD CONSTRAINT "enforce_geotype_field3" CHECK ((GeometryType("field3") = 'POINT'::text OR "field3" IS NULL))],
  'Add geometry field works');
 
-my $drop_field = SQL::Transpose::Producer::PostgreSQL::drop_field($field1, $options);
+my $drop_field = SQL::Transpose::Producer::PostgreSQL->drop_field($field1, $options);
 is($drop_field, qq[ALTER TABLE "my'table" DROP COLUMN "field3";
 DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'my''table' AND f_geometry_column = 'field3'],
  'Drop geometry field works');
@@ -118,7 +118,7 @@ my $field4 = SQL::Transpose::Schema::Field->new( name      => 'field4',
                                                   is_unique         => 0 );
 $table->add_field($field4);
 
-my ($create_table,$fks) = SQL::Transpose::Producer::PostgreSQL::create_table($table, $options);
+my ($create_table,$fks) = SQL::Transpose::Producer::PostgreSQL->create_table($table, $options);
 is($create_table,qq[--
 -- Table: my'table
 --
@@ -132,15 +132,14 @@ CREATE TABLE "my'table" (
 INSERT INTO geometry_columns VALUES ('','myschema','my''table','field3','2','-1','POINT')],
  'Create table with geometry works.');
 
-my $rename_table = SQL::Transpose::Producer::PostgreSQL::rename_table($table, "table2", $options);
+my $rename_table = SQL::Transpose::Producer::PostgreSQL->rename_table($table, "table2", $options);
 is($rename_table,qq[ALTER TABLE "my'table" RENAME TO "table2";
 DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'my''table' AND f_geometry_column = 'field3';
 INSERT INTO geometry_columns VALUES ('','myschema','table2','field3','2','-1','POINT')],
  'Rename table with geometry works.');
 
 $table->name("table2");
-my $drop_table = SQL::Transpose::Producer::PostgreSQL::drop_table($table, $options);
+my $drop_table = SQL::Transpose::Producer::PostgreSQL->drop_table($table, $options);
 is($drop_table, qq[DROP TABLE "table2" CASCADE;
 DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'table2' AND f_geometry_column = 'field3'],
  'Drop table with geometry works.');
-

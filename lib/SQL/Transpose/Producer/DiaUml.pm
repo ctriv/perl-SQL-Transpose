@@ -41,7 +41,10 @@ use File::ShareDir qw/dist_dir/;
 use SQL::Transpose::Utils 'debug';
 use base qw/SQL::Transpose::Producer::TT::Base/;
 # Convert produce call into a method call on our class
-sub produce { return __PACKAGE__->new( translator => shift )->run; };
+sub produce {
+    my $self = shift;
+    return __PACKAGE__->new( translator => shift )->run;
+};
 
 sub tt_config {
     ( INCLUDE_PATH => File::Spec->catdir (dist_dir('SQL-Translator'), 'DiaUml') );

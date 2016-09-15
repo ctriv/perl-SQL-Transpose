@@ -115,6 +115,7 @@ and table_constraint is:
 =cut
 
 sub produce {
+    my $self           = shift;
     my $translator     = shift;
     $DEBUG             = $translator->debug;
     $WARN              = $translator->show_warnings;
@@ -127,8 +128,8 @@ sub produce {
 
     for my $table ( $schema->get_tables ) {
         my $table_name    = $table->name or next;
-        $table_name       = mk_name( $table_name, '', undef, 1 );
-        my $table_name_ur = unreserve($table_name) || '';
+        $table_name       = $self->mk_name( $table_name, '', undef, 1 );
+        my $table_name_ur = $self->unreserve($table_name) || '';
 
         my ( @comments, @field_defs, @index_defs, @constraint_defs );
 
@@ -141,10 +142,10 @@ sub produce {
         #
         my %field_name_scope;
         for my $field ( $table->get_fields ) {
-            my $field_name    = mk_name(
+            my $field_name    = $self->mk_name(
                 $field->name, '', \%field_name_scope, undef,1
             );
-            my $field_name_ur = unreserve( $field_name, $table_name );
+            my $field_name_ur = $self->unreserve( $field_name, $table_name );
             my $field_def     = qq["$field_name_ur"];
             $field_def        =~ s/\"//g;
             if ( $field_def =~ /identity/ ){
@@ -163,7 +164,7 @@ sub produce {
             my $seq_name;
 
             if ( $data_type eq 'enum' ) {
-                my $check_name = mk_name(
+                my $check_name = $self->mk_name(
                     $table_name.'_'.$field_name, 'chk' ,undef, 1
                 );
                 push @constraint_defs,
@@ -242,20 +243,20 @@ sub produce {
         for my $constraint ( $table->get_constraints ) {
             my $name    = $constraint->name || '';
             my $type    = $constraint->type || NORMAL;
-            my @fields  = map { unreserve( $_, $table_name ) }
+            my @fields  = map { $self->unreserve( $_, $table_name ) }
                 $constraint->fields;
-            my @rfields = map { unreserve( $_, $table_name ) }
+            my @rfields = map { $self->unreserve( $_, $table_name ) }
                 $constraint->reference_fields;
             next unless @fields;
 
             if ( $type eq PRIMARY_KEY ) {
-                $name ||= mk_name( $table_name, 'pk', undef,1 );
+                $name ||= $self->mk_name( $table_name, 'pk', undef,1 );
                 push @constraint_defs,
                     "CONSTRAINT $name PRIMARY KEY ".
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $type eq FOREIGN_KEY ) {
-                $name ||= mk_name( $table_name, 'fk', undef,1 );
+                $name ||= $self->mk_name( $table_name, 'fk', undef,1 );
                 push @constraint_defs,
                     "CONSTRAINT $name FOREIGN KEY".
                     ' (' . join( ', ', @fields ) . ') REFERENCES '.
@@ -263,7 +264,7 @@ sub produce {
                     ' (' . join( ', ', @rfields ) . ')';
             }
             elsif ( $type eq UNIQUE ) {
-                $name ||= mk_name(
+                $name ||= $self->mk_name(
                     $table_name,
                     $name || ++$c_name_default,undef, 1
                 );
@@ -352,6 +353,7 @@ sub produce {
 }
 
 sub mk_name {
+    my $self          = shift;
     my $basename      = shift || '';
     my $type          = shift || '';
     my $scope         = shift || '';
@@ -390,6 +392,7 @@ sub mk_name {
 }
 
 sub unreserve {
+    my $self            = shift;
     my $name            = shift || '';
     my $schema_obj_name = shift || '';
     my ( $suffix ) = ( $name =~ s/(\W.*)$// ) ? $1 : '';

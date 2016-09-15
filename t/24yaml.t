@@ -244,5 +244,5 @@ my $tr   = SQL::Transpose->new(
 );
 
 my $out;
-ok( $out = $tr->translate, 'Translate SQLite to YAML' );
+ok( $out = $tr->translate, 'Translate SQLite to YAML' ) || diag($tr->error);
 eq_or_diff( $out, $yaml, 'YAML matches expected' );

@@ -141,7 +141,7 @@ my @no_length_attr = qw/
 
 
 sub preprocess_schema {
-    my ($schema) = @_;
+    my ($self, $schema) = @_;
 
     # extra->{mysql_table_type} used to be the type. It belongs in options, so
     # move it if we find it. Return Engine type if found in extra or options
@@ -250,6 +250,7 @@ sub preprocess_schema {
 {
     my ($quoting_generator, $nonquoting_generator);
     sub _generator {
+        my $self    = shift;
         my $options = shift;
         return $options->{generator} if exists $options->{generator};
 
@@ -262,6 +263,7 @@ sub preprocess_schema {
 }
 
 sub produce {
+    my $self           = shift;
     my $translator     = shift;
     local $DEBUG       = $translator->debug;
     local %used_names;
@@ -270,10 +272,10 @@ sub produce {
     my $schema         = $translator->schema;
     my $show_warnings  = $translator->show_warnings || 0;
     my $producer_args  = $translator->producer_args;
-    my $mysql_version  = parse_mysql_version ($producer_args->{mysql_version}, 'perl') || 0;
+    my $mysql_version  = parse_mysql_version($producer_args->{mysql_version}, 'perl') || 0;
     my $max_id_length  = $producer_args->{mysql_max_id_length} || $DEFAULT_MAX_ID_LENGTH;
 
-    my $generator = _generator({ quote_identifiers => $translator->quote_identifiers });
+    my $generator = $self->_generator({ quote_identifiers => $translator->quote_identifiers });
 
     debug("PKG: Beginning production\n");
     %used_names = ();
@@ -282,7 +284,7 @@ sub produce {
     # \todo Don't set if MySQL 3.x is set on command line
     my @create = "SET foreign_key_checks=0";
 
-    preprocess_schema($schema);
+    $self->preprocess_schema($schema);
 
     #
     # Generate sql
@@ -291,7 +293,7 @@ sub produce {
 
     for my $table ( $schema->get_tables ) {
 #        print $table->name, "\n";
-        push @table_defs, create_table($table,
+        push @table_defs, $self->create_table($table,
                                        { add_drop_table    => $add_drop_table,
                                          show_warnings     => $show_warnings,
                                          no_comments       => $no_comments,
@@ -303,7 +305,7 @@ sub produce {
 
     if ($mysql_version >= 5.000001) {
       for my $view ( $schema->get_views ) {
-        push @table_defs, create_view($view,
+        push @table_defs, $self->create_view($view,
                                        { add_replace_view  => $add_drop_table,
                                          show_warnings     => $show_warnings,
                                          no_comments       => $no_comments,
@@ -316,7 +318,7 @@ sub produce {
 
     if ($mysql_version >= 5.000002) {
       for my $trigger ( $schema->get_triggers ) {
-        push @table_defs, create_trigger($trigger,
+        push @table_defs, $self->create_trigger($trigger,
                                          { add_drop_trigger  => $add_drop_table,
                                            show_warnings        => $show_warnings,
                                            no_comments          => $no_comments,
@@ -335,8 +337,8 @@ sub produce {
 }
 
 sub create_trigger {
-    my ($trigger, $options) = @_;
-    my $generator = _generator($options);
+    my ($self, $trigger, $options) = @_;
+    my $generator = $self->_generator($options);
 
     my $trigger_name = $trigger->name;
     debug("PKG: Looking at trigger '${trigger_name}'\n");
@@ -374,8 +376,8 @@ sub create_trigger {
 }
 
 sub create_view {
-    my ($view, $options) = @_;
-    my $generator = _generator($options);
+    my ($self, $view, $options) = @_;
+    my $generator = $self->_generator($options);
 
     my $view_name = $view->name;
     my $view_name_qt = $generator->quote($view_name);
@@ -421,8 +423,8 @@ sub create_view {
 
 sub create_table
 {
-    my ($table, $options) = @_;
-    my $generator = _generator($options);
+    my ($self, $table, $options) = @_;
+    my $generator = $self->_generator($options);
 
     my $table_name = $generator->quote($table->name);
     debug("PKG: Looking at table '$table_name'\n");
@@ -441,7 +443,7 @@ sub create_table
     #
     my @field_defs;
     for my $field ( $table->get_fields ) {
-        push @field_defs, create_field($field, $options);
+        push @field_defs, $self->create_field($field, $options);
     }
 
     #
@@ -450,7 +452,7 @@ sub create_table
     my @index_defs;
     my %indexed_fields;
     for my $index ( $table->get_indices ) {
-        push @index_defs, create_index($index, $options);
+        push @index_defs, $self->create_index($index, $options);
         $indexed_fields{ $_ } = 1 for $index->fields;
     }
 
@@ -460,7 +462,7 @@ sub create_table
     my @constraint_defs;
     my @constraints = $table->get_constraints;
     for my $c ( @constraints ) {
-        my $constr = create_constraint($c, $options);
+        my $constr = $self->create_constraint($c, $options);
         push @constraint_defs, $constr if($constr);
 
          unless ( $indexed_fields{ ($c->fields())[0] } || $c->type ne FOREIGN_KEY ) {
@@ -477,7 +479,7 @@ sub create_table
     # Footer
     #
     $create .= "\n)";
-    $create .= generate_table_options($table, $options) || '';
+    $create .= $self->generate_table_options($table, $options) || '';
 #    $create .= ";\n\n";
 
     return $drop ? ($drop,$create) : $create;
@@ -485,11 +487,11 @@ sub create_table
 
 sub generate_table_options
 {
-  my ($table, $options) = @_;
+  my ($self, $table, $options) = @_;
   my $create;
 
   my $table_type_defined = 0;
-  my $generator        = _generator($options);
+  my $generator        = $self->_generator($options);
   my $charset          = $table->extra('mysql_charset');
   my $collate          = $table->extra('mysql_collate');
   my $union            = undef;
@@ -524,9 +526,9 @@ sub generate_table_options
 
 sub create_field
 {
-    my ($field, $options) = @_;
+    my ($self, $field, $options) = @_;
 
-    my $generator = _generator($options);
+    my $generator = $self->_generator($options);
 
     my $field_name = $field->name;
     debug("PKG: Looking at field '$field_name'\n");
@@ -657,9 +659,9 @@ sub _quote_string {
 
 sub alter_create_index
 {
-    my ($index, $options) = @_;
+    my ($self, $index, $options) = @_;
 
-    my $table_name = _generator($options)->quote($index->table->name);
+    my $table_name = $self->_generator($options)->quote($index->table->name);
     return join( ' ',
                  'ALTER TABLE',
                  $table_name,
@@ -670,8 +672,8 @@ sub alter_create_index
 
 sub create_index
 {
-    my ( $index, $options ) = @_;
-    my $generator = _generator($options);
+    my ($self, $index, $options) = @_;
+    my $generator = $self->_generator($options);
 
     return join(
         ' ',
@@ -689,9 +691,9 @@ sub create_index
 
 sub alter_drop_index
 {
-    my ($index, $options) = @_;
+    my ($self, $index, $options) = @_;
 
-    my $table_name = _generator($options)->quote($index->table->name);
+    my $table_name = $self->_generator($options)->quote($index->table->name);
 
     return join( ' ',
                  'ALTER TABLE',
@@ -705,9 +707,9 @@ sub alter_drop_index
 
 sub alter_drop_constraint
 {
-    my ($c, $options) = @_;
+    my ($self, $c, $options) = @_;
 
-    my $generator = _generator($options);
+    my $generator = $self->_generator($options);
     my $table_name = $generator->quote($c->table->name);
 
     my @out = ('ALTER','TABLE',$table_name,'DROP');
@@ -723,9 +725,9 @@ sub alter_drop_constraint
 
 sub alter_create_constraint
 {
-    my ($index, $options) = @_;
+    my ($self, $index, $options) = @_;
 
-    my $table_name = _generator($options)->quote($index->table->name);
+    my $table_name = $self->_generator($options)->quote($index->table->name);
     return join( ' ',
                  'ALTER TABLE',
                  $table_name,
@@ -735,9 +737,9 @@ sub alter_create_constraint
 
 sub create_constraint
 {
-    my ($c, $options) = @_;
+    my ($self, $c, $options) = @_;
 
-    my $generator       = _generator($options);
+    my $generator       = $self->_generator($options);
     my $leave_name      = $options->{leave_name} || undef;
 
     my $reference_table_name = $generator->quote($c->reference_table);
@@ -818,10 +820,10 @@ sub create_constraint
 
 sub alter_table
 {
-    my ($to_table, $options) = @_;
+    my ($self, $to_table, $options) = @_;
 
-    my $table_options = generate_table_options($to_table, $options) || '';
-    my $table_name = _generator($options)->quote($to_table->name);
+    my $table_options = $self->generate_table_options($to_table, $options) || '';
+    my $table_name = $self->_generator($options)->quote($to_table->name);
     my $out = sprintf('ALTER TABLE %s%s',
                       $table_name,
                       $table_options);
@@ -832,28 +834,28 @@ sub alter_table
 sub rename_field { alter_field(@_) }
 sub alter_field
 {
-    my ($from_field, $to_field, $options) = @_;
+    my ($self, $from_field, $to_field, $options) = @_;
 
-    my $generator  = _generator($options);
+    my $generator  = $self->_generator($options);
     my $table_name = $generator->quote($to_field->table->name);
 
     my $out = sprintf('ALTER TABLE %s CHANGE COLUMN %s %s',
                       $table_name,
                       $generator->quote($from_field->name),
-                      create_field($to_field, $options));
+                      $self->create_field($to_field, $options));
 
     return $out;
 }
 
 sub add_field
 {
-    my ($new_field, $options) = @_;
+    my ($self, $new_field, $options) = @_;
 
-    my $table_name = _generator($options)->quote($new_field->table->name);
+    my $table_name = $self->_generator($options)->quote($new_field->table->name);
 
     my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
                       $table_name,
-                      create_field($new_field, $options));
+                      $self->create_field($new_field, $options));
 
     return $out;
 
@@ -861,9 +863,9 @@ sub add_field
 
 sub drop_field
 {
-    my ($old_field, $options) = @_;
+    my ($self, $old_field, $options) = @_;
 
-    my $generator  = _generator($options);
+    my $generator  = $self->_generator($options);
     my $table_name = $generator->quote($old_field->table->name);
 
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
@@ -875,7 +877,7 @@ sub drop_field
 }
 
 sub batch_alter_table {
-  my ($table, $diff_hash, $options) = @_;
+  my ($self, $table, $diff_hash, $options) = @_;
 
   # InnoDB has an issue with dropping and re-adding a FK constraint under the
   # name in a single alter statement, see: http://bugs.mysql.com/bug.php?id=13741
@@ -902,14 +904,14 @@ sub batch_alter_table {
       grep { !$fks_to_alter{$_->name} } @{ $diff_hash->{alter_drop_constraint} }
     ];
 
-    @drop_stmt = batch_alter_table($table, { alter_drop_constraint => [ values %fks_to_alter ] }, $options);
+    @drop_stmt = $self->batch_alter_table($table, { alter_drop_constraint => [ values %fks_to_alter ] }, $options);
 
   }
 
-  my @stmts = batch_alter_table_statements($diff_hash, $options);
+  my @stmts = batch_alter_table_statements($self, $diff_hash, $options);
 
   #quote
-  my $generator = _generator($options);
+  my $generator = $self->_generator($options);
 
   # rename_table makes things a bit more complex
   my $renamed_from = "";
@@ -938,21 +940,21 @@ sub batch_alter_table {
 }
 
 sub drop_table {
-  my ($table, $options) = @_;
+  my ($self, $table, $options) = @_;
 
   return (
     # Drop (foreign key) constraints so table drops cleanly
-    batch_alter_table(
+    $self->batch_alter_table(
       $table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options
     ),
-    'DROP TABLE ' . _generator($options)->quote($table),
+    'DROP TABLE ' . $self->_generator($options)->quote($table),
   );
 }
 
 sub rename_table {
-  my ($old_table, $new_table, $options) = @_;
+  my ($self, $old_table, $new_table, $options) = @_;
 
-  my $generator      = _generator($options);
+  my $generator      = $self->_generator($options);
   my $old_table_name = $generator->quote($old_table);
   my $new_table_name = $generator->quote($new_table);
 

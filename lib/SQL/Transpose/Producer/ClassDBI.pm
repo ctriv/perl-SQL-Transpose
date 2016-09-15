@@ -16,6 +16,7 @@ my %CDBI_auto_pkgs = (
 );
 
 sub produce {
+    my $self          = shift;
     my $t             = shift;
     local $DEBUG      = $t->debug;
     my $no_comments   = $t->no_comments;

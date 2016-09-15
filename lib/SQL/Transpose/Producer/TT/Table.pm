@@ -171,6 +171,7 @@ use SQL::Transpose::Utils 'debug';
 my $Translator;
 
 sub produce {
+    my $self       = shift;
     $Translator = shift;
     local $DEBUG   = $Translator->debug;
     my $scma       = $Translator->schema;

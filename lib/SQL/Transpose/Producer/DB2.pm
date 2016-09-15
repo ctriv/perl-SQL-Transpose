@@ -174,7 +174,7 @@ DESCRIPTOR         LC_CTYPE       RESIGNAL
 
 sub produce
 {
-    my ($translator) = @_;
+    my ($self, $translator) = @_;
     $DEBUG             = $translator->debug;
     $WARN              = $translator->show_warnings;
     my $no_comments    = $translator->no_comments;
@@ -188,26 +188,26 @@ sub produce
     foreach my $table ($schema->get_tables)
     {
         push @table_defs, 'DROP TABLE ' . $table->name . ";" if $add_drop_table;
-        my ($table_def, $fks) = create_table($table, {
+        my ($table_def, $fks) = $self->create_table($table, {
             no_comments => $no_comments});
         push @table_defs, $table_def;
         push @fks, @$fks;
 
         foreach my $index ($table->get_indices)
         {
-            push @index_defs, create_index($index);
+            push @index_defs, $self->create_index($index);
         }
 
     }
     my (@view_defs);
     foreach my $view ( $schema->get_views )
     {
-        push @view_defs, create_view($view);
+        push @view_defs, $self->create_view($view);
     }
     my (@trigger_defs);
     foreach my $trigger ( $schema->get_triggers )
     {
-        push @trigger_defs, create_trigger($trigger);
+        push @trigger_defs, $self->create_trigger($trigger);
     }
 
     return wantarray ? (@table_defs, @fks, @index_defs, @view_defs, @trigger_defs) :
@@ -218,7 +218,7 @@ sub produce
 
     sub check_name
     {
-        my ($name, $type, $length) = @_;
+        my ($self, $name, $type, $length) = @_;
 
         my $newname = $name;
         if(length($name) > $length)   ## Maximum table name length is 18
@@ -245,21 +245,21 @@ sub produce
 
 sub create_table
 {
-    my ($table, $options) = @_;
+    my ($self, $table, $options) = @_;
 
-    my $table_name = check_name($table->name, 'tables', 128);
+    my $table_name = $self->check_name($table->name, 'tables', 128);
     # this limit is 18 in older DB2s ! (<= 8)
 
     my (@field_defs, @comments);
     push @comments, "--\n-- Table: $table_name\n--" unless $options->{no_comments};
     foreach my $field ($table->get_fields)
     {
-        push @field_defs, create_field($field);
+        push @field_defs, $self->create_field($field);
     }
     my (@con_defs, @fks);
     foreach my $con ($table->get_constraints)
     {
-        my ($cdefs, $fks) = create_constraint($con);
+        my ($cdefs, $fks) = $self->create_constraint($con);
         push @con_defs, @$cdefs;
         push @fks, @$fks;
     }
@@ -275,9 +275,9 @@ sub create_table
 
 sub create_field
 {
-    my ($field) = @_;
+    my ($self, $field) = @_;
 
-    my $field_name = check_name($field->name, 'fields', 30);
+    my $field_name = $self->check_name($field->name, 'fields', 30);
 #    use Data::Dumper;
 #    print Dumper(\%dt_translate);
 #    print $field->data_type, " ", $dt_translate{lc($field->data_type)}, "\n";
@@ -303,7 +303,7 @@ sub create_field
 
 sub create_index
 {
-    my ($index) = @_;
+    my ($self, $index) = @_;
 
     my $out = sprintf('CREATE %sINDEX %s ON %s ( %s );',
                       $index->type() =~ /^UNIQUE$/i ? 'UNIQUE' : '',
@@ -316,7 +316,7 @@ sub create_index
 
 sub create_constraint
 {
-    my ($constraint) = @_;
+    my ($self, $constraint) = @_;
 
     my (@con_defs, @fks);
 
@@ -353,7 +353,7 @@ sub create_constraint
 
 sub create_view
 {
-    my ($view) = @_;
+    my ($self, $view) = @_;
 
     my $out = sprintf("CREATE VIEW %s AS\n%s;",
                       $view->name,
@@ -364,7 +364,7 @@ sub create_view
 
 sub create_trigger
 {
-    my ($trigger) = @_;
+    my ($self, $trigger) = @_;
 # create: CREATE TRIGGER trigger_name before type /ON/i table_name reference_b(?) /FOR EACH ROW/i 'MODE DB2SQL' triggered_action
 
     my $db_events = join ', ', $trigger->database_events;
@@ -385,7 +385,7 @@ sub create_trigger
 
 sub alter_field
 {
-    my ($from_field, $to_field) = @_;
+    my ($self, $from_field, $to_field) = @_;
 
     my $data_type = uc($dt_translate{lc($to_field->data_type)} || $to_field->data_type);
 
@@ -407,18 +407,18 @@ sub alter_field
 
 sub add_field
 {
-    my ($new_field) = @_;
+    my ($self, $new_field) = @_;
 
     my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
                       $new_field->table->name,
-                      create_field($new_field));
+                      $self->create_field($new_field));
 
     return $out;
 }
 
 sub drop_field
 {
-    my ($field) = @_;
+    my ($self, $field) = @_;
 
     return '';
 }

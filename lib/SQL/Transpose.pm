@@ -17,6 +17,7 @@ use Sub::Quote qw(quote_sub);
 use SQL::Transpose::Producer;
 use SQL::Transpose::Schema;
 use SQL::Transpose::Utils qw(throw ex2err carp_ro normalize_quote_options);
+use Module::Runtime qw(use_module);
 
 $DEFAULT_SUB = sub { $_[0]->schema } unless defined $DEFAULT_SUB;
 
@@ -42,15 +43,32 @@ around BUILDARGS => sub {
     my $quote = normalize_quote_options($config);
     $config->{quote_identifiers} = $quote if defined $quote;
 
+    $config->{producer} = normalize_tool_class(Producer => $config->{producer});
+
     return $config;
 };
+
+
+sub normalize_tool_class {
+    my ($tool, $flavor) = @_;
+
+    if (!$flavor) {
+        return join('::', __PACKAGE__, $tool);
+    }
+    elsif ($flavor !~ m/^SQL::Transpose/) {
+        $flavor =~ s/-/::/g;
+        return join('::', __PACKAGE__, $tool, $flavor);
+    }
+}
 
 sub BUILD {
     my ($self) = @_;
     # Make sure all the tool-related stuff is set up
-    foreach my $tool (qw(producer parser)) {
+    foreach my $tool (qw(parser)) {
         $self->$tool($self->$tool);
     }
+
+    use_module($self->producer);
 }
 
 has $_ => (
@@ -88,21 +106,12 @@ after quote_identifiers => sub {
     }
 };
 
-has producer => ( is => 'rw', default => sub { $DEFAULT_SUB } );
+has producer => ( is => 'rw' );
 
-around producer => sub {
-    my $orig = shift;
-    shift->_tool({
-        orig => $orig,
-        name => 'producer',
-        path => "SQL::Transpose::Producer",
-        default_sub => "produce",
-    }, @_);
-};
 
-has producer_type => ( is => 'rwp', init_arg => undef );
-
-around producer_type => carp_ro('producer_type');
+sub producer_type {
+    return shift->producer;
+}
 
 has producer_args => ( is => 'rw', default => quote_sub(q{ +{} }) );
 
@@ -257,7 +266,7 @@ sub _build_schema { SQL::Transpose::Schema->new(translator => shift) }
 
 sub translate {
     my $self = shift;
-    my ($args, $parser, $parser_type, $producer, $producer_type);
+    my ($args, $parser, $parser_type);
     my ($parser_output, $producer_output, @producer_output);
 
     # Parse arguments
@@ -334,14 +343,11 @@ sub translate {
     $parser      = $self->parser;
     $parser_type = $self->parser_type;
 
-    # ----------------------------------------------------------------
-    # Local reference to the producer subroutine
-    # ----------------------------------------------------------------
-    if ($producer = ($args->{'producer'} || $args->{'to'})) {
-        $self->producer($producer);
+    my $producer = $self->producer;
+    if (my $override = ($args->{producer} || $args->{to})) {
+        $producer = normalize_tool_class(Producer => $override);
+        use_module($producer);
     }
-    $producer      = $self->producer;
-    $producer_type = $self->producer_type;
 
     # ----------------------------------------------------------------
     # Execute the parser, the filters and then execute the producer.
@@ -383,14 +389,14 @@ sub translate {
     my $wantarray = wantarray ? 1 : 0;
     eval {
         if ($wantarray) {
-            @producer_output = $producer->($self);
+            @producer_output = $producer->produce($self);
         } else {
-            $producer_output = $producer->($self);
+            $producer_output = $producer->produce($self);
         }
     };
     if ($@ || !( $producer_output || @producer_output)) {
         my $err = $@ || $self->error || "no results";
-        my $msg = "translate: Error with producer '$producer_type': $err";
+        my $msg = sprintf("translate: Error with producer '%s': %s", $self->producer, $err);
         return $self->error($msg);
     }
 

@@ -30,17 +30,11 @@ $obj = SQL::Transpose->new(
     add_drop_table => 1,
     from           => "XML-SQLFairy",
     filename       => "$Bin/data/xml/schema.xml",
-    to             => "Producer::BaseTest::produce",
+    to             => "BaseTest",
 );
 my $out;
-lives_ok { $out = $obj->translate; }  "Translate ran";
-is $obj->error, ''                   ,"No errors";
-ok $out ne ""                        ,"Produced something!";
-local $/ = undef; # slurp
-eq_or_diff $out, <DATA>              ,"Output looks right";
 
-
-__DATA__
+my $expected = <<END;
 Hello World
 Tables: Basic, Another
 
@@ -52,3 +46,9 @@ Another
 ------
 Fields: id num
 
+END
+
+lives_ok { $out = $obj->translate; }  "Translate ran";
+is $obj->error, ''                   ,"No errors";
+ok $out ne ""                        ,"Produced something!";
+eq_or_diff $out, $expected              ,"Output looks right";

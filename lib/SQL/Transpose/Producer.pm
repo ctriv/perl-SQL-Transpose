@@ -4,7 +4,11 @@ use strict;
 use warnings;
 use Scalar::Util ();
 
-sub produce { "" }
+sub produce {
+    my ($self, $tr) = @_;
+
+    return $tr->schema;
+}
 
 # Do not rely on this if you are not bundled with SQL::Transpose.
 # -- rjbs, 2008-09-30

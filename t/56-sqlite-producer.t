@@ -20,7 +20,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
                                                     if_not_exists => 1,
                                                   });
   my $create_opts = { no_comments => 1 };
-  my $view1_sql1 = [ SQL::Transpose::Producer::SQLite::create_view($view1, $create_opts) ];
+  my $view1_sql1 = [ SQL::Transpose::Producer::SQLite->create_view($view1, $create_opts) ];
 
   my $view_sql_replace = [ 'CREATE TEMPORARY VIEW IF NOT EXISTS "view_foo" AS
     SELECT id, name FROM thing' ];
@@ -31,7 +31,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
                                                   fields => [qw/id name/],
                                                   sql => 'SELECT id, name FROM thing',);
 
-  my $view1_sql2 = [ SQL::Transpose::Producer::SQLite::create_view($view2, $create_opts) ];
+  my $view1_sql2 = [ SQL::Transpose::Producer::SQLite->create_view($view2, $create_opts) ];
   my $view_sql_noreplace = [ 'CREATE VIEW "view_foo" AS
     SELECT id, name FROM thing' ];
   is_deeply($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
@@ -58,7 +58,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
         on_update => 'CASCADE',
     );
     my $expected = [ 'FOREIGN KEY ("foreign_key") REFERENCES "foo"("id") ON DELETE RESTRICT ON UPDATE CASCADE'];
-    my $result =  [SQL::Transpose::Producer::SQLite::create_foreignkey($constraint,$create_opts)];
+    my $result =  [SQL::Transpose::Producer::SQLite->create_foreignkey($constraint,$create_opts)];
     is_deeply($result, $expected, 'correct "FOREIGN KEY"');
 }
 {
@@ -71,7 +71,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
        default_value => 1,
    );
    my $expected = [ qq<CREATE TABLE "foo_table" (\n  "id" integer DEFAULT 1\n)>];
-   my $result =  [SQL::Transpose::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   my $result =  [SQL::Transpose::Producer::SQLite->create_table($table, { no_comments => 1 })];
    is_deeply($result, $expected, 'correctly unquoted DEFAULT');
 }
 
@@ -107,7 +107,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
   "data3" text,
   "data4" blob
 )>];
-   my $result =  [SQL::Transpose::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   my $result =  [SQL::Transpose::Producer::SQLite->create_table($table, { no_comments => 1 })];
    is_deeply($result, $expected, 'correctly translated bytea to blob');
 }
 
@@ -121,7 +121,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
        default_value => \'gunshow',
    );
    my $expected = [ qq<CREATE TABLE "foo_table" (\n  "id" integer DEFAULT gunshow\n)>];
-   my $result =  [SQL::Transpose::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   my $result =  [SQL::Transpose::Producer::SQLite->create_table($table, { no_comments => 1 })];
    is_deeply($result, $expected, 'correctly unquoted DEFAULT');
 }
 
@@ -135,7 +135,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
        default_value => 'frew',
    );
    my $expected = [ qq<CREATE TABLE "foo_table" (\n  "id" integer DEFAULT 'frew'\n)>];
-   my $result =  [SQL::Transpose::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   my $result =  [SQL::Transpose::Producer::SQLite->create_table($table, { no_comments => 1 })];
    is_deeply($result, $expected, 'correctly quoted DEFAULT');
 }
 
@@ -161,7 +161,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
   "when"  DEFAULT now(),
   "at"  DEFAULT CURRENT_TIMESTAMP
 )>];
-   my $result =  [SQL::Transpose::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   my $result =  [SQL::Transpose::Producer::SQLite->create_table($table, { no_comments => 1 })];
    is_deeply($result, $expected, 'correctly unquoted excempted DEFAULTs');
 }
 
@@ -180,7 +180,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
    );
    $table->primary_key('id');
    my $expected = [ qq<CREATE TABLE "some_table" (\n  "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n)>];
-   my $result =  [SQL::Transpose::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   my $result =  [SQL::Transpose::Producer::SQLite->create_table($table, { no_comments => 1 })];
    is_deeply($result, $expected, 'correctly built monotonicly autoincremened PK');
 }
 
@@ -189,25 +189,25 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
 
     {
         my $index = $table->add_index(name => 'myindex', fields => ['foo']);
-        my ($def) = SQL::Transpose::Producer::SQLite::create_index($index);
+        my ($def) = SQL::Transpose::Producer::SQLite->create_index($index);
         is($def, 'CREATE INDEX "myindex" ON "foobar" ("foo")', 'index created');
     }
 
     {
         my $index = $table->add_index(fields => ['foo']);
-        my ($def) = SQL::Transpose::Producer::SQLite::create_index($index);
+        my ($def) = SQL::Transpose::Producer::SQLite->create_index($index);
         is($def, 'CREATE INDEX "foobar_idx" ON "foobar" ("foo")', 'index created');
     }
 
     {
         my $constr = $table->add_constraint(name => 'constr', fields => ['foo']);
-        my ($def) = SQL::Transpose::Producer::SQLite::create_constraint($constr);
+        my ($def) = SQL::Transpose::Producer::SQLite->create_constraint($constr);
         is($def, 'CREATE UNIQUE INDEX "constr" ON "foobar" ("foo")', 'constraint created');
     }
 
     {
         my $constr = $table->add_constraint(fields => ['foo']);
-        my ($def) = SQL::Transpose::Producer::SQLite::create_constraint($constr);
+        my ($def) = SQL::Transpose::Producer::SQLite->create_constraint($constr);
         is($def, 'CREATE UNIQUE INDEX "foobar_idx02" ON "foobar" ("foo")', 'constraint created');
     }
 }
@@ -225,7 +225,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
             fields              => ['bar'],
             action              => 'BEGIN baz() END'
         );
-        my ($def) = SQL::Transpose::Producer::SQLite::create_trigger($trigger);
+        my ($def) = SQL::Transpose::Producer::SQLite->create_trigger($trigger);
         is($def, 'CREATE TRIGGER "mytrigger" before update on "foo" BEGIN baz() END', 'trigger created');
     }
 
@@ -238,7 +238,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
             fields              => ['bar'],
             action              => 'baz()'
         );
-        my ($def) = SQL::Transpose::Producer::SQLite::create_trigger($trigger);
+        my ($def) = SQL::Transpose::Producer::SQLite->create_trigger($trigger);
         is($def, 'CREATE TRIGGER "mytrigger2" after insert on "foo" BEGIN baz() END', 'trigger created');
     }
 }
@@ -246,7 +246,7 @@ $SQL::Transpose::Producer::SQLite::NO_QUOTES = 0;
 {
     my $table = SQL::Transpose::Schema::Table->new( name => 'foobar', fields => ['foo'] );
     my $constr = $table->add_constraint(name => 'constr', expression => "foo != 'baz'");
-    my ($def) = SQL::Transpose::Producer::SQLite::create_check_constraint($constr);
+    my ($def) = SQL::Transpose::Producer::SQLite->create_check_constraint($constr);
 
     is($def, q{CONSTRAINT "constr" CHECK(foo != 'baz')}, 'check constraint created');
 }

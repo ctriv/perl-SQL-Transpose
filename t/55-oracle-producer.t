@@ -70,7 +70,7 @@ use SQL::Transpose::Producer::Oracle;
 
     my ($table1_def, $fk1_def, $trigger1_def,
         $index1_def, $constraint1_def
-    ) = SQL::Transpose::Producer::Oracle::create_table($table1);
+    ) = SQL::Transpose::Producer::Oracle->create_table($table1);
 
     is_deeply(
         $fk1_def,

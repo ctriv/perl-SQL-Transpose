@@ -30,8 +30,9 @@ my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
     unless ( $schema->name ) {
         $schema->name( $_ );
     }
-    ($schema);
-} (qw( create1.yml create2.yml ));
+
+    $schema;
+} qw( create1.yml create2.yml );
 
 # Test for differences
 my @out = SQL::Transpose::Diff::schema_diff(

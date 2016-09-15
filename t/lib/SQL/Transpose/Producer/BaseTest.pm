@@ -1,4 +1,4 @@
-package Producer::BaseTest;
+package SQL::Transpose::Producer::BaseTest;
 
 #
 # A trivial little sub-class to test sub-classing the TT::Base producer.
@@ -7,7 +7,10 @@ package Producer::BaseTest;
 use base qw/SQL::Transpose::Producer::TT::Base/;
 
 # Make sure we use our new class as the producer
-sub produce { return __PACKAGE__->new( translator => shift )->run; };
+sub produce {
+    my $self = shift;
+    return __PACKAGE__->new( translator => shift )->run;
+}
 
 # Note: we don't need to impliment tt_schema as the default will use the DATA
 # section by default.

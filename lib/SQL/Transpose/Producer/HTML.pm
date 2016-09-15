@@ -17,6 +17,7 @@ use SQL::Transpose::Schema::Constants;
 # Main entry point.  Returns a string containing HTML.
 # -------------------------------------------------------------------
 sub produce {
+    my $self        = shift;
     my $t           = shift;
     my $args        = $t->producer_args;
     my $schema      = $t->schema;

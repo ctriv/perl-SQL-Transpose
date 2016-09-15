@@ -398,7 +398,7 @@ sub carp_ro {
 }
 
 sub batch_alter_table_statements {
-    my ($diff_hash, $options, @meths) = @_;
+    my ($package, $diff_hash, $options, @meths) = @_;
 
     @meths = qw(
         rename_table
@@ -413,11 +413,9 @@ sub batch_alter_table_statements {
         alter_table
     ) unless @meths;
 
-    my $package = caller;
-
     return map {
         my $meth = $package->can($_) or die "$package cant $_";
-        map { $meth->(ref $_ eq 'ARRAY' ? @$_ : $_, $options) } @{ $diff_hash->{$_} }
+        map { $package->$meth(ref $_ eq 'ARRAY' ? @$_ : $_, $options) } @{ $diff_hash->{$_} }
     } grep { @{$diff_hash->{$_} || []} }
         @meths;
 }

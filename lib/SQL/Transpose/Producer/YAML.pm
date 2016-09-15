@@ -25,25 +25,26 @@ use warnings;
 use YAML qw(Dump);
 
 sub produce {
+    my $self       = shift;
     my $translator = shift;
     my $schema     = $translator->schema;
 
     return Dump({
         schema => {
             tables => {
-                map { ($_->name => view_table($_)) }
+                map { ($_->name => $self->view_table($_)) }
                     $schema->get_tables,
             },
             views => {
-                map { ($_->name => view_view($_)) }
+                map { ($_->name => $self->view_view($_)) }
                     $schema->get_views,
             },
             triggers => {
-                map { ($_->name => view_trigger($_)) }
+                map { ($_->name => $self->view_trigger($_)) }
                     $schema->get_triggers,
             },
             procedures => {
-                map { ($_->name => view_procedure($_)) }
+                map { ($_->name => $self->view_procedure($_)) }
                     $schema->get_procedures,
             },
         },
@@ -63,6 +64,7 @@ sub produce {
 }
 
 sub view_table {
+    my $self  = shift;
     my $table = shift;
 
     return {
@@ -71,13 +73,13 @@ sub view_table {
         'options'     => $table->options  || [],
         $table->comments ? ('comments'    => [ $table->comments ] ) : (),
         'constraints' => [
-            map { view_constraint($_) } $table->get_constraints
+            map { $self->view_constraint($_) } $table->get_constraints
         ],
         'indices'     => [
-            map { view_index($_) } $table->get_indices
+            map { $self->view_index($_) } $table->get_indices
         ],
         'fields'      => {
-            map { ($_->name => view_field($_)) }
+            map { ($_->name => $self->view_field($_)) }
                 $table->get_fields
         },
         keys %{$table->extra} ? ('extra' => { $table->extra } ) : (),
@@ -85,6 +87,7 @@ sub view_table {
 }
 
 sub view_constraint {
+    my $self       = shift;
     my $constraint = shift;
 
     return {
@@ -104,6 +107,7 @@ sub view_constraint {
 }
 
 sub view_field {
+    my $self  = shift;
     my $field = shift;
 
     return {
@@ -122,6 +126,7 @@ sub view_field {
 }
 
 sub view_procedure {
+    my $self      = shift;
     my $procedure = shift;
 
     return {
@@ -136,6 +141,7 @@ sub view_procedure {
 }
 
 sub view_trigger {
+    my $self    = shift;
     my $trigger = shift;
 
     return {
@@ -151,6 +157,7 @@ sub view_trigger {
 }
 
 sub view_view {
+    my $self = shift;
     my $view = shift;
 
     return {
@@ -163,6 +170,7 @@ sub view_view {
 }
 
 sub view_index {
+    my $self  = shift;
     my $index = shift;
 
     return {

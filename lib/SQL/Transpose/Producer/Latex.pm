@@ -38,6 +38,7 @@ our @EXPORT_OK;
 use SQL::Transpose::Utils 'debug';
 
 sub produce {
+    my $self           = shift;
     my $translator     = shift;
     my $schema         = $translator->schema;
     my $o = '';

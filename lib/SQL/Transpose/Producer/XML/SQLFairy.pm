@@ -168,6 +168,7 @@ my $PArgs     = {};
 my $no_comments;
 
 sub produce {
+    my $self        = shift;
     my $translator  = shift;
     my $schema      = $translator->schema;
     $no_comments    = $translator->no_comments;
@@ -194,7 +195,7 @@ sub produce {
     $xml->comment(header_comment('', ''))
       unless $no_comments;
 
-    xml_obj($xml, $schema,
+    $self->xml_obj($xml, $schema,
         tag => "schema", methods => [qw/name database extra/], end_tag => 0 );
 
     #
@@ -203,7 +204,7 @@ sub produce {
     $xml->startTag( [ $Namespace => "tables" ] );
     for my $table ( $schema->get_tables ) {
         debug "Table:",$table->name;
-        xml_obj($xml, $table,
+        $self->xml_obj($xml, $table,
              tag => "table",
              methods => [qw/name order extra/],
              end_tag => 0
@@ -212,7 +213,7 @@ sub produce {
         #
         # Fields
         #
-        xml_obj_children( $xml, $table,
+        $self->xml_obj_children( $xml, $table,
             tag   => 'field',
             methods =>[qw/
                 name data_type size is_nullable default_value is_auto_increment
@@ -223,7 +224,7 @@ sub produce {
         #
         # Indices
         #
-        xml_obj_children( $xml, $table,
+        $self->xml_obj_children( $xml, $table,
             tag   => 'index',
             collection_tag => "indices",
             methods => [qw/name type fields options extra/],
@@ -232,7 +233,7 @@ sub produce {
         #
         # Constraints
         #
-        xml_obj_children( $xml, $table,
+        $self->xml_obj_children( $xml, $table,
             tag   => 'constraint',
             methods => [qw/
                 name type fields reference_table reference_fields
@@ -244,7 +245,7 @@ sub produce {
         #
         # Comments
         #
-        xml_obj_children( $xml, $table,
+        $self->xml_obj_children( $xml, $table,
             tag   => 'comment',
             collection_tag => "comments",
             methods => [qw/
@@ -259,7 +260,7 @@ sub produce {
     #
     # Views
     #
-    xml_obj_children( $xml, $schema,
+    $self->xml_obj_children( $xml, $schema,
         tag   => 'view',
         methods => [qw/name sql fields order extra/],
     );
@@ -267,7 +268,7 @@ sub produce {
     #
     # Tiggers
     #
-    xml_obj_children( $xml, $schema,
+    $self->xml_obj_children( $xml, $schema,
         tag    => 'trigger',
         methods => [qw/name database_events action on_table perform_action_when
             fields order extra/],
@@ -276,7 +277,7 @@ sub produce {
     #
     # Procedures
     #
-    xml_obj_children( $xml, $schema,
+    $self->xml_obj_children( $xml, $schema,
         tag   => 'procedure',
         methods => [qw/name sql parameters owner comments order extra/],
     );
@@ -296,8 +297,7 @@ sub produce {
 # collection of foos and gets the members using ->get_foos.
 #
 sub xml_obj_children {
-    my ($xml,$parent) = (shift,shift);
-    my %args = @_;
+    my ($self, $xml, $parent, %args) = @_;
     my ($name,$collection_name,$methods)
         = @args{qw/tag collection_tag methods/};
     $collection_name ||= "${name}s";
@@ -317,7 +317,7 @@ sub xml_obj_children {
         if ( $collection_name eq 'comments' ){
             $xml->dataElement( [ $Namespace => 'comment' ], $obj );
         } else {
-            xml_obj($xml, $obj,
+            $self->xml_obj($xml, $obj,
                 tag     => "$name",
                 end_tag => 1,
                 methods => $methods,
@@ -343,7 +343,7 @@ sub xml_obj_children {
 my $elements_re = join("|", @MAP_AS_ELEMENTS);
 $elements_re = qr/^($elements_re)$/;
 sub xml_obj {
-    my ($xml, $obj, %args) = @_;
+    my ($self, $xml, $obj, %args) = @_;
     my $tag                = $args{'tag'}              || '';
     my $end_tag            = $args{'end_tag'}          || '';
     my @meths              = @{ $args{'methods'} };

@@ -22,6 +22,7 @@ use warnings;
 use JSON;
 
 sub produce {
+    my $Self       = shift;
     my $translator = shift;
     my $schema     = $translator->schema;
 

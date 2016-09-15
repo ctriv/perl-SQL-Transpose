@@ -448,10 +448,9 @@ for my $t2 ( $target_schema->get_tables ) {
 }
 
 if ( @new_tables ) {
-    my $dummy_tr = SQL::Transpose->new;
+    my $dummy_tr = SQL::Transpose->new(producer => $target_db);
     $dummy_tr->schema->add_table( $_ ) for @new_tables;
-    my $producer = $dummy_tr->producer( $target_db );
-    unshift @diffs, $producer->( $dummy_tr );
+    unshift @diffs, $dummy_tr->producer($dummy_tr);
 }
 push(@diffs, @diffs_at_end);
 

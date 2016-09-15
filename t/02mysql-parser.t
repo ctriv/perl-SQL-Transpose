@@ -953,9 +953,9 @@ ok ($@, 'Exception thrown on invalid version string');
     # test rt70437 and rt71468
     my $file = "$Bin/data/mysql/cashmusic_db.sql";
     ok (-f $file,"File exists");
-    my $tr = SQL::Transpose->new( parser => 'MySQL');
-    ok ($tr->translate($file),'File translated');
-    ok (!$tr->error, 'no error');
+    my $tr = SQL::Transpose->new( parser => 'MySQL', producer => 'MySQL');
+    ok ($tr->translate($file), 'File translated');
+    ok (!$tr->error, 'no error') || diag($tr->error);
     ok (my $schema = $tr->schema, 'got schema');
 }
 

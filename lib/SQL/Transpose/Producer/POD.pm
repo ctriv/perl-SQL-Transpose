@@ -27,6 +27,7 @@ use SQL::Transpose::Schema::Constants;
 use SQL::Transpose::Utils qw(header_comment);
 
 sub produce {
+    my $self        = shift;
     my $t           = shift;
     my $schema      = $t->schema;
     my $schema_name = $schema->name || 'Schema';

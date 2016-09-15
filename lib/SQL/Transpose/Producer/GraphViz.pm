@@ -233,6 +233,7 @@ our $DEBUG;
 $DEBUG   = 0 unless defined $DEBUG;
 
 sub produce {
+    my $self       = shift;
     my $t          = shift;
     my $schema     = $t->schema;
     my $args       = $t->producer_args;

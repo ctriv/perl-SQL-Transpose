@@ -9,6 +9,7 @@ use Data::Dumper;
 use Carp::Clan qw/^SQL::Transpose/;
 use SQL::Transpose::Schema::Constants;
 use Sub::Quote qw(quote_sub);
+use Module::Runtime qw(use_module);
 use Moo;
 
 has ignore_index_names => (
@@ -146,13 +147,11 @@ sub BUILD {
 sub compute_differences {
     my ($self) = @_;
 
-    my $producer_class = "SQL::Transpose::Producer::@{[$self->output_db]}";
-    eval "require $producer_class";
-    die $@ if $@;
+    my $producer_class = use_module("SQL::Transpose::Producer::@{[$self->output_db]}");
 
-    if (my $preprocess = $producer_class->can('preprocess_schema')) {
-      $preprocess->($self->source_schema);
-      $preprocess->($self->target_schema);
+    if ($producer_class->can('preprocess_schema')) {
+        $producer_class->preprocess_schema($self->source_schema);
+        $producer_class->preprocess_schema($self->target_schema);
     }
 
     $self->_compute_procedure_differences();
@@ -305,9 +304,7 @@ sub produce_diff_sql {
     my $tar_name  = $target_schema->name;
     my $src_name  = $source_schema->name;
 
-    my $producer_class = "SQL::Transpose::Producer::@{[$self->output_db]}";
-    eval "require $producer_class";
-    die $@ if $@;
+    my $producer_class = use_module("SQL::Transpose::Producer::@{[$self->output_db]}");
 
     # Map of name we store under => producer method name
     my %func_map = (
@@ -326,15 +323,13 @@ sub produce_diff_sql {
 
     push(@diffs, $self->_procedure_diff_sql($producer_class));
 
-    if (!$self->no_batch_alters &&
-        (my $batch_alter = $producer_class->can('batch_alter_table')) )
-    {
+    if (!$self->no_batch_alters && $producer_class->can('batch_alter_table')) {
       # Good - Producer supports batch altering of tables.
       foreach my $table ( sort keys %{$self->table_diff_hash} ) {
         my $tar_table = $target_schema->get_table($table)
                      || $source_schema->get_table($table);
 
-        push @diffs, $batch_alter->($tar_table,
+        push @diffs, $producer_class->batch_alter_table($tar_table,
           { map {
               $func_map{$_} => $self->table_diff_hash->{$table}{$_}
             } keys %func_map
@@ -358,7 +353,7 @@ sub produce_diff_sql {
             my $meth = $producer_class->can($_);
 
             $meth ? map {
-                    map { $_ ? "$_" : () } $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $self->producer_args );
+                    map { $_ ? "$_" : () } $producer_class->$meth(ref $_ eq 'ARRAY' ? @$_ : $_, $self->producer_args);
                   } @{ $flattened_diffs{$_} }
                   : $self->ignore_missing_methods
                   ? "-- $producer_class cant $_"
@@ -392,14 +387,14 @@ sub produce_diff_sql {
 
       unshift @diffs,
         # Remove begin/commit here, since we wrap everything in one.
-        grep { $_ !~ /^(?:COMMIT|START(?: TRANSACTION)?|BEGIN(?: TRANSACTION)?)/ } $producer_class->can('produce')->($translator);
+        grep { $_ !~ /^(?:COMMIT|START(?: TRANSACTION)?|BEGIN(?: TRANSACTION)?)/ } $producer_class->produce($translator);
     }
 
 
     if (my @tables_to_drop = @{ $self->{tables_to_drop} || []} ) {
       my $meth = $producer_class->can('drop_table');
 
-      push @diffs, $meth ? ( map { $meth->($_, $self->producer_args) } @tables_to_drop)
+      push @diffs, $meth ? ( map { $producer_class->drop_table($_, $self->producer_args) } @tables_to_drop)
                          : $self->ignore_missing_methods
                          ? "-- $producer_class cant drop_table"
                          : die "$producer_class cant drop_table";
@@ -441,15 +436,15 @@ sub _procedure_diff_sql {
     return unless $create && $alter && $drop;
 
     foreach my $proc (@{$self->procedures_to_create}) {
-        push(@diff, $create->($proc));
+        push(@diff, $producer->create_procedure($proc));
     }
 
     foreach my $proc (@{$self->procedures_to_alter}) {
-        push(@diff, $alter->($proc));
+        push(@diff, $producer->alter_procedure($proc));
     }
 
     foreach my $proc (@{$self->procedures_to_drop}) {
-        push(@diff, $drop->($proc));
+        push(@diff, $producer->drop_procedure($proc));
     }
 
     return @diff;
@@ -468,15 +463,15 @@ sub _view_diff_sql {
     return unless $create && $alter && $drop;
 
     foreach my $view (@{$self->views_to_create}) {
-        push(@diff, $create->($view, { no_comments => 1 }));
+        push(@diff, $producer->create_view($view, { no_comments => 1 }));
     }
 
     foreach my $view (@{$self->views_to_alter}) {
-        push(@diff, $alter->($view));
+        push(@diff, $producer->alter_view($view));
     }
 
     foreach my $view (@{$self->views_to_drop}) {
-        push(@diff, $drop->($view));
+        push(@diff, $producer->drop_view($view));
     }
 
     return @diff;

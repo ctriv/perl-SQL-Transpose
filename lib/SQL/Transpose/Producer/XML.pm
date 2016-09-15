@@ -27,8 +27,7 @@ use warnings;
 our $DEBUG;
 $DEBUG = 1 unless defined $DEBUG;
 
-use SQL::Transpose::Producer::XML::SQLFairy;
+use base 'SQL::Transpose::Producer::XML::SQLFairy';
 
-*produce = \&SQL::Transpose::Producer::XML::SQLFairy::produce;
 
 1;

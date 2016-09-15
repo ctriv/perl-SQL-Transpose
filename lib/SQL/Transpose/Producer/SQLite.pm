@@ -44,6 +44,7 @@ our $NO_QUOTES = 1;
 }
 
 sub produce {
+    my $self           = shift;
     my $translator     = shift;
     local $DEBUG       = $translator->debug;
     local $WARN        = $translator->show_warnings;
@@ -72,20 +73,20 @@ sub produce {
     push @create, "BEGIN TRANSACTION" unless $no_txn;
 
     for my $table ( $schema->get_tables ) {
-        push @create, create_table($table, { no_comments => $no_comments,
+        push @create, $self->create_table($table, { no_comments => $no_comments,
                                              sqlite_version => $sqlite_version,
                                           add_drop_table => $add_drop_table,});
     }
 
     for my $view ( $schema->get_views ) {
-      push @create, create_view($view, {
+      push @create, $self->create_view($view, {
         add_drop_view => $add_drop_table,
         no_comments   => $no_comments,
       });
     }
 
     for my $trigger ( $schema->get_triggers ) {
-      push @create, create_trigger($trigger, {
+      push @create, $self->create_trigger($trigger, {
         add_drop_trigger => $add_drop_table,
         no_comments   => $no_comments,
       });
@@ -105,7 +106,7 @@ sub produce {
 }
 
 sub mk_name {
-    my ($name, $scope, $critical) = @_;
+    my ($self, $name, $scope, $critical) = @_;
 
     $scope ||= \%global_names;
     if ( my $prev = $scope->{ $name } ) {
@@ -121,11 +122,11 @@ sub mk_name {
     }
 
     $scope->{ $name }++;
-    return _generator()->quote($name);
+    return $self->_generator()->quote($name);
 }
 
 sub create_view {
-    my ($view, $options) = @_;
+    my ($self, $view, $options) = @_;
     my $add_drop_view = $options->{add_drop_view};
 
     my $view_name = _generator()->quote($view->name);
@@ -160,9 +161,9 @@ sub create_view {
 
 sub create_table
 {
-    my ($table, $options) = @_;
+    my ($self, $table, $options) = @_;
 
-    my $table_name = _generator()->quote($table->name);
+    my $table_name = $self->_generator()->quote($table->name);
     $global_names{$table->name} = 1;
 
     my $no_comments = $options->{no_comments};
@@ -210,7 +211,7 @@ sub create_table
     #
     my ( @field_defs, $pk_set );
     for my $field ( @fields ) {
-        push @field_defs, create_field($field);
+        push @field_defs, $self->create_field($field);
     }
 
     if (
@@ -218,14 +219,14 @@ sub create_table
          ||
          ( @pk_fields && !grep /INTEGER PRIMARY KEY/, @field_defs )
          ) {
-        push @field_defs, 'PRIMARY KEY (' . join(', ', map _generator()->quote($_), @pk_fields ) . ')';
+        push @field_defs, 'PRIMARY KEY (' . join(', ', map { $self->_generator()->quote($_) } @pk_fields ) . ')';
     }
 
     #
     # Indices
     #
     for my $index ( $table->get_indices ) {
-        push @index_defs, create_index($index);
+        push @index_defs, $self->create_index($index);
     }
 
     #
@@ -233,13 +234,13 @@ sub create_table
     #
     for my $c ( $table->get_constraints ) {
         if ($c->type eq "FOREIGN KEY") {
-            push @field_defs, create_foreignkey($c);
+            push @field_defs, $self->create_foreignkey($c);
         }
         elsif ($c->type eq "CHECK") {
-            push @field_defs, create_check_constraint($c);
+            push @field_defs, $self->create_check_constraint($c);
         }
         next unless $c->type eq UNIQUE;
-        push @constraint_defs, create_constraint($c);
+        push @constraint_defs, $self->create_constraint($c);
     }
 
     $create_table .= join(",\n", map { "  $_" } @field_defs ) . "\n)";
@@ -248,6 +249,7 @@ sub create_table
 }
 
 sub create_check_constraint {
+    my $self  = shift;
     my $c     = shift;
     my $check = '';
     $check .= 'CONSTRAINT ' . _generator->quote( $c->name ) . ' ' if $c->name;
@@ -256,6 +258,7 @@ sub create_check_constraint {
 }
 
 sub create_foreignkey {
+    my $self = shift;
     my $c = shift;
 
     my @fields = $c->fields;
@@ -274,9 +277,9 @@ sub create_foreignkey {
     }
 
     my $fk_sql = sprintf 'FOREIGN KEY (%s) REFERENCES %s(%s)',
-        join (', ', map { _generator()->quote($_) } @fields ),
-        _generator()->quote($c->reference_table),
-        join (', ', map { _generator()->quote($_) } @rfields )
+        join (', ', map { $self->_generator()->quote($_) } @fields ),
+        $self->_generator()->quote($c->reference_table),
+        join (', ', map { $self->_generator()->quote($_) } @rfields )
     ;
 
     $fk_sql .= " ON DELETE " . $c->{on_delete} if $c->{on_delete};
@@ -285,20 +288,20 @@ sub create_foreignkey {
     return $fk_sql;
 }
 
-sub create_field { return _generator()->field($_[0]) }
+sub create_field { return shift->_generator()->field(@_) }
 
 sub create_index
 {
-    my ($index, $options) = @_;
+    my ($self, $index, $options) = @_;
 
     (my $index_table_name = $index->table->name) =~ s/^.+?\.//; # table name may not specify schema
-    my $name   = mk_name($index->name || "${index_table_name}_idx");
+    my $name   = $self->mk_name($index->name || "${index_table_name}_idx");
 
     my $type   = $index->type eq 'UNIQUE' ? "UNIQUE " : '';
 
     # strip any field size qualifiers as SQLite doesn't like these
-    my @fields = map { s/\(\d+\)$//; _generator()->quote($_) } $index->fields;
-    $index_table_name = _generator()->quote($index_table_name);
+    my @fields = map { s/\(\d+\)$//; $self->_generator()->quote($_) } $index->fields;
+    $index_table_name = $self->_generator()->quote($index_table_name);
     warn "removing schema name from '" . $index->table->name . "' to make '$index_table_name'\n" if $WARN;
     my $index_def =
     "CREATE ${type}INDEX $name ON " . $index_table_name .
@@ -309,12 +312,12 @@ sub create_index
 
 sub create_constraint
 {
-    my ($c, $options) = @_;
+    my ($self, $c, $options) = @_;
 
     (my $index_table_name = $c->table->name) =~ s/^.+?\.//; # table name may not specify schema
-    my $name   = mk_name($c->name || "${index_table_name}_idx");
-    my @fields = map _generator()->quote($_), $c->fields;
-    $index_table_name = _generator()->quote($index_table_name);
+    my $name   = $self->mk_name($c->name || "${index_table_name}_idx");
+    my @fields = map { $self->_generator()->quote($_) } $c->fields;
+    $index_table_name = $self->_generator()->quote($index_table_name);
     warn "removing schema name from '" . $c->table->name . "' to make '$index_table_name'\n" if $WARN;
 
     my $c_def =
@@ -325,7 +328,7 @@ sub create_constraint
 }
 
 sub create_trigger {
-  my ($trigger, $options) = @_;
+  my ($self, $trigger, $options) = @_;
   my $add_drop = $options->{add_drop_trigger};
 
   my @statements;
@@ -344,7 +347,7 @@ sub create_trigger {
         "creating trigger '$trig_name' for the '$evt' event.\n" if $WARN;
     }
 
-    $trig_name = _generator()->quote($trig_name);
+    $trig_name = $self->_generator()->quote($trig_name);
     push @statements,  "DROP TRIGGER IF EXISTS $trig_name" if $add_drop;
 
 
@@ -374,7 +377,7 @@ sub create_trigger {
       $trig_name,
       $trigger->perform_action_when,
       $evt,
-      _generator()->quote($trigger->on_table),
+      $self->_generator()->quote($trigger->on_table),
       $action
     );
   }
@@ -385,36 +388,36 @@ sub create_trigger {
 sub alter_table { () } # Noop
 
 sub add_field {
-  my ($field) = @_;
+  my ($self, $field) = @_;
 
   return sprintf("ALTER TABLE %s ADD COLUMN %s",
-      _generator()->quote($field->table->name), create_field($field))
+      $self->_generator()->quote($field->table->name), $self->create_field($field))
 }
 
 sub alter_create_index {
-  my ($index) = @_;
+  my ($self, $index) = @_;
 
   # This might cause name collisions
-  return create_index($index);
+  return $self->create_index($index);
 }
 
 sub alter_create_constraint {
-  my ($constraint) = @_;
+  my ($self, $constraint) = @_;
 
-  return create_constraint($constraint) if $constraint->type eq 'UNIQUE';
+  return $self->create_constraint($constraint) if $constraint->type eq 'UNIQUE';
 }
 
 sub alter_drop_constraint { alter_drop_index(@_) }
 
 sub alter_drop_index {
-  my ($constraint) = @_;
+  my ($self, $constraint) = @_;
 
   return sprintf("DROP INDEX %s",
-      _generator()->quote($constraint->name));
+      $self->_generator()->quote($constraint->name));
 }
 
 sub batch_alter_table {
-  my ($table, $diffs, $options) = @_;
+  my ($self, $table, $diffs, $options) = @_;
 
   # If we have any of the following
   #
@@ -447,7 +450,7 @@ sub batch_alter_table {
        @{$diffs->{alter_field}}  == 0 &&
        @{$diffs->{drop_field}}   == 0
        ) {
-    return batch_alter_table_statements($diffs, $options);
+    return batch_alter_table_statements($self, $diffs, $options);
   }
 
   my @sql;
@@ -469,7 +472,7 @@ sub batch_alter_table {
   do {
     local $table->{name} = $temp_table_name;
     # We only want the table - don't care about indexes on tmp table
-    my ($table_sql) = create_table($table, {no_comments => 1, temporary_table => 1});
+    my ($table_sql) = $self->create_table($table, {no_comments => 1, temporary_table => 1});
     push @sql,$table_sql;
 
     %temp_table_fields = map { $_ => 1} $table->get_fields;
@@ -485,60 +488,60 @@ sub batch_alter_table {
 
   push @sql, sprintf( 'INSERT INTO %s( %s) SELECT %s FROM %s',
 
-    _generator()->quote( $temp_table_name ),
+    $self->_generator()->quote( $temp_table_name ),
 
     join( ', ',
-        map _generator()->quote($_),
+        map  { $self->_generator()->quote($_) }
         grep { $temp_table_fields{$_} } $table->get_fields ),
 
     join( ', ',
-        map _generator()->quote($_),
+        map { $self->_generator()->quote($_) }
         map { $rename_field{$_} ? $rename_field{$_} : $_ }
         grep { $temp_table_fields{$_} } $table->get_fields ),
 
-    _generator()->quote( $old_table->name )
+    $self->_generator()->quote( $old_table->name )
   );
 
   # DROP TABLE t1;
 
-  push @sql, sprintf('DROP TABLE %s', _generator()->quote($old_table->name));
+  push @sql, sprintf('DROP TABLE %s', $self->_generator()->quote($old_table->name));
 
   # CREATE TABLE t1(a,b);
 
-  push @sql, create_table($table, { no_comments => 1 });
+  push @sql, $self->create_table($table, { no_comments => 1 });
 
   # INSERT INTO t1 SELECT a,b FROM t1_backup;
 
   push @sql, sprintf('INSERT INTO %s SELECT %s FROM %s',
-    _generator()->quote($table_name),
-    join(', ', map _generator()->quote($_), $table->get_fields),
-    _generator()->quote($temp_table_name)
+    $self->_generator()->quote($table_name),
+    join(', ', map { $self->_generator()->quote($_) } $table->get_fields),
+    $self->_generator()->quote($temp_table_name)
   );
 
   # DROP TABLE t1_backup;
 
-  push @sql, sprintf('DROP TABLE %s', _generator()->quote($temp_table_name));
+  push @sql, sprintf('DROP TABLE %s', $self->_generator()->quote($temp_table_name));
 
   return wantarray ? @sql : join(";\n", @sql);
 }
 
 sub drop_table {
-  my ($table) = @_;
-  $table = _generator()->quote($table);
+  my ($self, $table) = @_;
+  $table = $self->_generator()->quote($table);
   return "DROP TABLE $table";
 }
 
 sub rename_table {
-  my ($old_table, $new_table, $options) = @_;
+  my ($self, $old_table, $new_table, $options) = @_;
 
-  $old_table = _generator()->quote($old_table);
-  $new_table = _generator()->quote($new_table);
+  $old_table = $self->_generator()->quote($old_table);
+  $new_table = $self->_generator()->quote($new_table);
 
   return "ALTER TABLE $old_table RENAME TO $new_table";
 
 }
 
-# No-op. Just here to signify that we are a new style parser.
+# No-op. Just here to signify that we are a new style producer.
 sub preproces_schema { }
 
 1;

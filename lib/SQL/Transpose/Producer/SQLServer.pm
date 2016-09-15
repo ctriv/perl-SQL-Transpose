@@ -10,6 +10,7 @@ use SQL::Transpose::Utils qw(debug header_comment);
 use SQL::Transpose::Generator::DDL::SQLServer;
 
 sub produce {
+  my $self = shift;
   my $translator = shift;
   SQL::Transpose::Generator::DDL::SQLServer->new(
     add_comments    => !$translator->no_comments,

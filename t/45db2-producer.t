@@ -36,7 +36,7 @@ my $field1 = SQL::Transpose::Schema::Field->new( name => 'myfield',
                                                   is_foreign_key => 0,
                                                   is_unique => 0 );
 
-my $field1_sql = SQL::Transpose::Producer::DB2::create_field($field1);
+my $field1_sql = SQL::Transpose::Producer::DB2->create_field($field1);
 
 is($field1_sql, 'myfield VARCHAR(10)', 'Create field works');
 
@@ -50,13 +50,12 @@ my $field2 = SQL::Transpose::Schema::Field->new( name      => 'myfield',
                                                   is_foreign_key => 0,
                                                   is_unique => 0 );
 
-my $alter_field = SQL::Transpose::Producer::DB2::alter_field($field1,
-                                                                $field2);
+my $alter_field = SQL::Transpose::Producer::DB2->alter_field($field1, $field2);
 is($alter_field, 'ALTER TABLE mytable ALTER myfield SET DATATYPE VARCHAR(25)', 'Alter field works');
 
-my $add_field = SQL::Transpose::Producer::DB2::add_field($field1);
+my $add_field = SQL::Transpose::Producer::DB2->add_field($field1);
 
 is($add_field, 'ALTER TABLE mytable ADD COLUMN myfield VARCHAR(10)', 'Add field works');
 
-my $drop_field = SQL::Transpose::Producer::DB2::drop_field($field2);
+my $drop_field = SQL::Transpose::Producer::DB2->drop_field($field2);
 is($drop_field, '', 'Drop field works');

@@ -35,6 +35,7 @@ use constant MAX_ID_LENGTH => 62;
 {
   my ($quoting_generator, $nonquoting_generator);
   sub _generator {
+    my $self    = shift;
     my $options = shift;
     return $options->{generator} if exists $options->{generator};
 
@@ -136,6 +137,7 @@ and table_constraint is:
 =cut
 
 sub produce {
+    my $self             = shift;
     my $translator       = shift;
     local $DEBUG         = $translator->debug;
     local $WARN          = $translator->show_warnings;
@@ -147,7 +149,7 @@ sub produce {
         $pargs->{postgres_version}, 'perl'
     );
 
-    my $generator = _generator({ quote_identifiers => $translator->quote_identifiers });
+    my $generator = $self->_generator({ quote_identifiers => $translator->quote_identifiers });
 
     my @output;
     push @output, header_comment unless ($no_comments);
@@ -156,7 +158,7 @@ sub produce {
     my %type_defs;
     for my $table ( $schema->get_tables ) {
 
-        my ($table_def, $fks) = create_table($table, {
+        my ($table_def, $fks) = $self->create_table($table, {
             generator         => $generator,
             no_comments       => $no_comments,
             postgres_version  => $postgres_version,
@@ -169,7 +171,7 @@ sub produce {
     }
 
     for my $view ( $schema->get_views ) {
-        push @table_defs, create_view($view, {
+        push @table_defs, $self->create_view($view, {
             postgres_version  => $postgres_version,
             add_drop_view     => $add_drop_table,
             generator         => $generator,
@@ -178,7 +180,7 @@ sub produce {
     }
 
     for my $trigger ( $schema->get_triggers ) {
-      push @table_defs, create_trigger( $trigger, {
+      push @table_defs, $self->create_trigger( $trigger, {
           add_drop_trigger => $add_drop_table,
           generator        => $generator,
           no_comments      => $no_comments,
@@ -207,6 +209,7 @@ sub produce {
 {
     my %global_names;
     sub mk_name {
+        my $self          = shift;
         my $basename      = shift || '';
         my $type          = shift || '';
         my $scope         = shift || '';
@@ -246,20 +249,22 @@ sub produce {
 }
 
 sub is_geometry {
+    my $self  = shift;
     my $field = shift;
     return 1 if $field->data_type eq 'geometry';
 }
 
 sub is_geography {
+    my $self  = shift;
     my $field = shift;
     return 1 if $field->data_type eq 'geography';
 }
 
 sub create_table
 {
-    my ($table, $options) = @_;
+    my ($self, $table, $options) = @_;
 
-    my $generator = _generator($options);
+    my $generator = $self->_generator($options);
     my $no_comments = $options->{no_comments} || 0;
     my $add_drop_table = $options->{add_drop_table} || 0;
     my $postgres_version = $options->{postgres_version} || 0;
@@ -281,7 +286,7 @@ sub create_table
     # Fields
     #
     for my $field ( $table->get_fields ) {
-        push @field_defs, create_field($field, {
+        push @field_defs, $self->create_field($field, {
             generator => $generator,
             postgres_version => $postgres_version,
             type_defs => $type_defs,
@@ -293,7 +298,7 @@ sub create_table
     # Index Declarations
     #
     for my $index ( $table->get_indices ) {
-        my ($idef, $constraints) = create_index($index, {
+        my ($idef, $constraints) = $self->create_index($index, {
             generator => $generator,
         });
         $idef and push @index_defs, $idef;
@@ -304,7 +309,7 @@ sub create_table
     # Table constraints
     #
     for my $c ( $table->get_constraints ) {
-        my ($cdefs, $fks) = create_constraint($c, {
+        my ($cdefs, $fks) = $self->create_constraint($c, {
             generator => $generator,
         });
         push @constraint_defs, @$cdefs;
@@ -332,17 +337,17 @@ sub create_table
     #
     # Geometry
     #
-    if (my @geometry_columns = grep { is_geometry($_) } $table->get_fields) {
-        $create_statement .= join(";\n", '', map{ drop_geometry_column($_, $options) } @geometry_columns) if $options->{add_drop_table};
-        $create_statement .= join(";\n", '', map{ add_geometry_column($_, $options) } @geometry_columns);
+    if (my @geometry_columns = grep { $self->is_geometry($_) } $table->get_fields) {
+        $create_statement .= join(";\n", '', map{ $self->drop_geometry_column($_, $options) } @geometry_columns) if $options->{add_drop_table};
+        $create_statement .= join(";\n", '', map{ $self->add_geometry_column($_, $options) } @geometry_columns);
     }
 
     return $create_statement, \@fks;
 }
 
 sub create_view {
-    my ($view, $options) = @_;
-    my $generator = _generator($options);
+    my ($self, $view, $options) = @_;
+    my $generator = $self->_generator($options);
     my $postgres_version = $options->{postgres_version} || 0;
     my $add_drop_view = $options->{add_drop_view};
 
@@ -386,14 +391,14 @@ sub create_view {
 }
 
 sub drop_view {
-    my ($view, $options) = @_;
-    my $generator = _generator($options);
+    my ($self, $view, $options) = @_;
+    my $generator = $self->_generator($options);
 
     return sprintf('DROP VIEW %s', $generator->quote($view->name));
 }
 
 sub alter_view {
-    my ($view, $options) = @_;
+    my ($self, $view, $options) = @_;
 
     $options ||= {};
 
@@ -403,7 +408,7 @@ sub alter_view {
         no_comments => 1,
     );
 
-    return create_view($view, \%options)
+    return $self->create_view($view, \%options)
 }
 
 {
@@ -411,9 +416,9 @@ sub alter_view {
 
     sub create_field
     {
-        my ($field, $options) = @_;
+        my ($self, $field, $options) = @_;
 
-        my $generator = _generator($options);
+        my $generator = $self->_generator($options);
         my $table_name = $field->table->name;
         my $constraint_defs = $options->{constraint_defs} || [];
         my $postgres_version = $options->{postgres_version} || 0;
@@ -435,7 +440,7 @@ sub alter_view {
         my $data_type = lc $field->data_type;
         my %extra     = $field->extra;
         my $list      = $extra{'list'} || [];
-        my $commalist = join( ', ', map { __PACKAGE__->_quote_string($_) } @$list );
+        my $commalist = join( ', ', map { $self->_quote_string($_) } @$list );
 
         if ($postgres_version >= 8.003 && $data_type eq 'enum') {
             my $type_name = $extra{'custom_type_name'} || $field->table->name . '_' . $field->name . '_type';
@@ -448,13 +453,13 @@ sub alter_view {
                 die "Attempted to redefine type name '$type_name' as a different type.\n";
             }
         } else {
-            $field_def .= ' '. convert_datatype($field);
+            $field_def .= ' '. $self->convert_datatype($field);
         }
 
         #
         # Default value
         #
-        __PACKAGE__->_apply_default_value(
+        $self->_apply_default_value(
           $field,
           \$field_def,
           [
@@ -472,9 +477,9 @@ sub alter_view {
         #
         # Geometry constraints
         #
-        if (is_geometry($field)) {
-            foreach ( create_geometry_constraints($field, $options) ) {
-                my ($cdefs, $fks) = create_constraint($_, $options);
+        if ($self->is_geometry($field)) {
+            foreach ( $self->create_geometry_constraints($field, $options) ) {
+                my ($cdefs, $fks) = $self->create_constraint($_, $options);
                 push @$constraint_defs, @$cdefs;
                 push @$fks, @$fks;
             }
@@ -485,9 +490,9 @@ sub alter_view {
 }
 
 sub create_geometry_constraints {
-    my ($field, $options) = @_;
+    my ($self, $field, $options) = @_;
 
-    my $fname = _generator($options)->quote($field);
+    my $fname = $self->_generator($options)->quote($field);
     my @constraints;
     push @constraints, SQL::Transpose::Schema::Constraint->new(
         name       => "enforce_dims_".$field->name,
@@ -504,7 +509,7 @@ sub create_geometry_constraints {
     );
     push @constraints, SQL::Transpose::Schema::Constraint->new(
         name       => "enforce_geotype_".$field->name,
-        expression => "(GeometryType($fname) = ". __PACKAGE__->_quote_string($field->extra->{geometry_type}) ."::text OR $fname IS NULL)",
+        expression => "(GeometryType($fname) = ". $self->_quote_string($field->extra->{geometry_type}) ."::text OR $fname IS NULL)",
         table       => $field->table,
         type       => CHECK_C,
     );
@@ -516,9 +521,9 @@ sub create_geometry_constraints {
     my %index_name;
     sub create_index
     {
-        my ($index, $options) = @_;
+        my ($self, $index, $options) = @_;
 
-        my $generator = _generator($options);
+        my $generator = $self->_generator($options);
         my $table_name = $index->table->name;
 
         my ($index_def, @constraint_defs);
@@ -572,9 +577,9 @@ sub create_geometry_constraints {
 
 sub create_constraint
 {
-    my ($c, $options) = @_;
+    my ($self, $c, $options) = @_;
 
-    my $generator = _generator($options);
+    my $generator = $self->_generator($options);
     my $table_name = $c->table->name;
     my (@constraint_defs, @fks);
 
@@ -629,8 +634,8 @@ sub create_constraint
 }
 
 sub create_trigger {
-  my ($trigger,$options) = @_;
-  my $generator = _generator($options);
+  my ($self, $trigger, $options) = @_;
+  my $generator = $self->_generator($options);
 
   my @statements;
 
@@ -655,7 +660,7 @@ sub create_trigger {
 
 sub convert_datatype
 {
-    my ($field) = @_;
+    my ($self, $field) = @_;
 
     my @size      = $field->size;
     my $data_type = lc $field->data_type;
@@ -664,7 +669,7 @@ sub convert_datatype
     if ( $data_type eq 'enum' ) {
 #        my $len = 0;
 #        $len = ($len < length($_)) ? length($_) : $len for (@$list);
-#        my $chk_name = mk_name( $table_name.'_'.$field_name, 'chk' );
+#        my $chk_name = $self->mk_name( $table_name.'_'.$field_name, 'chk' );
 #        push @$constraint_defs,
 #        'CONSTRAINT "$chk_name" CHECK (' . $generator->quote(field_name) .
 #           qq[IN ($commalist))];
@@ -744,19 +749,19 @@ sub convert_datatype
 
 sub alter_field
 {
-    my ($from_field, $to_field, $options) = @_;
+    my ($self, $from_field, $to_field, $options) = @_;
 
     die "Can't alter field in another table"
-        if($from_field->table->name ne $to_field->table->name);
+        if ($from_field->table->name ne $to_field->table->name);
 
-    my $generator = _generator($options);
+    my $generator = $self->_generator($options);
     my @out;
 
     # drop geometry column and constraints
     push @out,
-        drop_geometry_column($from_field, $options),
-        drop_geometry_constraints($from_field, $options),
-        if is_geometry($from_field);
+        $self->drop_geometry_column($from_field, $options),
+        $self->drop_geometry_constraints($from_field, $options),
+        if $self->is_geometry($from_field);
 
     # it's necessary to start with rename column cause this would affect
     # all of the following statements which would be broken if do the
@@ -789,8 +794,8 @@ sub alter_field
        if (!$from_field->is_nullable and $to_field->is_nullable);
 
 
-    my $from_dt = convert_datatype($from_field);
-    my $to_dt   = convert_datatype($to_field);
+    my $from_dt = $self->convert_datatype($from_field);
+    my $to_dt   = $self->convert_datatype($to_field);
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
                        map($generator->quote($_),
                            $to_field->table->name,
@@ -809,7 +814,7 @@ sub alter_field
     if(ref $default_value eq "SCALAR" ) {
         $default_value = $$default_value;
     } elsif( defined $default_value && $to_dt =~ /^(character|text)/xsmi ) {
-        $default_value = __PACKAGE__->_quote_string($default_value);
+        $default_value = $self->_quote_string($default_value);
     }
 
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s',
@@ -835,9 +840,9 @@ sub alter_field
 
     # add geometry column and constraints
     push @out,
-        add_geometry_column($to_field, $options),
-        add_geometry_constraints($to_field, $options),
-        if is_geometry($to_field);
+        $self->add_geometry_column($to_field, $options),
+        $self->add_geometry_constraints($to_field, $options),
+        if $self->is_geometry($to_field);
 
     return wantarray ? @out : join(";\n", @out);
 }
@@ -846,38 +851,38 @@ sub rename_field { alter_field(@_) }
 
 sub add_field
 {
-    my ($new_field,$options) = @_;
+    my ($self, $new_field, $options) = @_;
 
     my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
-                      _generator($options)->quote($new_field->table->name),
-                      create_field($new_field, $options));
-    $out .= ";\n".add_geometry_column($new_field, $options)
-          . ";\n".add_geometry_constraints($new_field, $options)
-        if is_geometry($new_field);
+                      $self->_generator($options)->quote($new_field->table->name),
+                      $self->create_field($new_field, $options));
+    $out .= ";\n" . $self->add_geometry_column($new_field, $options)
+          . ";\n" . $self->add_geometry_constraints($new_field, $options)
+        if $self->is_geometry($new_field);
     return $out;
 
 }
 
 sub drop_field
 {
-    my ($old_field, $options) = @_;
+    my ($self, $old_field, $options) = @_;
 
-    my $generator = _generator($options);
+    my $generator = $self->_generator($options);
 
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
                       $generator->quote($old_field->table->name),
                       $generator->quote($old_field->name));
-    $out .= ";\n".drop_geometry_column($old_field, $options)
-        if is_geometry($old_field);
+    $out .= ";\n" . $self->drop_geometry_column($old_field, $options)
+        if $self->is_geometry($old_field);
     return $out;
 }
 
 sub add_geometry_column {
-    my ($field, $options) = @_;
+    my ($self, $field, $options) = @_;
 
     return sprintf(
         "INSERT INTO geometry_columns VALUES (%s,%s,%s,%s,%s,%s,%s)",
-        map(__PACKAGE__->_quote_string($_),
+        map($self->_quote_string($_),
             '',
             $field->table->schema->name,
             $options->{table} ? $options->{table} : $field->table->name,
@@ -890,11 +895,11 @@ sub add_geometry_column {
 }
 
 sub drop_geometry_column {
-    my ($field) = @_;
+    my ($self, $field) = @_;
 
     return sprintf(
         "DELETE FROM geometry_columns WHERE f_table_schema = %s AND f_table_name = %s AND f_geometry_column = %s",
-        map(__PACKAGE__->_quote_string($_),
+        map($self->_quote_string($_),
             $field->table->schema->name,
             $field->table->name,
             $field->name,
@@ -903,23 +908,23 @@ sub drop_geometry_column {
 }
 
 sub add_geometry_constraints {
-    my ($field, $options) = @_;
+    my ($self, $field, $options) = @_;
 
-    return join(";\n", map { alter_create_constraint($_, $options) }
-                    create_geometry_constraints($field, $options));
+    return join(";\n", map { $self->alter_create_constraint($_, $options) }
+                    $self->create_geometry_constraints($field, $options));
 }
 
 sub drop_geometry_constraints {
-    my ($field, $options) = @_;
+    my ($self, $field, $options) = @_;
 
-    return join(";\n", map { alter_drop_constraint($_, $options) }
-                    create_geometry_constraints($field, $options));
+    return join(";\n", map { $self->alter_drop_constraint($_, $options) }
+                    $self->create_geometry_constraints($field, $options));
 
 }
 
 sub alter_table {
-    my ($to_table, $options) = @_;
-    my $generator = _generator($options);
+    my ($self, $to_table, $options) = @_;
+    my $generator = $self->_generator($options);
     my $out = sprintf('ALTER TABLE %s %s',
                       $generator->quote($to_table->name),
                       $options->{alter_table_action});
@@ -928,24 +933,24 @@ sub alter_table {
 }
 
 sub rename_table {
-    my ($old_table, $new_table, $options) = @_;
-    my $generator = _generator($options);
+    my ($self, $old_table, $new_table, $options) = @_;
+    my $generator = $self->_generator($options);
     $options->{alter_table_action} = "RENAME TO " . $generator->quote($new_table);
 
     my @geometry_changes = map {
-        drop_geometry_column($_, $options),
-        add_geometry_column($_, { %{$options}, table => $new_table }),
-    } grep { is_geometry($_) } $old_table->get_fields;
+        $self->drop_geometry_column($_, $options),
+        $self->add_geometry_column($_, { %{$options}, table => $new_table }),
+    } grep { $self->is_geometry($_) } $old_table->get_fields;
 
     $options->{geometry_changes} = join (";\n",@geometry_changes) if @geometry_changes;
 
-    return alter_table($old_table, $options);
+    return $self->alter_table($old_table, $options);
 }
 
 sub alter_create_index {
-    my ($index, $options) = @_;
-    my $generator = _generator($options);
-    my ($idef, $constraints) = create_index($index, $options);
+    my ($self, $index, $options) = @_;
+    my $generator = $self->_generator($options);
+    my ($idef, $constraints) = $self->create_index($index, $options);
     return $index->type eq NORMAL ? $idef
         : sprintf('ALTER TABLE %s ADD %s',
               $generator->quote($index->table->name),
@@ -954,13 +959,13 @@ sub alter_create_index {
 }
 
 sub alter_drop_index {
-    my ($index, $options) = @_;
-    return 'DROP INDEX '. _generator($options)->quote($index->name);
+    my ($self, $index, $options) = @_;
+    return 'DROP INDEX '. $self->_generator($options)->quote($index->name);
 }
 
 sub alter_drop_constraint {
-    my ($c, $options) = @_;
-    my $generator = _generator($options);
+    my ($self, $c, $options) = @_;
+    my $generator = $self->_generator($options);
 
     # attention: Postgres  has a very special naming structure for naming
     # foreign keys and primary keys.  It names them using the name of the
@@ -984,9 +989,9 @@ sub alter_drop_constraint {
 }
 
 sub alter_create_constraint {
-    my ($index, $options) = @_;
-    my $generator = _generator($options);
-    my ($defs, $fks) = create_constraint(@_);
+    my ($self, $index, $options) = @_;
+    my $generator = $self->_generator($options);
+    my ($defs, $fks) = $self->create_constraint($index, $options);
 
     # return if there are no constraint definitions so we don't run
     # into output like this:
@@ -1000,26 +1005,26 @@ sub alter_create_constraint {
 }
 
 sub drop_table {
-    my ($table, $options) = @_;
-    my $generator = _generator($options);
+    my ($self, $table, $options) = @_;
+    my $generator = $self->_generator($options);
     my $out = "DROP TABLE " . $generator->quote($table) . " CASCADE";
 
-    my @geometry_drops = map { drop_geometry_column($_); } grep { is_geometry($_) } $table->get_fields;
+    my @geometry_drops = map { $self->drop_geometry_column($_); } grep { $self->is_geometry($_) } $table->get_fields;
 
     $out .= join(";\n", '', @geometry_drops) if @geometry_drops;
     return $out;
 }
 
 sub batch_alter_table {
-  my ( $table, $diff_hash, $options ) = @_;
+  my ($self, $table, $diff_hash, $options ) = @_;
 
   # as long as we're not renaming the table we don't need to be here
   if ( @{$diff_hash->{rename_table}} == 0 ) {
-    return batch_alter_table_statements($diff_hash, $options);
+    return batch_alter_table_statements($self, $diff_hash, $options);
   }
 
   # first we need to perform drops which are on old table
-  my @sql = batch_alter_table_statements($diff_hash, $options, qw(
+  my @sql = batch_alter_table_statements($self, $diff_hash, $options, qw(
     alter_drop_constraint
     alter_drop_index
     drop_field
@@ -1027,7 +1032,7 @@ sub batch_alter_table {
 
   # next comes the rename_table
   my $old_table = $diff_hash->{rename_table}[0][0];
-  push @sql, rename_table( $old_table, $table, $options );
+  push @sql, $self->rename_table( $old_table, $table, $options );
 
   # for alter_field (and so also rename_field) we need to make sure old
   # field has table name set to new table otherwise calling alter_field dies
@@ -1037,7 +1042,7 @@ sub batch_alter_table {
     [map { $_->[0]->table($table) && $_ } @{$diff_hash->{rename_field}}];
 
   # now add everything else
-  push @sql, batch_alter_table_statements($diff_hash, $options, qw(
+  push @sql, batch_alter_table_statements($self, $diff_hash, $options, qw(
     add_field
     alter_field
     rename_field
@@ -1068,21 +1073,21 @@ sub batch_alter_table {
 #     [ WITH ( attribute [, ...] ) ]
 
 sub create_procedure {
-    my ($procedure, $options) = @_;
+    my ($self, $procedure, $options) = @_;
 
-    return _create_function($procedure, { or_replace => 0}, $options);
+    return $self->_create_function($procedure, { or_replace => 0}, $options);
 }
 
 sub alter_procedure {
-    my ($procedure, $options) = @_;
+    my ($self, $procedure, $options) = @_;
 
-    return _create_function($procedure, { or_replace => 1}, $options);
+    return $self->_create_function($procedure, { or_replace => 1}, $options);
 }
 
 sub _create_function {
-    my ($procedure, $args, $options) = @_;
+    my ($self, $procedure, $args, $options) = @_;
 
-    my $generator  = _generator($options);
+    my $generator  = $self->_generator($options);
     my $or_replace = $args->{or_replace} ? 'OR REPLACE ' : '';
     my $name       = $generator->quote($procedure->name);
     my $sql = sprintf('CREATE %sFUNCTION %s (%s) ',
@@ -1110,8 +1115,8 @@ sub _create_function {
 }
 
 sub drop_procedure {
-    my ($procedure, $options) = @_;
-    my $generator  = _generator($options);
+    my ($self, $procedure, $options) = @_;
+    my $generator  = $self->_generator($options);
 
     return sprintf('DROP FUNCTION %s (%s)',
         $generator->quote($procedure->name),
