@@ -164,10 +164,13 @@ my ($source_schema, $source_db, $target_schema, $target_db) = map {
     die "Unable to read file '$file'\n" unless -r $file;
     die "'$parser' is an invalid parser\n" unless $valid_parsers{$parser};
 
-    my $t = SQL::Transpose->new(parser_args => {mysql_parser_version => $mysql_parser_version});
+    my $t = SQL::Transpose->new(
+        parser      => $parser,
+        parser_args => {mysql_parser_version => $mysql_parser_version}
+    );
     $t->debug($debug);
     $t->trace($trace);
-    $t->parser($parser) or die $tr->error;
+    
     my $out = $t->translate($file) or die $tr->error;
     my $schema = $t->schema;
     unless ($schema->name) {

@@ -45,6 +45,7 @@ around BUILDARGS => sub {
     $config->{quote_identifiers} = $quote if defined $quote;
 
     $config->{producer} = normalize_tool_class(Producer => $config->{producer});
+    $config->{parser}   = normalize_tool_class(Parser   => $config->{parser});
 
     return $config;
 };
@@ -55,20 +56,19 @@ sub normalize_tool_class {
     if (!$flavor) {
         return join('::', __PACKAGE__, $tool);
     }
-    elsif ($flavor !~ m/^SQL::Transpose/) {
+    elsif ($flavor !~ m/^SQL::Transpose::$tool/) {
         $flavor =~ s/-/::/g;
         return join('::', __PACKAGE__, $tool, $flavor);
+    }
+    else {
+        return $flavor;
     }
 }
 
 sub BUILD {
     my ($self) = @_;
 
-    # Make sure all the tool-related stuff is set up
-    foreach my $tool (qw(parser)) {
-        $self->$tool($self->$tool);
-    }
-
+    use_module($self->parser);
     use_module($self->producer);
 }
 
@@ -122,30 +122,12 @@ around producer_args => sub {
     shift->_args($orig, @_);
 };
 
-has parser => (
-    is      => 'rw',
-    default => sub { $DEFAULT_SUB }
-);
+has parser => (is => 'rw');
 
-around parser => sub {
-    my $orig = shift;
-    shift->_tool(
-        {
-            orig        => $orig,
-            name        => 'parser',
-            path        => "SQL::Transpose::Parser",
-            default_sub => "parse",
-        },
-        @_
-    );
-};
 
-has parser_type => (
-    is       => 'rwp',
-    init_arg => undef
-);
-
-around parser_type => carp_ro('parser_type');
+sub parser_type {
+    return shift->parser;
+}
 
 has parser_args => (
     is      => 'rw',
@@ -282,7 +264,7 @@ sub _build_schema { SQL::Transpose::Schema->new(translator => shift) }
 
 sub translate {
     my $self = shift;
-    my ($args,          $parser,          $parser_type);
+    my ($args);
     my ($parser_output, $producer_output, @producer_output);
 
     # Parse arguments
@@ -354,14 +336,11 @@ sub translate {
     # ----------------------------------------------------------------
     my $data = $self->data;
 
-    # ----------------------------------------------------------------
-    # Local reference to the parser subroutine
-    # ----------------------------------------------------------------
-    if ($parser = ($args->{'parser'} || $args->{'from'})) {
-        $self->parser($parser);
+    my $parser = $self->parser;
+    if (my $override = ($args->{'parser'} || $args->{'from'})) {
+        $parser = normalize_tool_class(Parser => $override);
+        use_module($parser);
     }
-    $parser      = $self->parser;
-    $parser_type = $self->parser_type;
 
     my $producer = $self->producer;
     if (my $override = ($args->{producer} || $args->{to})) {
@@ -379,9 +358,9 @@ sub translate {
 
     # Run parser
     unless ($self->_has_schema) {
-        eval { $parser_output = $parser->($self, $$data) };
+        eval { $parser_output = $parser->parse($self, $$data) };
         if ($@ || !$parser_output) {
-            my $msg = sprintf "translate: Error with parser '%s': %s", $parser_type, ($@) ? $@ : " no results";
+            my $msg = sprintf "translate: Error with parser '%s': %s", $self->parser, ($@) ? $@ : " no results";
             return $self->error($msg);
         }
     }

@@ -8,7 +8,6 @@ use SQL::Transpose::Schema::Constants;
 use Test::SQL::Transpose qw(maybe_plan);
 
 maybe_plan(99, 'SQL::Transpose::Parser::Oracle');
-SQL::Transpose::Parser::Oracle->import('parse');
 
 my $t = SQL::Transpose->new(trace => 0);
 my $sql = q[
@@ -110,7 +109,7 @@ my $sql = q[
 
 $| = 1;
 
-my $data = parse($t, $sql);
+my $data = SQL::Transpose::Parser::Oracle->parse($t, $sql);
 my $schema = $t->schema;
 
 isa_ok($schema, 'SQL::Transpose::Schema', 'Schema object');

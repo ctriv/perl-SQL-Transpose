@@ -31,7 +31,7 @@ ok($data, 'Data');
 
 my $t = SQL::Transpose->new;
 
-my $val = parse($t, $data);
+my $val = SQL::Transpose::Parser::Sybase->parse($t, $data);
 
 is($val, 1, 'Parse');
 

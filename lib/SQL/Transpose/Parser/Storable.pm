@@ -22,17 +22,11 @@ the data into a database tables or graphs.
 use strict;
 use warnings;
 
-our $DEBUG;
-$DEBUG = 0 unless defined $DEBUG;
 
 use Storable;
-use SQL::Transpose::Utils qw(debug normalize_name);
-
-use base qw(Exporter);
-our @EXPORT_OK = qw(parse);
 
 sub parse {
-    my ($translator, $data) = @_;
+    my ($self, $translator, $data) = @_;
 
     if (defined($data)) {
         $translator->{'schema'} = Storable::thaw($data);

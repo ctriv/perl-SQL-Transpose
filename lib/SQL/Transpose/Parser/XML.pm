@@ -22,11 +22,8 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 use strict;
 use warnings;
-our $DEBUG;
-$DEBUG = 1 unless defined $DEBUG;
 
-use SQL::Transpose::Parser::XML::SQLFairy;
+use base 'SQL::Transpose::Parser::XML::SQLFairy';
 
-*parse = \&SQL::Transpose::Parser::XML::SQLFairy::parse;
 
 1;

@@ -17,16 +17,14 @@ delegates to DBD::DB2.
 
 use strict;
 use warnings;
-use DBI;
 use Data::Dumper;
-use SQL::Transpose::Parser::DB2;
 use SQL::Transpose::Schema::Constants;
 
-our ($DEBUG, @EXPORT_OK);
+our ($DEBUG);
 $DEBUG = 0 unless defined $DEBUG;
 
 sub parse {
-    my ($tr, $dbh) = @_;
+    my ($self, $tr, $dbh) = @_;
 
     my $schema = $tr->schema;
 
@@ -118,13 +116,11 @@ SQL
     @tables = @{$tabsth->fetchall_arrayref({})};
 
     foreach my $table_info (@tables) {
-        next
-            unless (defined($table_info->{TYPE}));
+        next unless defined $table_info->{TYPE};
 
         # Why are we not getting system tables, maybe a parameter should decide?
 
-        if (   $table_info->{TYPE} eq 'T'
-            && $table_info->{TABSCHEMA} !~ /^SYS/) {
+        if ($table_info->{TYPE} eq 'T' && $table_info->{TABSCHEMA} !~ /^SYS/) {
             print Dumper($table_info) if ($DEBUG);
             print $table_info->{TABNAME} if ($DEBUG);
             my $table = $schema->add_table(
@@ -168,14 +164,14 @@ SQL
 
             $indsth->execute($table_info->{TABNAME});
             my $inds = $indsth->fetchall_hashref("INDNAME");
-            print Dumper($inds) if ($DEBUG);
-            next if (!%$inds);
+            print Dumper($inds) if $DEBUG;
+            next if !%$inds;
 
             foreach my $ind (keys %$inds) {
-                print $ind if ($DEBUG);
+                print $ind if $DEBUG;
                 $indsth->execute($table_info->{TABNAME});
                 my $indcols = $indsth->fetchall_hashref("COLNAME");
-                next if ($inds->{$ind}{UNIQUERULE} eq 'P');
+                next if $inds->{$ind}{UNIQUERULE} eq 'P';
 
                 print Dumper($indcols) if ($DEBUG);
 
@@ -194,10 +190,10 @@ SQL
             $trigsth->execute($table_info->{TABNAME});
             my $trigs = $trigsth->fetchall_hashref("TRIGNAME");
             print Dumper($trigs);
-            next if (!%$trigs);
+            next if !%$trigs;
 
             foreach my $t (values %$trigs) {
-                print $t->{TRIGNAME} if ($DEBUG);
+                print $t->{TRIGNAME} if $DEBUG;
                 my $trig = $schema->add_trigger(
                     name => $t->{TRIGNAME},
 

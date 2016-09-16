@@ -664,7 +664,7 @@ quantified_p: expression1 /(=|<>|<|>|<=|=>|\^=|\^<|\^>|\!=)/ /SOME|ANY|ALL/i '('
 END_OF_GRAMMAR
 
 sub parse {
-    my ($translator, $data) = @_;
+    my ($self, $translator, $data) = @_;
 
     # Enable warnings within the Parse::RecDescent module.
     local $::RD_ERRORS = 1 unless defined $::RD_ERRORS; # Make sure the parser dies when it encounters an error

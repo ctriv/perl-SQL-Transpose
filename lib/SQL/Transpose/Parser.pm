@@ -3,7 +3,12 @@ package SQL::Transpose::Parser;
 use strict;
 use warnings;
 
-sub parse { "" }
+sub parse {
+    my ($self, $tr) = @_;
+
+    return $tr->schema;
+}
+
 
 1;
 

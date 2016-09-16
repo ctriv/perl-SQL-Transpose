@@ -29,10 +29,10 @@ close $io1;
 close $io2;
 
 my $s = SQL::Transpose->new(from => 'YAML');
-$s->parser->($s, $yaml1);
+$s->parser->parse($s, $yaml1);
 
 my $t = SQL::Transpose->new(from => 'YAML');
-$t->parser->($t, $yaml2);
+$t->parser->parse($t, $yaml2);
 
 my $d = SQL::Transpose::Diff->new(
     {

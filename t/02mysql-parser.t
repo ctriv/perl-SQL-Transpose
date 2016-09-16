@@ -13,7 +13,6 @@ use FindBin qw/$Bin/;
 
 BEGIN {
     maybe_plan(undef, "SQL::Transpose::Parser::MySQL");
-    SQL::Transpose::Parser::MySQL->import('parse');
 }
 
 {
@@ -26,7 +25,7 @@ BEGIN {
         fulltext key `session_fulltext` (a_session)
     );|;
 
-    my $val = parse($tr, $data);
+    my $val = SQL::Transpose::Parser::MySQL->parse($tr, $data);
     my $schema = $tr->schema;
     is($schema->is_valid, 1, 'Schema is valid');
     my @tables = $schema->get_tables;
@@ -69,7 +68,7 @@ BEGIN {
 
 {
     my $tr   = SQL::Transpose->new;
-    my $data = parse(
+    my $data = SQL::Transpose::Parser::MySQL->parse(
         $tr,
         q[
             CREATE TABLE `check` (
@@ -250,7 +249,7 @@ BEGIN {
 
 {
     my $tr   = SQL::Transpose->new;
-    my $data = parse(
+    my $data = SQL::Transpose::Parser::MySQL->parse(
         $tr,
         q[
             CREATE TABLE orders (
@@ -429,7 +428,7 @@ BEGIN {
 #
 {
     my $tr   = SQL::Transpose->new;
-    my $data = parse(
+    my $data = SQL::Transpose::Parser::MySQL->parse(
         $tr,
         q[
             USE database_name;
@@ -503,7 +502,7 @@ BEGIN {
 #
 {
     my $tr = SQL::Transpose->new(parser_args => {mysql_parser_version => 50013});
-    my $data = parse(
+    my $data = SQL::Transpose::Parser::MySQL->parse(
         $tr,
         q[
             DELIMITER ;;
@@ -685,7 +684,7 @@ BEGIN {
 # Tests for collate table option
 {
     my $tr = SQL::Transpose->new(parser_args => {mysql_parser_version => 50003});
-    my $data = parse(
+    my $data = SQL::Transpose::Parser::MySQL->parse(
         $tr,
         q[
           CREATE TABLE test ( id int ) DEFAULT CHARACTER SET latin1 COLLATE latin1_bin;
@@ -751,7 +750,7 @@ ok($@, 'Exception thrown on invalid version string');
        SPATIAL KEY shape_field (shape_field)
     ) ENGINE=MRG_MyISAM UNION=(`sometable_0`,`sometable_1`,`sometable_2`);|;
 
-    my $val = parse($tr, $data);
+    my $val = SQL::Transpose::Parser::MySQL->parse($tr, $data);
     my $schema = $tr->schema;
     is($schema->is_valid, 1, 'Schema is valid');
     my @tables = $schema->get_tables;
@@ -822,7 +821,7 @@ ok($@, 'Exception thrown on invalid version string');
     foreach my $data (@data) {
         my $tr = SQL::Transpose->new;
 
-        my $val = parse($tr, $data);
+        my $val = SQL::Transpose::Parser::MySQL->parse($tr, $data);
         my $schema = $tr->schema;
         is($schema->is_valid, 1, 'Schema is valid');
         my @tables = $schema->get_tables;
@@ -860,7 +859,7 @@ ok($@, 'Exception thrown on invalid version string');
         key using btree (ssn)
     );|;
 
-    my $val = parse($tr, $data);
+    my $val = SQL::Transpose::Parser::MySQL->parse($tr, $data);
     my $schema = $tr->schema;
     is($schema->is_valid, 1, 'Schema is valid');
     my @tables = $schema->get_tables;
@@ -910,7 +909,7 @@ ok($@, 'Exception thrown on invalid version string');
         key using btree (ssn)
     );|;
 
-    my $val = parse($tr, $data);
+    my $val = SQL::Transpose::Parser::MySQL->parse($tr, $data);
     ok($tr->error =~ /Parse failed\./, 'Parse failed error without default value');
 }
 
@@ -922,7 +921,7 @@ ok($@, 'Exception thrown on invalid version string');
         ssn varchar(12) NOT NULL default "",
         key using btree (ssn)
     );|;
-    my $val = parse($tr, $data);
+    my $val = SQL::Transpose::Parser::MySQL->parse($tr, $data);
 
     my @fields = $tr->schema->get_table('sessions')->get_fields;
     is(scalar @fields, 2, 'Both fields parsed correctly');

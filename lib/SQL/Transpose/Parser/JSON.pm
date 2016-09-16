@@ -9,7 +9,7 @@ use Data::Dumper;
 use JSON;
 
 sub parse {
-    my ($translator, $data) = @_;
+    my ($self, $translator, $data) = @_;
     $data = from_json($data);
     $data = $data->{'schema'};
 

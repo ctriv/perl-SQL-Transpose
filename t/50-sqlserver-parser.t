@@ -14,7 +14,6 @@ use SQL::Transpose::Schema::Constants;
 
 BEGIN {
     maybe_plan(46, 'SQL::Transpose::Parser::SQLServer');
-    SQL::Transpose::Parser::SQLServer->import('parse');
 }
 
 my $file = "$Bin/data/sqlserver/create.sql";
@@ -33,7 +32,7 @@ ok($data, 'Data');
 
 my $t = SQL::Transpose->new;
 
-my $val = parse($t, $data);
+my $val = SQL::Transpose::Parser::SQLServer->parse($t, $data);
 
 is($val, 1, 'Parse');
 
@@ -122,4 +121,3 @@ my @procedures = $schema->get_procedures;
 is(scalar @procedures, 10, 'Ten procedures');
 like($procedures[8]->sql, qr/Tx_B_Get_Vlan/,     "Detected procedure Tx_B_Get_Vlan");
 like($procedures[9]->sql, qr/\[dbo\].inet_ntoa/, "Detected function [dbo].inet_ntoa");
-

@@ -140,9 +140,6 @@ use Storable qw(dclone);
 use DBI qw(:sql_types);
 use SQL::Transpose::Utils qw/parse_mysql_version ddl_parser_instance/;
 
-use base qw(Exporter);
-our @EXPORT_OK = qw(parse);
-
 our %type_mapping = ();
 
 use constant DEFAULT_PARSER_VERSION => 40000;
@@ -883,7 +880,7 @@ CURRENT_TIMESTAMP :
 END_OF_GRAMMAR
 
 sub parse {
-    my ($translator, $data) = @_;
+    my ($self, $translator, $data) = @_;
 
     # Enable warnings within the Parse::RecDescent module.
     # Make sure the parser dies when it encounters an error

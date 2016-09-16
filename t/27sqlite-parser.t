@@ -12,7 +12,6 @@ use SQL::Transpose::Schema::Constants;
 BEGIN {
     maybe_plan(25, 'SQL::Transpose::Parser::SQLite');
 }
-SQL::Transpose::Parser::SQLite->import('parse');
 
 my $file = "$Bin/data/sqlite/create.sql";
 
@@ -21,7 +20,7 @@ my $file = "$Bin/data/sqlite/create.sql";
     open my $fh, "<$file" or die "Can't read file '$file': $!\n";
     my $data = <$fh>;
     my $t    = SQL::Transpose->new;
-    parse($t, $data);
+    SQL::Transpose::Parser::SQLite->parse($t, $data);
 
     my $schema = $t->schema;
 
@@ -61,7 +60,7 @@ $file = "$Bin/data/sqlite/named.sql";
     open my $fh, "<$file" or die "Can't read file '$file': $!\n";
     my $data = <$fh>;
     my $t    = SQL::Transpose->new;
-    parse($t, $data);
+    SQL::Transpose::Parser::SQLite->parse($t, $data);
 
     my $schema = $t->schema;
 

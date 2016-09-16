@@ -25,9 +25,6 @@ $DEBUG = 0 unless defined $DEBUG;
 use Data::Dumper;
 use SQL::Transpose::Utils qw/ddl_parser_instance/;
 
-use base qw(Exporter);
-our @EXPORT_OK = qw(parse);
-
 our $GRAMMAR = <<'END_OF_GRAMMAR';
 
 {
@@ -450,7 +447,7 @@ BQSTRING : '[' <skip: ''> /(?:[^]]|]])+/ ']'
 END_OF_GRAMMAR
 
 sub parse {
-    my ($translator, $data) = @_;
+    my ($self, $translator, $data) = @_;
 
     # Enable warnings within the Parse::RecDescent module.
     local $::RD_ERRORS = 1 unless defined $::RD_ERRORS; # Make sure the parser dies when it encounters an error

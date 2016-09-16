@@ -150,9 +150,8 @@ foreach my $in (@input) {
     die "Unable to read file '$file'\n" unless -r $file;
     die "'$parser' is an invalid parser\n" unless $valid_parsers{$parser};
 
-    my $t = SQL::Transpose->new;
+    my $t = SQL::Transpose->new(parser => $parser);
     $t->debug($debug);
-    $t->parser($parser) or die $tr->error;
     my $out = $t->translate($file) or die $tr->error;
     my $schema = $t->schema;
     unless ($schema->name) {

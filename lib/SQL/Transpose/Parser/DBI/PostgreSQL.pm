@@ -16,12 +16,8 @@ Uses DBI to query PostgreSQL system tables to determine schema structure.
 
 use strict;
 use warnings;
-use DBI;
-use Data::Dumper;
 use SQL::Transpose::Schema::Constants;
 
-our ($DEBUG, @EXPORT_OK);
-$DEBUG = 0 unless defined $DEBUG;
 
 my $actions = {
     c => 'cascade',
@@ -32,7 +28,7 @@ my $actions = {
 };
 
 sub parse {
-    my ($tr, $dbh) = @_;
+    my ($self, $tr, $dbh) = @_;
 
     my $schema = $tr->schema;
 
@@ -176,7 +172,6 @@ ORDER BY 1;
 
         $fk_select->execute('public', $table_name) or die "Can't execute: $@";
         my $fkeys = $fk_select->fetchall_arrayref({});
-        $DEBUG and print Dumper $fkeys;
         foreach my $con (@$fkeys) {
             my $con_name         = $con->{conname};
             my $fields           = $con->{fields};

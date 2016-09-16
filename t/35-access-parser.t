@@ -10,12 +10,7 @@ use SQL::Transpose;
 use SQL::Transpose::Schema::Constants;
 use Test::SQL::Transpose qw(maybe_plan table_ok);
 
-#BEGIN {
-#    maybe_plan(180, "SQL::Transpose::Parser::Access");
-#    SQL::Transpose::Parser::Access->import('parse');
-#}
-
-use SQL::Transpose::Parser::Access 'parse';
+use SQL::Transpose::Parser::Access;
 
 {
     my $tr = SQL::Transpose->new;
@@ -25,7 +20,7 @@ use SQL::Transpose::Parser::Access 'parse';
     local $/;
     my $data = <FH>;
     close FH;
-    my $val = parse($tr, $data);
+    my $val =  SQL::Transpose::Parser::Access->parse($tr, $data);
     ok($val, 'Parsed OK');
 
     my $schema = $tr->schema;

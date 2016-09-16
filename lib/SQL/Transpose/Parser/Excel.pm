@@ -30,16 +30,9 @@ and field sizes.  True by default.
 
 use strict;
 use warnings;
-our ($DEBUG, @EXPORT_OK);
-$DEBUG = 0 unless defined $DEBUG;
 
 use Spreadsheet::ParseExcel;
-use Exporter;
-use SQL::Transpose::Utils qw(debug normalize_name);
-
-use base qw(Exporter);
-
-@EXPORT_OK = qw(parse);
+use SQL::Transpose::Utils qw(normalize_name);
 
 my %ET_to_ST = (
     'Text'    => 'VARCHAR',
@@ -54,7 +47,7 @@ my %ET_to_ST = (
 # Spreadsheet::ParseExcel works on files, not data streams.
 # -------------------------------------------------------------------
 sub parse {
-    my ($tr, $data) = @_;
+    my ($self, $tr, $data) = @_;
     my $args     = $tr->parser_args;
     my $filename = $tr->filename || return;
     my $wb       = Spreadsheet::ParseExcel::Workbook->Parse($filename);

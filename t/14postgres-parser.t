@@ -9,7 +9,6 @@ use Test::SQL::Transpose qw(maybe_plan);
 
 BEGIN {
     maybe_plan(undef, 'SQL::Transpose::Parser::PostgreSQL');
-    SQL::Transpose::Parser::PostgreSQL->import('parse');
 }
 
 my $t = SQL::Transpose->new(trace => 0);
@@ -126,7 +125,7 @@ my $sql = q{
 
 $| = 1;
 
-my $data = parse($t, $sql);
+my $data = SQL::Transpose::Parser::PostgreSQL->parse($t, $sql);
 my $schema = $t->schema;
 
 isa_ok($schema, 'SQL::Transpose::Schema', 'Schema object');

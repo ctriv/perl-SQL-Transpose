@@ -18,9 +18,7 @@ use_ok('SQL::Transpose::Diff') or die "Cannot continue\n";
 my $tr = SQL::Transpose->new;
 
 my ($source_schema, $target_schema) = map {
-    my $t = SQL::Transpose->new;
-    $t->parser('YAML')
-        or die $tr->error;
+    my $t = SQL::Transpose->new(parser => 'YAML');
     my $out = $t->translate(catfile($Bin, qw/data diff/, $_))
         or die $tr->error;
 
@@ -186,4 +184,3 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found");
 -- No differences found;
 
 ## END OF DIFF
-

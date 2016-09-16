@@ -16,17 +16,11 @@ Uses DBI Catalog Methods.
 
 use strict;
 use warnings;
-use DBI;
 use SQL::Transpose::Schema;
-use Data::Dumper;
 
-our ($DEBUG, @EXPORT_OK);
-$DEBUG = 0 unless defined $DEBUG;
-
-no strict 'refs';
 
 sub parse {
-    my ($tr, $dbh) = @_;
+    my ($self, $tr, $dbh) = @_;
 
     if ($dbh->{FetchHashKeyName} ne 'NAME_uc') {
         warn "setting dbh attribute {FetchHashKeyName} to NAME_uc";

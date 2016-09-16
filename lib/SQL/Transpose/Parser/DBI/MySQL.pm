@@ -18,16 +18,11 @@ a create file.  Should be much faster for larger schemas.
 
 use strict;
 use warnings;
-use DBI;
-use Data::Dumper;
-use SQL::Transpose::Schema::Constants;
 use SQL::Transpose::Parser::MySQL;
 
-our ($DEBUG, @EXPORT_OK);
-$DEBUG = 0 unless defined $DEBUG;
 
 sub parse {
-    my ($tr, $dbh) = @_;
+    my ($self, $tr, $dbh) = @_;
     my $schema      = $tr->schema;
     my @table_names = @{$dbh->selectcol_arrayref('show tables')};
     my @skip_tables = defined $tr->parser_args->{skip} ? split(/,/, $tr->parser_args->{skip}) : ();
@@ -43,7 +38,7 @@ sub parse {
         $create .= ($table->{'create table'} || $table->{'create view'}) . ";\n\n";
     }
 
-    SQL::Transpose::Parser::MySQL::parse($tr, $create);
+    SQL::Transpose::Parser::MySQL->parse($tr, $create);
 
     return 1;
 }

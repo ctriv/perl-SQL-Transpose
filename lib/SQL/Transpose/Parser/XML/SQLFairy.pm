@@ -78,14 +78,11 @@ To convert your old format files simply pass them through the translator :)
 use strict;
 use warnings;
 
-our ($DEBUG, @EXPORT_OK);
+our ($DEBUG);
 $DEBUG = 0 unless defined $DEBUG;
 
 use Data::Dumper;
 use Carp::Clan qw/^SQL::Transpose/;
-use Exporter;
-use base qw(Exporter);
-@EXPORT_OK = qw(parse);
 
 use base qw/SQL::Transpose::Parser/; # Doesnt do anything at the mo!
 use SQL::Transpose::Utils 'debug';
@@ -93,7 +90,7 @@ use XML::LibXML;
 use XML::LibXML::XPathContext;
 
 sub parse {
-    my ($translator, $data) = @_;
+    my ($self, $translator, $data) = @_;
     my $schema = $translator->schema;
     local $DEBUG = $translator->debug;
     my $doc = XML::LibXML->new->parse_string($data);
@@ -109,14 +106,14 @@ sub parse {
     {
         debug "Adding table:" . $xp->findvalue('sqlf:name', $tblnode);
 
-        my $table = $schema->add_table(get_tagfields($xp, $tblnode, "sqlf:" => qw/name order extra/)) or die $schema->error;
+        my $table = $schema->add_table($self->get_tagfields($xp, $tblnode, "sqlf:" => qw/name order extra/)) or die $schema->error;
 
         #
         # Fields
         #
         my @nodes = $xp->findnodes('sqlf:fields/sqlf:field', $tblnode);
         foreach (sort { ("" . $xp->findvalue('sqlf:order', $a) || 0) <=> ("" . $xp->findvalue('sqlf:order', $b) || 0) } @nodes) {
-            my %fdata = get_tagfields(
+            my %fdata = $self->get_tagfields(
                 $xp, $_, "sqlf:",
                 qw/name data_type size default_value is_nullable extra
                     is_auto_increment is_primary_key is_foreign_key comments/
@@ -148,7 +145,7 @@ sub parse {
         #
         @nodes = $xp->findnodes('sqlf:constraints/sqlf:constraint', $tblnode);
         foreach (@nodes) {
-            my %data = get_tagfields(
+            my %data = $self->get_tagfields(
                 $xp, $_, "sqlf:",
                 qw/name type table fields reference_fields reference_table
                     match_type on_delete on_update extra/
@@ -161,7 +158,7 @@ sub parse {
         #
         @nodes = $xp->findnodes('sqlf:indices/sqlf:index', $tblnode);
         foreach (@nodes) {
-            my %data = get_tagfields($xp, $_, "sqlf:", qw/name type fields options extra/);
+            my %data = $self->get_tagfields($xp, $_, "sqlf:", qw/name type fields options extra/);
             $table->add_index(%data) or die $table->error;
         }
 
@@ -181,7 +178,7 @@ sub parse {
     #
     @nodes = $xp->findnodes('/sqlf:schema/sqlf:view|/sqlf:schema/sqlf:views/sqlf:view');
     foreach (@nodes) {
-        my %data = get_tagfields($xp, $_, "sqlf:", qw/name sql fields order extra/);
+        my %data = $self->get_tagfields($xp, $_, "sqlf:", qw/name sql fields order extra/);
         $schema->add_view(%data) or die $schema->error;
     }
 
@@ -190,7 +187,7 @@ sub parse {
     #
     @nodes = $xp->findnodes('/sqlf:schema/sqlf:trigger|/sqlf:schema/sqlf:triggers/sqlf:trigger');
     foreach (@nodes) {
-        my %data = get_tagfields(
+        my %data = $self->get_tagfields(
             $xp, $_, "sqlf:", qw/
                 name perform_action_when database_event database_events fields
                 on_table action order extra
@@ -218,7 +215,7 @@ sub parse {
     #
     @nodes = $xp->findnodes('/sqlf:schema/sqlf:procedure|/sqlf:schema/sqlf:procedures/sqlf:procedure');
     foreach (@nodes) {
-        my %data = get_tagfields($xp, $_, "sqlf:", qw/name sql parameters owner comments order extra/);
+        my %data = $self->get_tagfields($xp, $_, "sqlf:", qw/name sql parameters owner comments order extra/);
         $schema->add_procedure(%data) or die $schema->error;
     }
 
@@ -234,7 +231,7 @@ sub get_tagfields {
     # TODO - Add handling of an explicit NULL value.
     #
 
-    my ($xp, $node, @names) = @_;
+    my ($self, $xp, $node, @names) = @_;
     my (%data, $ns);
     foreach (@names) {
         if (m/:$/) { $ns = $_; next; } # Set def namespace

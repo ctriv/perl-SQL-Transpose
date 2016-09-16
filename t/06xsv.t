@@ -27,7 +27,7 @@ $tr->parser_args(
     trim_fields => 1,
     scan_fields => 1
 );
-my $val = parse($tr, $data, $s);
+my $val = SQL::Transpose::Parser::xSV->parse($tr, $data, $s);
 
 my $schema = $tr->schema;
 my @tables = $schema->get_tables;

@@ -16,14 +16,13 @@ Uses DBI introspection methods to determine schema details.
 
 use strict;
 use warnings;
-use DBI;
 use SQL::Transpose::Schema::Constants;
 use SQL::Transpose::Schema::Table;
 use SQL::Transpose::Schema::Field;
 use SQL::Transpose::Schema::Constraint;
 
 sub parse {
-    my ($tr, $dbh) = @_;
+    my ($self, $tr, $dbh) = @_;
 
     my $schema = $tr->schema;
 
@@ -31,7 +30,7 @@ sub parse {
     my $sth = $dbh->table_info(undef, $db_user, '%', 'TABLE');
 
     while (my $table_info = $sth->fetchrow_hashref('NAME_uc')) {
-        next if ($table_info->{TABLE_NAME} =~ /\$/);
+        next if $table_info->{TABLE_NAME} =~ /\$/;
 
         # create the table
 

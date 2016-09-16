@@ -9,7 +9,7 @@ use Data::Dumper;
 use YAML qw(Load);
 
 sub parse {
-    my ($translator, $data) = @_;
+    my ($self, $translator, $data) = @_;
     $data = Load($data);
     $data = $data->{'schema'};
 

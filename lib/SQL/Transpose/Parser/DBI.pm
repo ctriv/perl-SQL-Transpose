@@ -101,7 +101,7 @@ query Oracle directly and skip the parsing of a text file, too.
 use strict;
 use warnings;
 use DBI;
-our @EXPORT;
+use Module::Runtime qw(use_module);
 
 use constant DRIVERS => {
     mysql  => 'MySQL',
@@ -113,18 +113,12 @@ use constant DRIVERS => {
     db2    => 'DB2',
 };
 
-use Exporter;
-
-use SQL::Transpose::Utils qw(debug);
-
-use base qw(Exporter);
-@EXPORT = qw(parse);
 
 #
 # Passed a SQL::Transpose instance and a string containing the data
 #
 sub parse {
-    my ($tr, $data) = @_;
+    my ($self, $tr, $data) = @_;
 
     my $args        = $tr->parser_args;
     my $dbh         = $args->{'dbh'};
@@ -152,19 +146,12 @@ sub parse {
     my $db_type = $dbh->{'Driver'}{'Name'} or die 'Cannot determine DBI type';
     my $driver  = DRIVERS->{lc $db_type}   or die "$db_type not supported";
     my $pkg     = "SQL::Transpose::Parser::DBI::$driver";
-    my $sub     = $pkg . '::parse';
 
-    SQL::Transpose::load($pkg);
+    use_module($pkg);
 
-    my $s = eval {
-        no strict 'refs';
-        &{$sub}($tr, $dbh) or die "No result from $pkg";
-    };
-    my $err = $@;
+    my $s = $pkg->parse($t, $dbh);
 
-    eval { $dbh->disconnect } if (defined $dbh and $dbh_is_local);
-
-    die $err if $err;
+    eval { $dbh->disconnect } if defined $dbh and $dbh_is_local;
 
     return $s;
 }

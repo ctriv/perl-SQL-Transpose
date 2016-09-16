@@ -45,21 +45,18 @@ C<SQL::Transpose::Utils::normalize_name>.
 
 use strict;
 use warnings;
-our @EXPORT;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
 use Text::RecordParser;
 use SQL::Transpose::Utils qw(debug normalize_name);
 
-use base qw(Exporter);
-@EXPORT = qw(parse);
 
 #
 # Passed a SQL::Transpose instance and a string containing the data
 #
 sub parse {
-    my ($tr, $data) = @_;
+    my ($self, $tr, $data) = @_;
     my $args   = $tr->parser_args;
     my $parser = Text::RecordParser->new(
         field_separator  => $args->{'field_separator'}  || ',',
