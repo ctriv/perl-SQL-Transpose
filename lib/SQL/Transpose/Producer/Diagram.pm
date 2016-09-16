@@ -434,7 +434,7 @@ TABLE:
         }
     }
 
-    my $sig     = 'Created by SQL::Transpose ' . $t->version;
+    my $sig     = 'Created by SQL::Transpose';
     my $sig_len = $font->width * length $sig;
     push @shapes, ['string', $font, $max_x - $sig_len, $max_y - $font->height - 4, $sig, 'black'];
 
